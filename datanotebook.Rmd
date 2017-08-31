@@ -89,7 +89,6 @@ data <- read_csv('finaladultdata.csv', col_types=
                      right.rv4 = col_double()
                      )
 )
-data
 kable(data)
 ```
 
