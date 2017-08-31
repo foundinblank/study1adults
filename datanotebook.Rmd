@@ -1,14 +1,26 @@
 ---
 title: "Study 1 Adult Data Analysis"
 author: "Adam Stone, PhD"
-date: '`r format(Sys.time(), "%d %B, %Y")`'
-output: github_document
+date: "August 31, 2017"
+output:
+  html_notebook:
+    code_folding: hide
+    theme: united
+    toc: yes
+    toc_depth: 2
+    toc_float: yes
+  html_document:
+    toc: yes
+    toc_depth: '2'
+  github_document:
+    toc: yes
+    toc_depth: 2
 ---
 
 ## Importing and Reshaping Data
-Here we're going to import the data, remove dropped participants, and reshape the data so story and direction are grouping variables (and the dataset will be more tall than wide). 
+Here we're going to import the data, remove dropped participants, and reshape the data so story and direction are grouping variables (and the dataset will be more tall than wide). Let's see all our data first. 
 
-```{r, message=FALSE, warning=FALSE}
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
 
 # Import packages we'll need.
 library(tidyverse)
@@ -16,7 +28,7 @@ library(stringr)
 library(lme4)
 library(prettydoc)
 library(broom)
-
+library(knitr)
 # Import the data
 data <- read_csv('finaladultdata.csv', col_types=
                    cols(
@@ -80,11 +92,15 @@ data <- read_csv('finaladultdata.csv', col_types=
 data
 ```
 
-Remove dropped participants (they have no main group name). These are who we dropped:
+Remove dropped participants (they have no main group name, or no data). These are who we dropped. 
 
 ```{r}
 dropped <- filter(data, is.na(maingroup)==TRUE)
-data <- filter(data, is.na(maingroup)==FALSE)
+manual <- filter(data,participant=="Lucinda" | participant=="Joe")
+dropped <- rbind(dropped,manual) %>% arrange(id)
+data <- data %>%
+  filter(is.na(maingroup)==FALSE) %>% 
+  filter(participant!="Lucinda" & participant!="Joe")
 dropped
 ```
 
@@ -97,7 +113,7 @@ Now we'll reshape the data. Based on Rain's UNM talk, this is what Group 1 & 2 s
 | 3    | Cinderella Fwd    | King Mias Fwd   |
 | 4    | Goldilocks Rev    | Red Riding Hood Rev   |
 
-Let's add that information to our data, too.
+Let's add that information to our data when we reshape it. Here's the final, "cleaned-up" dataset that we're going to use for all further analysis. 
 
 ```{r, message=FALSE, warning=FALSE}
 # I tried writing a function to do this using column names as arguments. 
@@ -207,7 +223,7 @@ data
 ```
 
 ## Participant Demographics
-Now we can easily get group means. Let's see...
+Now we can easily get group means.
 ```{r}
 groupmeans <- data %>%
   group_by(maingroup) %>%
@@ -231,17 +247,20 @@ accdata <- data %>%
 #Boxplot
 ggplot(data,aes(maingroup,acc,fill=direction)) + 
   geom_boxplot() +
-  scale_y_continuous(limits=c(0,1))
+  scale_y_continuous(limits=c(0,1)) +
+  theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 ```{r}
 # Error bar chart
 ggplot(accdata,aes(maingroup,acc.mean,color=direction)) + 
   geom_point(position=position_dodge(0.5)) +
   geom_errorbar(aes(ymin=acc.mean-acc.sd,ymax=acc.mean+acc.sd),width=0.1,position=position_dodge(0.5)) +
-  scale_y_continuous(limits=c(0,1))
+  scale_y_continuous(limits=c(0,1)) +
+  theme(axis.text.x=element_text(angle=45,hjust=1))
+
 ```
 
-Let's test for statistical significance. A simple ANOVA tell us there is a main effect of group and direction, but no interactions. Tukey's HSD posthoc tells us HearingNoviceASL and DeafLateASL are significantly different, as well as HearingNoviceASL and HearingLateASL, and importantly, NativeDeaf is different from HearingNoviceASL!
+Let's test for statistical significance. A simple ANOVA tell us there is a main effect of group and direction, but no interactions. Tukey's HSD posthoc tells us that Hearing Novice ASL is significantly different from Deaf Native.  
 ```{r}
 # Let's set Native Deaf as the reference level to compare all other
 data$maingroup <- relevel(data$maingroup, ref="NativeDeaf")
@@ -277,10 +296,11 @@ ggplot(accdata2,aes(maingroup,acc.mean,color=direction)) +
   geom_point(position=position_dodge(0.5)) +
   geom_errorbar(aes(ymin=acc.mean-acc.sd,ymax=acc.mean+acc.sd),width=0.1,position=position_dodge(0.5)) +
   scale_y_continuous(limits=c(0,1)) +
-  facet_wrap("story")
+  facet_wrap("story") + 
+  theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 
-Boy! Seems King Midas had a strong reversal effect, while Red Riding Hood had a weak reversal effect. Maybe we should put those in as random effects variables in a mixed model, along with participants too. With mixed models, you define predictor variables (what we're interested in; aka, fixed effects) and grouping (what we're not interested in, aka, random effects). This is overkill for simple accuracy data but this will help set us up for eye tracking analysis and besides reviewers may ask us about item-level effects given we have just 4 stories.  
+Boy! Seems King Midas had a strong reversal effect, while Red Riding Hood had a weak reversal effect. Maybe we should put those in as random effects variables in a mixed model, along with participants too. With mixed models, you define predictor variables (what we're interested in; aka, fixed effects) and grouping (what we're not interested in, aka, random effects). This is overkill for simple accuracy data but this will help set us up for eye tracking analysis and **importantly reviewers may ask us about item-level effects given we have just 4 stories.**
 
 So here, we have fixed effects of group and direction, and random effects of story and id, with varying slopes for direction.
 
