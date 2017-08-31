@@ -9,9 +9,6 @@ output:
     toc: yes
     toc_depth: 2
     toc_float: yes
-  html_document:
-    toc: yes
-    toc_depth: '2'
   github_document:
     toc: yes
     toc_depth: 2
@@ -89,7 +86,7 @@ data <- read_csv('finaladultdata.csv', col_types=
                      right.rv4 = col_double()
                      )
 )
-kable(data)
+kable(head(data))
 ```
 
 Remove dropped participants (they have no main group name, or no data). These are who we dropped. 
@@ -101,7 +98,7 @@ dropped <- rbind(dropped,manual) %>% arrange(id)
 data <- data %>%
   filter(is.na(maingroup)==FALSE) %>% 
   filter(participant!="Lucinda" & participant!="Joe")
-dropped
+kable(dropped)
 ```
 
 Now we'll reshape the data. Based on Rain's UNM talk, this is what Group 1 & 2 saw:
@@ -219,7 +216,7 @@ data <- data %>%
   select(id,participant,hearing,videogroup,aoagroup,languagegroup,maingroup,video,story,
          direction,age,selfrate,signyrs,aoasl,acc,forehead,eyes,mouth,chin,upperchest,
          midchest,lowerchest,belly,left,right)
-data
+kable(head(data, n=10))
 ```
 
 ## Participant Demographics
@@ -232,7 +229,7 @@ groupmeans <- data %>%
             selfrate = mean(selfrate),
             signyrs = mean(signyrs),
             aoasl = mean(aoasl))
-groupmeans
+kable(groupmeans)
 ```
 
 ## Accuracy Data Analysis
