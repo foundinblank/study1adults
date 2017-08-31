@@ -2,7 +2,7 @@
 title: "Study 1 Adult Data Analysis"
 author: "Adam Stone, PhD"
 date: '`r format(Sys.time(), "%d %B, %Y")`'
-output: html_notebook
+output: github_document
 ---
 
 ## Importing and Reshaping Data
