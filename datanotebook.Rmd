@@ -1,0 +1,295 @@
+---
+title: "Study 1 Adult Data Analysis"
+author: "Adam Stone, PhD"
+date: '`r format(Sys.time(), "%d %B, %Y")`'
+output: html_notebook
+---
+
+## Importing and Reshaping Data
+Here we're going to import the data, remove dropped participants, and reshape the data so story and direction are grouping variables (and the dataset will be more tall than wide). 
+
+```{r, message=FALSE, warning=FALSE}
+
+# Import packages we'll need.
+library(tidyverse)
+library(stringr)
+library(lme4)
+library(prettydoc)
+library(broom)
+
+# Import the data
+data <- read_csv('finaladultdata.csv', col_types=
+                   cols(
+                     id = col_integer(),
+                     participant = col_character(),
+                     hearing = col_character(),
+                     videogroup = col_character(),
+                     aoagroup = col_character(),
+                     languagegroup = col_character(),
+                     maingroup = col_character(),
+                     selfrate = col_double(),
+                     age = col_double(),
+                     signyrs = col_double(),
+                     aoasl = col_integer(),
+                     acc.fw1 = col_double(),
+                     acc.rv2 = col_double(),
+                     acc.fw3 = col_double(),
+                     acc.rv4 = col_double(),
+                     forehead.fw1 = col_double(),
+                     forehead.fw3 = col_double(),
+                     forehead.rv2 = col_double(),
+                     forehead.rv4 = col_double(),
+                     eyes.fw1 = col_double(),
+                     eyes.fw3 = col_double(),
+                     eyes.rv2 = col_double(),
+                     eyes.rv4 = col_double(),
+                     mouth.fw1 = col_double(),
+                     mouth.fw3 = col_double(),
+                     mouth.rv2 = col_double(),
+                     mouth.rv4 = col_double(),
+                     chin.fw1 = col_double(),
+                     chin.fw3 = col_double(),
+                     chin.rv2 = col_double(),
+                     chin.rv4 = col_double(),
+                     upperchest.fw1 = col_double(),
+                     upperchest.fw3 = col_double(),
+                     upperchest.rv2 = col_double(),
+                     upperchest.rv4 = col_double(),
+                     midchest.fw1 = col_double(),
+                     midchest.fw3 = col_double(),
+                     midchest.rv2 = col_double(),
+                     midchest.rv4 = col_double(),
+                     lowerchest.fw1 = col_double(),
+                     lowerchest.fw3 = col_double(),
+                     lowerchest.rv2 = col_double(),
+                     lowerchest.rv4 = col_double(),
+                     belly.fw1 = col_double(),
+                     belly.fw3 = col_double(),
+                     belly.rv2 = col_double(),
+                     belly.rv4 = col_double(),
+                     left.fw1 = col_double(),
+                     left.fw3 = col_double(),
+                     left.rv2 = col_double(),
+                     left.rv4 = col_double(),
+                     right.fw1 = col_double(),
+                     right.fw3 = col_double(),
+                     right.rv2 = col_double(),
+                     right.rv4 = col_double()
+                     )
+)
+data
+```
+
+Remove dropped participants (they have no main group name). These are who we dropped:
+
+```{r}
+dropped <- filter(data, is.na(maingroup)==TRUE)
+data <- filter(data, is.na(maingroup)==FALSE)
+dropped
+```
+
+Now we'll reshape the data. Based on Rain's UNM talk, this is what Group 1 & 2 saw:
+
+| No. | Group1 | Group2 |
+|:------|:-----|:------|
+| 1     | Red Riding Hood Fwd    | Goldilocks Fwd   |
+| 2     | King Midas Rev    | Cinderella Rev   |
+| 3    | Cinderella Fwd    | King Mias Fwd   |
+| 4    | Goldilocks Rev    | Red Riding Hood Rev   |
+
+Let's add that information to our data, too.
+
+```{r, message=FALSE, warning=FALSE}
+# I tried writing a function to do this using column names as arguments. 
+# But after hours of googling I couldn't figure it out! So just copying/pasting code here.
+data.acc <- data %>%
+  select(id,acc.fw1:acc.rv4) %>%
+  gather(video,acc,acc.fw1:acc.rv4, factor_key=TRUE) %>%
+  mutate(video = str_sub(video,-3,-1))
+data.forehead <- data %>%
+  select(id,forehead.fw1:forehead.rv4) %>%
+  gather(video,forehead,forehead.fw1:forehead.rv4) %>%
+  mutate(video = str_sub(video,-3,-1))
+data.eyes <- data %>%
+  select(id,eyes.fw1:eyes.rv4) %>%
+  gather(video,eyes,eyes.fw1:eyes.rv4) %>%
+  mutate(video = str_sub(video,-3,-1))
+data.mouth <- data %>%
+  select(id,mouth.fw1:mouth.rv4) %>%
+  gather(video,mouth,mouth.fw1:mouth.rv4) %>%
+  mutate(video = str_sub(video,-3,-1))
+data.chin <- data %>%
+  select(id,chin.fw1:chin.rv4) %>%
+  gather(video,chin,chin.fw1:chin.rv4) %>%
+  mutate(video = str_sub(video,-3,-1))
+data.upperchest <- data %>%
+  select(id,upperchest.fw1:upperchest.rv4) %>%
+  gather(video,upperchest,upperchest.fw1:upperchest.rv4) %>%
+  mutate(video = str_sub(video,-3,-1))
+data.midchest <- data %>%
+  select(id,midchest.fw1:midchest.rv4) %>%
+  gather(video,midchest,midchest.fw1:midchest.rv4) %>%
+  mutate(video = str_sub(video,-3,-1))
+data.lowerchest <- data %>%
+  select(id,lowerchest.fw1:lowerchest.rv4) %>%
+  gather(video,lowerchest,lowerchest.fw1:lowerchest.rv4) %>%
+  mutate(video = str_sub(video,-3,-1))
+data.belly <- data %>%
+  select(id,belly.fw1:belly.rv4) %>%
+  gather(video,belly,belly.fw1:belly.rv4) %>%
+  mutate(video = str_sub(video,-3,-1))
+data.left <- data %>%
+  select(id,left.fw1:left.rv4) %>%
+  gather(video,left,left.fw1:left.rv4) %>%
+  mutate(video = str_sub(video,-3,-1))
+data.right <- data %>%
+  select(id,right.fw1:right.rv4) %>%
+  gather(video,right,right.fw1:right.rv4) %>%
+  mutate(video = str_sub(video,-3,-1))
+data.header <- data[1:11]
+
+# Join them all back together. inner_join is smart, it'll join by id AND video.
+newdata <- data.header %>%
+  inner_join(data.acc,by="id") %>%
+  inner_join(data.forehead) %>%
+  inner_join(data.eyes) %>%
+  inner_join(data.mouth) %>%
+  inner_join(data.chin) %>%
+  inner_join(data.upperchest) %>%
+  inner_join(data.midchest) %>%
+  inner_join(data.lowerchest) %>%
+  inner_join(data.belly) %>%
+  inner_join(data.left) %>%
+  inner_join(data.right)
+
+# Let's change the names
+oldata <- data
+data <- newdata
+
+# Add story and direction variables and split data into videogroups
+data$story <- NA
+data$direction <- NA
+group1 <- filter(data,videogroup=="Group 1")
+group2 <- filter(data,videogroup=="Group 2")
+
+# Now define levels for story and direction based on that table above
+group1 <- mutate(group1,story = ifelse(video == "fw1","RedRidingHood",
+                                       ifelse(video == "rv2","KingMidas",
+                                              ifelse(video =="fw3","Cinderella","Goldilocks"))))
+group1 <- mutate(group1,direction = ifelse(video == "fw1","forward",
+                                       ifelse(video == "rv2","reversed",
+                                              ifelse(video == "fw3","forward","reversed"))))
+group2 <- mutate(group2,story = ifelse(video == "fw1","Goldilocks",
+                                       ifelse(video == "rv2","Cinderella",
+                                              ifelse(video=="fw3","KingMidas","RedRidingHood"))))
+group2 <- mutate(group2,direction = ifelse(video == "fw1","forward",
+                                           ifelse(video == "rv2","reversed",
+                                                  ifelse(video == "fw3","forward","reversed"))))
+
+# Join groups back together and view
+data <- rbind(group1,group2)
+data <- arrange(data,id,video)
+
+# Convert some columns to factors
+data <- data %>%
+  mutate(hearing = as.factor(hearing)) %>%
+  mutate(videogroup = as.factor(videogroup)) %>%
+  mutate(aoagroup = as.factor(aoagroup)) %>%
+  mutate(languagegroup = as.factor(languagegroup)) %>%
+  mutate(maingroup = as.factor(maingroup)) %>%
+  mutate(video = as.factor(video)) %>%
+  mutate(story = as.factor(story)) %>%
+  mutate(direction = as.factor(direction)) %>%
+  select(id,participant,hearing,videogroup,aoagroup,languagegroup,maingroup,video,story,
+         direction,age,selfrate,signyrs,aoasl,acc,forehead,eyes,mouth,chin,upperchest,
+         midchest,lowerchest,belly,left,right)
+data
+```
+
+## Participant Demographics
+Now we can easily get group means. Let's see...
+```{r}
+groupmeans <- data %>%
+  group_by(maingroup) %>%
+  summarize(n = n()/4,
+            age = mean(age),
+            selfrate = mean(selfrate),
+            signyrs = mean(signyrs),
+            aoasl = mean(aoasl))
+groupmeans
+```
+
+## Accuracy Data Analysis
+And accuracy boxplots and error bar charts for forward vs. backward stories. 
+```{r}
+# Summarizing means and SDs
+accdata <- data %>%
+  group_by(maingroup,direction) %>%
+  summarize(acc.mean = mean(acc, na.rm=TRUE),
+            acc.sd = sd(acc, na.rm=TRUE))
+
+#Boxplot
+ggplot(data,aes(maingroup,acc,fill=direction)) + 
+  geom_boxplot() +
+  scale_y_continuous(limits=c(0,1))
+```
+```{r}
+# Error bar chart
+ggplot(accdata,aes(maingroup,acc.mean,color=direction)) + 
+  geom_point(position=position_dodge(0.5)) +
+  geom_errorbar(aes(ymin=acc.mean-acc.sd,ymax=acc.mean+acc.sd),width=0.1,position=position_dodge(0.5)) +
+  scale_y_continuous(limits=c(0,1))
+```
+
+Let's test for statistical significance. A simple ANOVA tell us there is a main effect of group and direction, but no interactions. Tukey's HSD posthoc tells us HearingNoviceASL and DeafLateASL are significantly different, as well as HearingNoviceASL and HearingLateASL, and importantly, NativeDeaf is different from HearingNoviceASL!
+```{r}
+# Let's set Native Deaf as the reference level to compare all other
+data$maingroup <- relevel(data$maingroup, ref="NativeDeaf")
+# Run the ANOVA
+acc.anova <- aov(data=data,acc ~ maingroup*direction)
+summary(acc.anova)
+# Run the posthoc on main group
+TukeyHSD(acc.anova,'maingroup',conf.level = 0.95)
+```
+
+Group coefficients are here. Remember our reference level ("control") is Native Deaf. Their forward accuracy is 85% with a reversal effect of -9%.  ASL, Forward. Mean accuracy for that is 84%, and its reversal effect is -14%. All the other values are to be added to these coefficients. Hearing Novice ASL's forward accuracy was 78%, with a reversal effect of -6%! 
+```{r}
+#Coefficients
+acc.anova$coefficients
+```
+
+In summary, ANOVA tells us there are main effects of group and direction, no interactions. All of which is a good thing. But I'm curious if there's any item-level effects we should be watching out for. Because there are 4 different stories. Let's plot those out.
+
+```{r}
+# Run summary stats grouped by story, too
+accdata2 <- data %>%
+  group_by(maingroup,story,direction) %>%
+  summarize(acc.mean = mean(acc, na.rm=TRUE),
+            acc.sd = sd(acc, na.rm=TRUE))
+# Boxplot
+# ggplot(data,aes(maingroup,acc,fill=direction)) + 
+#   geom_boxplot() +
+#   scale_y_continuous(limits=c(0,1)) +
+#   facet_wrap("story")
+
+# Error bar chart
+ggplot(accdata2,aes(maingroup,acc.mean,color=direction)) + 
+  geom_point(position=position_dodge(0.5)) +
+  geom_errorbar(aes(ymin=acc.mean-acc.sd,ymax=acc.mean+acc.sd),width=0.1,position=position_dodge(0.5)) +
+  scale_y_continuous(limits=c(0,1)) +
+  facet_wrap("story")
+```
+
+Boy! Seems King Midas had a strong reversal effect, while Red Riding Hood had a weak reversal effect. Maybe we should put those in as random effects variables in a mixed model, along with participants too. With mixed models, you define predictor variables (what we're interested in; aka, fixed effects) and grouping (what we're not interested in, aka, random effects). This is overkill for simple accuracy data but this will help set us up for eye tracking analysis and besides reviewers may ask us about item-level effects given we have just 4 stories.  
+
+So here, we have fixed effects of group and direction, and random effects of story and id, with varying slopes for direction.
+
+The output tells us now that Hearing Novice ASL is significantly different from Deaf Native ASL, that we still have a main effect of direction, with a  significant interaction of direction and Hearing Late ASL. We probably don't need all this in the paper, though, the ANOVA will do and accuracy is not our main point. 
+```{r}
+acc.lm <- lmer(data=data, acc ~ maingroup*direction + (direction|id) + (1|story))
+summary(acc.lm)
+```
+
+
+## Eye Data 
+To come!
