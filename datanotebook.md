@@ -11,134 +11,8865 @@ August 31, 2017
 Importing and Reshaping Data
 ----------------------------
 
-Here we're going to import the data, remove dropped participants, and reshape the data so story and direction are grouping variables (and the dataset will be more tall than wide). Let's see all our data first.
+Here we're going to import the data, remove dropped participants, and reshape the data so story and direction are grouping variables (and the dataset will be more tall than wide). Let's see all our data first (scroll horizontally).
 
-``` r
-# Import packages we'll need.
-library(tidyverse)
-library(stringr)
-library(lme4)
-library(prettydoc)
-library(broom)
-library(knitr)
-# Import the data
-data <- read_csv('finaladultdata.csv', col_types=
-                   cols(
-                     id = col_integer(),
-                     participant = col_character(),
-                     hearing = col_character(),
-                     videogroup = col_character(),
-                     aoagroup = col_character(),
-                     languagegroup = col_character(),
-                     maingroup = col_character(),
-                     selfrate = col_double(),
-                     age = col_double(),
-                     signyrs = col_double(),
-                     aoasl = col_integer(),
-                     acc.fw1 = col_double(),
-                     acc.rv2 = col_double(),
-                     acc.fw3 = col_double(),
-                     acc.rv4 = col_double(),
-                     forehead.fw1 = col_double(),
-                     forehead.fw3 = col_double(),
-                     forehead.rv2 = col_double(),
-                     forehead.rv4 = col_double(),
-                     eyes.fw1 = col_double(),
-                     eyes.fw3 = col_double(),
-                     eyes.rv2 = col_double(),
-                     eyes.rv4 = col_double(),
-                     mouth.fw1 = col_double(),
-                     mouth.fw3 = col_double(),
-                     mouth.rv2 = col_double(),
-                     mouth.rv4 = col_double(),
-                     chin.fw1 = col_double(),
-                     chin.fw3 = col_double(),
-                     chin.rv2 = col_double(),
-                     chin.rv4 = col_double(),
-                     upperchest.fw1 = col_double(),
-                     upperchest.fw3 = col_double(),
-                     upperchest.rv2 = col_double(),
-                     upperchest.rv4 = col_double(),
-                     midchest.fw1 = col_double(),
-                     midchest.fw3 = col_double(),
-                     midchest.rv2 = col_double(),
-                     midchest.rv4 = col_double(),
-                     lowerchest.fw1 = col_double(),
-                     lowerchest.fw3 = col_double(),
-                     lowerchest.rv2 = col_double(),
-                     lowerchest.rv4 = col_double(),
-                     belly.fw1 = col_double(),
-                     belly.fw3 = col_double(),
-                     belly.rv2 = col_double(),
-                     belly.rv4 = col_double(),
-                     left.fw1 = col_double(),
-                     left.fw3 = col_double(),
-                     left.rv2 = col_double(),
-                     left.rv4 = col_double(),
-                     right.fw1 = col_double(),
-                     right.fw3 = col_double(),
-                     right.rv2 = col_double(),
-                     right.rv4 = col_double()
-                     )
-)
-kable(data)
-```
-
-|   id| participant                   | hearing | videogroup | aoagroup | languagegroup | maingroup        |  selfrate|    age|  signyrs|  aoasl|  acc.fw1|  acc.rv2|  acc.fw3|  acc.rv4|  forehead.fw1|  forehead.fw3|  forehead.rv2|  forehead.rv4|  eyes.fw1|  eyes.fw3|  eyes.rv2|  eyes.rv4|  mouth.fw1|  mouth.fw3|  mouth.rv2|  mouth.rv4|  chin.fw1|  chin.fw3|  chin.rv2|  chin.rv4|  upperchest.fw1|  upperchest.fw3|  upperchest.rv2|  upperchest.rv4|  midchest.fw1|  midchest.fw3|  midchest.rv2|  midchest.rv4|  lowerchest.fw1|  lowerchest.fw3|  lowerchest.rv2|  lowerchest.rv4|  belly.fw1|  belly.fw3|  belly.rv2|  belly.rv4|  left.fw1|  left.fw3|  left.rv2|  left.rv4|  right.fw1|  right.fw3|  right.rv2|  right.rv4|
-|----:|:------------------------------|:--------|:-----------|:---------|:--------------|:-----------------|---------:|------:|--------:|------:|--------:|--------:|--------:|--------:|-------------:|-------------:|-------------:|-------------:|---------:|---------:|---------:|---------:|----------:|----------:|----------:|----------:|---------:|---------:|---------:|---------:|---------------:|---------------:|---------------:|---------------:|-------------:|-------------:|-------------:|-------------:|---------------:|---------------:|---------------:|---------------:|----------:|----------:|----------:|----------:|---------:|---------:|---------:|---------:|----------:|----------:|----------:|----------:|
-|    1| Jessika                       | Deaf    | Group 1    | Early    | EarlyASL      | DeafEarlyASL     |       5.0|  24.00|    21.00|      3|     0.85|   0.7500|     0.90|     0.80|            NA|            NA|            NA|          0.23|      5.51|      3.70|      3.04|      6.37|      14.73|      25.33|       8.02|      11.58|      0.72|      7.61|      0.43|      0.31|            0.01|            0.04|              NA|              NA|            NA|          0.02|            NA|            NA|              NA|            0.02|              NA|              NA|         NA|         NA|         NA|         NA|        NA|        NA|        NA|        NA|         NA|         NA|         NA|         NA|
-|    2| Derek                         | Deaf    | Group 1    | Early    | EarlyASL      | DeafEarlyASL     |       5.0|  41.00|    38.00|      3|     0.80|   0.7000|     0.85|     0.65|            NA|          0.02|          0.01|            NA|      0.53|      2.09|      3.08|      1.20|      16.98|      29.47|       5.44|      11.70|      3.29|      4.14|      0.52|      2.46|            0.22|              NA|            0.01|            0.27|            NA|          0.01|          0.02|          0.32|              NA|              NA|            0.02|            0.20|         NA|         NA|       0.38|         NA|        NA|        NA|      0.03|        NA|         NA|         NA|         NA|         NA|
-|    3| Vanessa\_Deaf                 | Deaf    | Group 2    | Early    | EarlyASL      | DeafEarlyASL     |       5.0|  34.00|    30.00|      4|     0.85|   0.7000|     0.80|     0.65|            NA|          0.02|          0.02|          0.12|      0.32|      1.77|      0.05|      2.22|      15.87|      17.98|      32.13|      11.72|      0.52|      0.57|      3.36|      4.30|            0.03|            0.03|            0.01|            0.18|          0.23|          0.01|            NA|          0.06|              NA|              NA|              NA|            0.01|         NA|         NA|         NA|         NA|        NA|        NA|        NA|        NA|         NA|         NA|         NA|       0.02|
-|    4| Josh                          | Deaf    | Group 2    | Early    | EarlyASL      | DeafEarlyASL     |       5.0|  31.00|    27.00|      4|     0.95|   0.5000|     0.85|     0.75|            NA|            NA|            NA|            NA|      0.72|        NA|      0.06|        NA|      19.77|      16.46|      28.94|      14.28|      6.19|      4.14|      9.58|      5.78|            0.12|            0.06|            0.34|            0.45|          0.03|          0.02|          0.49|            NA|              NA|            0.02|            0.01|              NA|         NA|       0.02|         NA|         NA|        NA|        NA|      0.79|        NA|       0.12|         NA|         NA|       0.09|
-|    5| Lynnette                      | Deaf    | Group 1    | Early    | EarlyASL      | DeafEarlyASL     |       5.0|  39.00|    34.00|      5|     0.90|   0.6500|     0.70|     0.75|            NA|          0.17|            NA|          0.03|      3.17|      0.08|      0.41|      0.37|      16.91|       1.82|       2.26|       1.44|      0.15|      0.76|      3.10|      0.06|              NA|              NA|            0.01|            0.02|            NA|          0.01|            NA|          0.01|              NA|              NA|              NA|            0.01|         NA|       0.01|         NA|         NA|        NA|        NA|        NA|        NA|         NA|       0.06|       0.37|       0.02|
-|    6| Laura P (missing stories)     | Deaf    | Group 1    | Early    | EarlyASL      | DeafEarlyASL     |       5.0|  37.00|    29.00|      8|     0.95|   0.7500|     0.70|     0.90|            NA|            NA|            NA|            NA|        NA|      3.01|        NA|      0.72|         NA|      31.72|         NA|       2.69|        NA|      0.54|        NA|      0.37|              NA|            0.03|              NA|            0.01|            NA|          0.01|            NA|            NA|              NA|              NA|              NA|              NA|         NA|         NA|         NA|         NA|        NA|        NA|        NA|        NA|         NA|       0.17|         NA|       0.01|
-|    7| Rebecca                       | Deaf    | Group 1    | Early    | EarlyASL      | DeafEarlyASL     |       5.0|  38.00|    29.00|      9|     0.85|   0.4000|     0.75|     0.55|            NA|            NA|            NA|            NA|      0.01|        NA|      0.02|        NA|       8.31|       0.40|       0.02|       2.06|     11.80|      2.16|      0.44|      3.09|            0.08|            0.32|            0.32|            0.46|            NA|          0.01|          0.01|          0.02|              NA|            0.01|              NA|              NA|         NA|       0.04|         NA|         NA|        NA|        NA|        NA|        NA|         NA|       3.90|         NA|         NA|
-|    8| Cathy                         | Deaf    | Group 2    | Early    | EarlyASL      | DeafEarlyASL     |       5.0|  39.00|    30.00|      9|     0.85|   0.7500|     0.85|     0.85|            NA|            NA|            NA|            NA|        NA|        NA|        NA|        NA|         NA|         NA|         NA|         NA|        NA|        NA|        NA|        NA|              NA|              NA|              NA|              NA|            NA|            NA|            NA|            NA|              NA|              NA|              NA|              NA|         NA|         NA|         NA|         NA|        NA|        NA|        NA|        NA|         NA|         NA|         NA|         NA|
-|    9| Crystal                       | Deaf    | Group 2    | Early    | LateASL       | DeafLateASL      |       5.0|  39.00|    29.00|     10|     0.90|   0.6667|     0.80|     0.80|            NA|          0.00|            NA|          0.02|      4.78|     10.02|     18.82|      7.30|      13.26|      11.34|      17.52|      13.63|      0.14|      0.09|      0.04|      0.02|              NA|            0.10|            0.01|              NA|            NA|          0.02|          0.01|          0.01|              NA|            0.01|              NA|              NA|         NA|       0.03|         NA|         NA|      0.16|        NA|        NA|        NA|         NA|         NA|       0.07|         NA|
-|   10| Chrissy G.                    | Deaf    | Group 1    | Early    | LateASL       | DeafLateASL      |       5.0|  43.00|    27.00|     12|     0.90|   0.7000|     0.90|     0.65|            NA|            NA|            NA|            NA|        NA|        NA|        NA|        NA|         NA|         NA|         NA|         NA|        NA|        NA|        NA|        NA|              NA|              NA|              NA|              NA|            NA|            NA|            NA|            NA|              NA|              NA|              NA|              NA|         NA|         NA|         NA|         NA|        NA|        NA|        NA|        NA|         NA|         NA|         NA|         NA|
-|   11| Adam                          | Deaf    | Group 1    | Early    | LateASL       | DeafLateASL      |       5.0|  26.00|    13.00|     13|     0.80|   0.7000|       NA|       NA|            NA|            NA|            NA|            NA|      3.78|      4.90|      1.03|      2.28|      17.31|      31.70|      10.39|      10.89|      0.23|      0.44|      0.28|      0.06|              NA|              NA|              NA|            0.22|            NA|            NA|            NA|            NA|              NA|              NA|              NA|              NA|         NA|         NA|         NA|         NA|        NA|        NA|        NA|        NA|         NA|         NA|         NA|       0.01|
-|   12| Brad                          | Deaf    | Group 1    | Early    | LateASL       | DeafLateASL      |       5.0|  34.00|    21.00|     13|     0.75|   0.6000|     0.80|     0.75|            NA|            NA|            NA|            NA|      3.46|      0.06|      0.42|      0.15|      17.29|      10.87|      11.42|      17.42|      0.15|      0.88|      0.56|      0.38|            0.01|              NA|            0.24|              NA|            NA|          0.01|            NA|            NA|              NA|            0.01|              NA|              NA|         NA|       0.08|         NA|         NA|        NA|        NA|        NA|        NA|       0.01|         NA|         NA|         NA|
-|   13| Alicia                        | Deaf    | Group 2    | Early    | LateASL       | DeafLateASL      |       5.0|  37.00|    23.00|     14|     0.95|   0.7000|     1.00|     0.85|            NA|            NA|            NA|          0.05|      0.85|      0.07|      3.92|      1.05|      14.91|       8.17|      29.22|      13.42|      1.03|      2.23|      1.02|      1.11|            1.26|            0.01|            0.26|            0.36|          0.05|          0.01|          0.29|          1.64|              NA|            0.03|            0.11|            0.16|         NA|       0.13|       0.05|         NA|        NA|      0.65|      1.92|      0.38|         NA|       0.05|         NA|         NA|
-|   14| Joe                           | Deaf    | Group 2    | Early    | LateASL       | DeafLateASL      |       5.0|  44.00|    29.00|     15|     0.90|   0.6000|     0.90|     0.80|            NA|            NA|            NA|            NA|        NA|        NA|        NA|        NA|         NA|         NA|         NA|         NA|        NA|        NA|        NA|        NA|              NA|              NA|              NA|              NA|            NA|            NA|            NA|            NA|              NA|              NA|              NA|              NA|         NA|         NA|         NA|         NA|        NA|        NA|        NA|        NA|         NA|         NA|         NA|         NA|
-|   15| Svenna                        | Deaf    | Group 2    | Native   | Native        | NativeDeaf       |       5.0|  32.00|    32.00|      0|     0.85|   0.9000|     0.95|     0.85|            NA|            NA|            NA|            NA|      3.45|      0.02|      3.71|      0.86|      13.88|      19.59|      31.92|      18.38|      0.47|      1.87|      0.27|      1.73|              NA|            0.07|            0.12|              NA|            NA|            NA|          0.01|            NA|              NA|              NA|              NA|              NA|         NA|         NA|         NA|         NA|        NA|        NA|        NA|        NA|         NA|         NA|         NA|       0.22|
-|   16| Monica                        | Deaf    | Group 1    | Native   | Native        | NativeDeaf       |       5.0|  24.00|    24.00|      0|     0.80|   0.8500|     0.75|     0.70|            NA|            NA|            NA|          7.17|      5.89|      5.05|      1.34|     10.43|      15.25|      29.36|       5.59|       0.59|      0.33|      1.51|      4.21|      0.01|              NA|              NA|            0.13|              NA|            NA|            NA|          0.01|            NA|              NA|              NA|              NA|              NA|         NA|         NA|       0.02|         NA|        NA|      0.02|        NA|      0.03|         NA|       0.01|         NA|         NA|
-|   17| Valerie                       | Deaf    | Group 1    | Native   | Native        | NativeDeaf       |       5.0|  29.00|    29.00|      0|     0.90|   0.8000|     0.76|     0.85|            NA|            NA|            NA|            NA|      0.11|      0.05|        NA|        NA|      15.54|       3.33|       1.80|         NA|      5.08|     32.94|     12.87|      0.50|            0.02|            0.40|            0.09|            0.02|            NA|            NA|            NA|            NA|              NA|              NA|              NA|              NA|         NA|         NA|         NA|         NA|        NA|        NA|        NA|        NA|         NA|         NA|         NA|         NA|
-|   18| Lucy                          | Deaf    | Group 2    | Native   | Native        | NativeDeaf       |       5.0|  37.00|    37.00|      0|     0.85|   0.6500|     0.90|     0.85|            NA|            NA|            NA|            NA|      0.15|        NA|      0.03|        NA|      16.40|      17.95|      35.04|      14.53|      0.41|      2.91|      1.21|      0.67|            0.03|            0.03|              NA|              NA|            NA|            NA|            NA|            NA|              NA|              NA|              NA|              NA|         NA|         NA|         NA|         NA|        NA|        NA|        NA|        NA|         NA|         NA|         NA|         NA|
-|   19| Chrissy K                     | Deaf    | Group 2    | Native   | Native        | NativeDeaf       |       5.0|  22.00|    22.00|      0|     0.90|   0.8500|     0.75|     0.65|            NA|            NA|            NA|            NA|        NA|        NA|        NA|        NA|       3.63|       1.24|       0.68|       0.13|     14.56|     14.24|     25.89|      8.27|            0.06|            6.22|            7.48|            8.67|          0.12|          0.15|          0.02|          1.91|            0.03|              NA|            0.02|            0.06|       0.05|         NA|       0.25|       0.43|        NA|        NA|      0.21|      0.47|         NA|         NA|         NA|         NA|
-|   20| MarlaMarks Deaf               | Deaf    | Group 2    | Native   | Native        | NativeDeaf       |       5.0|  57.00|    57.00|      0|     0.90|   0.6200|     0.95|     0.85|          0.04|            NA|          0.01|            NA|      7.31|      2.03|      1.25|      2.21|      10.35|      17.88|      14.58|      15.35|      0.02|      0.21|      0.52|      1.41|            0.10|            0.23|            0.19|            0.02|          0.12|            NA|          0.02|          0.01|              NA|              NA|              NA|              NA|         NA|         NA|         NA|       0.02|        NA|        NA|        NA|        NA|         NA|         NA|         NA|         NA|
-|   21| Alyssa\_Deaf                  | Deaf    | Group 1    | Native   | Native        | NativeDeaf       |       5.0|  24.00|    22.00|      0|     0.80|   0.7000|     0.80|     0.85|            NA|            NA|            NA|            NA|      0.31|        NA|        NA|      0.01|       4.90|       1.86|       0.12|       2.24|     15.03|     32.42|     13.22|     14.73|            0.21|            0.12|            0.02|            0.21|          0.02|          0.02|          0.01|          0.02|            0.01|              NA|            0.01|            0.36|         NA|       0.01|       0.01|         NA|        NA|        NA|        NA|        NA|       0.01|         NA|       0.16|       0.03|
-|   22| Melissa                       | Deaf    | Group 2    | Native   | Native        | NativeDeaf       |       5.0|  33.00|    33.00|      0|       NA|       NA|     0.86|     0.80|            NA|            NA|            NA|            NA|      6.20|      2.74|      3.61|      1.59|      10.90|      17.74|      31.92|      18.12|      0.02|      0.07|      0.23|      0.41|            0.23|            0.02|              NA|            0.03|            NA|            NA|            NA|            NA|              NA|              NA|              NA|            0.01|         NA|         NA|         NA|       0.01|        NA|        NA|        NA|        NA|         NA|         NA|         NA|       0.01|
-|   23| Lucinda                       | Deaf    | Group 2    | Native   | Native        | NativeDeaf       |       5.0|  32.00|    32.00|      0|     0.85|   0.6500|     0.90|     0.85|            NA|            NA|            NA|            NA|        NA|        NA|        NA|        NA|         NA|         NA|         NA|         NA|        NA|        NA|        NA|        NA|              NA|              NA|              NA|              NA|            NA|            NA|            NA|            NA|              NA|              NA|              NA|              NA|         NA|         NA|         NA|         NA|        NA|        NA|        NA|        NA|         NA|         NA|         NA|         NA|
-|   24| Lindsay\_DeafAdult            | Deaf    | Group 1    | Native   | Native        | NativeDeaf       |       5.0|  37.00|    36.00|      1|     0.85|   0.5500|     0.67|     0.60|            NA|          0.16|            NA|            NA|      2.38|      0.93|      0.96|      0.57|      16.07|      13.11|       2.65|      13.13|      2.74|     11.61|      3.33|      4.72|              NA|            1.01|            0.02|            0.07|            NA|          0.01|            NA|            NA|              NA|              NA|            0.02|              NA|         NA|       0.05|       0.02|         NA|        NA|        NA|        NA|        NA|         NA|       0.02|       0.29|         NA|
-|   25| Michael\_Deaf                 | Deaf    | Group 2    | Native   | Native        | NativeDeaf       |       5.0|  30.00|    29.00|      1|     0.90|   0.5000|     0.85|     0.75|          0.01|            NA|          0.01|          0.21|      2.14|      0.69|      2.33|      1.32|      14.01|      10.74|      12.33|       2.76|      0.09|      0.84|      4.01|      0.30|            0.02|            0.03|            0.08|            0.03|            NA|          0.09|          0.01|            NA|              NA|              NA|              NA|              NA|         NA|       0.01|         NA|         NA|        NA|        NA|        NA|        NA|         NA|         NA|       0.18|         NA|
-|   26| Erin                          | Deaf    | Group 1    | Native   | Native        | NativeDeaf       |       5.0|  37.00|    36.00|      1|     0.95|   0.9500|     0.86|     0.95|            NA|            NA|            NA|            NA|      0.25|      0.46|      8.70|      0.89|      20.23|      36.18|       3.02|      17.36|      0.73|      0.32|      0.10|      0.02|            0.21|            0.24|            0.17|            0.20|            NA|            NA|            NA|            NA|              NA|              NA|              NA|              NA|         NA|         NA|         NA|         NA|        NA|        NA|        NA|        NA|         NA|         NA|         NA|         NA|
-|   27| Megan                         | Hearing | Group 2    | Late     | EarlyASL      | NA               |       4.0|  17.00|    10.00|      6|     0.80|   0.8000|     0.95|     0.80|            NA|            NA|            NA|            NA|        NA|        NA|        NA|        NA|         NA|         NA|         NA|         NA|        NA|        NA|        NA|        NA|              NA|              NA|              NA|              NA|            NA|            NA|            NA|            NA|              NA|              NA|              NA|              NA|         NA|         NA|         NA|         NA|        NA|        NA|        NA|        NA|         NA|         NA|         NA|         NA|
-|   28| Allison                       | Hearing | Group 1    | Late     | LateASL       | HearingLateASL   |       5.0|  22.00|    10.00|     12|     0.80|   0.5000|     0.75|     0.90|          0.04|          1.63|          0.92|          1.56|     14.00|     11.40|     16.03|     13.19|       6.04|       3.28|       1.72|       1.02|      0.23|      0.19|      0.01|      0.03|            0.03|            0.10|            0.02|              NA|          0.07|          0.02|          0.04|            NA|            0.08|            0.03|            0.42|              NA|       0.02|       0.03|         NA|         NA|        NA|      0.02|        NA|        NA|         NA|       8.12|       0.01|       1.90|
-|   29| DeAnnaHearingLate             | Hearing | Group 2    | Late     | LateASL       | HearingLateASL   |       4.5|  23.00|     9.00|     13|     0.70|   0.6500|     0.75|     0.80|            NA|          2.36|          0.18|          0.27|      6.59|     13.27|     14.25|     11.68|      10.52|       4.74|      16.03|       4.89|      0.04|      0.85|      2.70|      1.16|              NA|              NA|            1.47|            0.93|            NA|            NA|          0.04|          2.26|              NA|              NA|            0.15|            0.12|         NA|         NA|         NA|         NA|        NA|      0.06|      1.54|        NA|         NA|       0.31|       0.21|         NA|
-|   30| Sara G                        | Hearing | Group 1    | Late     | LateASL       | HearingLateASL   |       4.0|  29.00|    15.00|     14|     0.90|   0.7000|     0.85|     0.85|          0.61|          1.57|          1.41|          0.58|      1.12|     30.28|     15.00|     12.47|       0.50|       7.97|       1.87|       4.50|      0.02|      0.48|      2.79|      0.25|              NA|            0.04|            2.23|            0.15|            NA|          0.02|          0.40|            NA|              NA|            0.12|            0.74|              NA|         NA|       0.01|       0.86|         NA|      0.29|      0.97|      0.68|        NA|       0.02|       0.16|       2.36|         NA|
-|   31| JenniferHearingTerp           | Hearing | Group 2    | Late     | LateASL       | HearingLateASL   |       5.0|  32.00|    17.00|     15|     0.75|   0.6500|     1.00|     0.65|            NA|            NA|            NA|          0.08|      0.36|        NA|        NA|      1.31|      17.39|       4.63|      34.54|      19.00|      0.44|      0.10|      2.01|      0.32|              NA|              NA|              NA|              NA|            NA|            NA|            NA|            NA|              NA|              NA|              NA|              NA|         NA|         NA|         NA|         NA|        NA|        NA|        NA|        NA|         NA|         NA|         NA|         NA|
-|   32| Desiree\_Nonnative Signer     | Hearing | Group 2    | Late     | LateASL       | HearingLateASL   |       4.0|  18.00|     5.00|     15|     1.00|   0.5000|     1.00|     0.80|            NA|            NA|            NA|            NA|      1.11|      2.20|      0.01|      0.27|      14.85|      13.78|      24.69|       2.00|      2.36|      0.72|     11.45|      1.73|            0.04|            0.02|            0.07|            0.04|          0.02|          0.01|          0.02|          0.01|              NA|            0.01|            0.01|              NA|         NA|         NA|       0.03|       0.01|        NA|        NA|        NA|        NA|         NA|         NA|         NA|       0.02|
-|   33| Matt\_Hall\_LateAdultSigner   | Hearing | Group 2    | Late     | LateASL       | HearingLateASL   |       5.0|  29.00|    11.00|     18|     0.85|   0.6100|     0.95|     0.85|          0.02|            NA|            NA|            NA|      0.58|      0.23|      0.09|      0.18|      11.76|      20.32|      32.88|      19.72|      5.93|      1.75|      4.22|      1.53|            0.17|              NA|              NA|              NA|            NA|            NA|            NA|            NA|              NA|              NA|              NA|              NA|         NA|         NA|         NA|         NA|        NA|        NA|        NA|        NA|         NA|         NA|         NA|         NA|
-|   34| Tori                          | Hearing | Group 1    | Late     | LateASL       | HearingLateASL   |       5.0|  30.00|    12.00|     18|     0.90|   0.5000|     0.75|     0.45|          0.28|          1.12|          2.47|          2.34|      7.53|     17.02|      7.41|      6.55|       3.61|       9.10|       0.72|       3.04|      2.48|      3.06|      1.45|      1.55|            1.65|            0.42|            1.53|            2.46|          0.22|          0.11|          0.16|          0.32|            0.05|            0.17|            0.34|            0.04|       0.07|       0.14|       0.02|       0.22|      0.27|      2.66|      1.09|      0.44|         NA|         NA|       0.76|       0.15|
-|   35| Amy L                         | Hearing | Group 1    | Late     | LateASL       | HearingLateASL   |       5.0|  39.00|    20.00|     19|     0.90|   0.5500|     0.90|     0.80|            NA|          0.05|            NA|          0.06|      1.88|     20.00|     13.60|     15.14|      17.90|      16.92|       1.10|       3.23|      0.13|      0.02|      0.01|      0.05|              NA|            0.02|            0.01|            0.01|            NA|          0.01|            NA|            NA|              NA|              NA|              NA|              NA|         NA|       0.03|         NA|         NA|        NA|        NA|        NA|        NA|       0.12|         NA|         NA|         NA|
-|   36| Chris                         | Hearing | Group 1    | Late     | LateASL       | HearingLateASL   |       4.0|  26.00|     7.00|     19|     0.90|   0.5500|     0.75|     0.65|          0.05|          0.34|          5.65|          3.14|     10.34|     21.82|     12.60|      8.80|       6.49|      14.37|       0.12|       1.30|      0.26|      0.02|      0.47|      0.19|            0.07|            0.24|            0.01|              NA|            NA|            NA|          0.02|            NA|              NA|            0.01|            0.37|              NA|         NA|         NA|         NA|         NA|        NA|        NA|        NA|        NA|         NA|         NA|       0.45|       1.09|
-|   37| Jilliean                      | Hearing | Group 2    | Late     | LateASL       | HearingLateASL   |       5.0|  38.00|    18.00|     20|     0.90|   0.8500|     0.90|     0.75|            NA|            NA|            NA|            NA|      1.91|      0.78|      2.34|      0.88|      16.13|      18.39|      32.60|      17.12|        NA|      1.17|      1.82|      2.06|              NA|            0.15|            0.25|              NA|            NA|          0.05|            NA|            NA|              NA|              NA|              NA|              NA|         NA|         NA|         NA|         NA|        NA|        NA|        NA|        NA|         NA|         NA|         NA|         NA|
-|   38| Cami                          | Hearing | Group 2    | Late     | LateASL       | HearingLateASL   |       5.0|  28.00|     6.00|     22|     0.90|   0.8000|     1.00|     0.80|            NA|            NA|          0.19|            NA|      0.25|        NA|      1.79|        NA|      11.26|       4.54|      21.91|       5.14|      6.08|     16.85|     11.49|     15.09|            0.22|            0.23|            0.36|            0.09|            NA|            NA|          0.01|          0.02|              NA|              NA|            0.02|            0.24|         NA|         NA|       0.26|       0.02|        NA|        NA|      0.03|        NA|       0.20|       0.26|       0.21|       0.21|
-|   39| deniz                         | Hearing | Group 2    | Late     | LateASL       | HearingLateASL   |       4.0|  33.00|    11.00|     22|     0.90|   0.5000|     0.80|     0.80|            NA|            NA|            NA|            NA|        NA|      0.03|        NA|        NA|       6.96|      13.98|       7.02|       7.71|      3.94|      2.35|     10.32|     11.38|            1.18|            0.21|            0.75|            0.22|          0.70|            NA|          0.25|          1.20|              NA|              NA|            0.02|            0.51|         NA|         NA|       0.01|         NA|        NA|        NA|      0.18|        NA|         NA|         NA|         NA|         NA|
-|   40| DustinHearingCODA             | Hearing | Group 2    | Native   | Native        | NA               |       5.0|  29.00|    29.00|      0|     0.85|   0.5000|     0.75|     0.85|            NA|            NA|            NA|            NA|      7.71|     11.36|      1.43|     10.34|      10.67|      10.45|      33.51|       9.50|      0.05|      0.02|      1.58|      1.07|              NA|              NA|            0.09|            0.37|            NA|          0.02|          0.02|          0.20|              NA|              NA|              NA|              NA|         NA|         NA|         NA|         NA|        NA|        NA|      0.32|        NA|       0.04|         NA|         NA|         NA|
-|   41| DanFisher                     | Hearing | Group 1    | Native   | Native        | NA               |       5.0|  26.00|    25.00|      1|     0.95|   0.6000|     0.85|     0.90|          0.02|          0.01|            NA|            NA|      0.88|      0.63|        NA|      0.23|       8.95|      16.18|       1.35|      13.28|      5.11|      7.73|      6.88|      3.87|            0.18|            0.42|            0.07|              NA|            NA|          0.04|            NA|          0.01|              NA|              NA|              NA|              NA|         NA|         NA|         NA|         NA|      0.01|        NA|        NA|        NA|       0.08|       0.02|       0.70|       0.00|
-|   42| Stephanie                     | Hearing | Group 1    | Novice   | NoviceASL     | HearingNoviceASL |       3.0|  19.00|     4.00|     15|     1.00|   0.5000|     0.81|     0.70|            NA|            NA|            NA|            NA|      2.49|      0.06|        NA|      0.37|      13.61|      29.68|       5.09|      11.96|      2.23|      4.33|      7.36|      3.84|            1.58|            0.25|            1.88|            0.92|          0.55|          0.02|          0.80|          0.01|            0.17|              NA|            0.63|              NA|         NA|       0.01|       0.29|         NA|        NA|      0.20|      0.21|        NA|         NA|         NA|         NA|         NA|
-|   43| Mauro                         | Hearing | Group 2    | Novice   | NoviceASL     | HearingNoviceASL |       2.0|  21.00|     3.00|     16|     0.80|   0.7000|     0.65|     0.55|            NA|            NA|            NA|            NA|      0.79|      4.18|      0.83|      4.20|      14.34|      15.81|      28.70|      13.28|      2.50|      0.68|      4.62|      0.33|              NA|            0.01|            0.47|            0.06|          0.02|          0.01|          0.02|          0.62|              NA|            0.01|            0.15|            0.13|       0.01|       0.02|       0.02|         NA|        NA|      0.32|      1.03|      0.22|       0.36|       0.42|         NA|         NA|
-|   44| Cora                          | Hearing | Group 2    | Novice   | NoviceASL     | HearingNoviceASL |       3.0|  21.00|     4.00|     17|     0.90|   0.5500|     0.90|     0.60|          0.23|          0.45|            NA|          0.12|     12.94|     18.88|     20.82|     15.47|       4.40|       0.52|       9.23|       4.02|      0.03|      0.07|      0.21|      0.04|            0.01|            0.01|            0.02|            0.23|            NA|            NA|          0.02|          0.01|              NA|            0.01|            0.30|              NA|         NA|       0.01|       0.02|       0.01|        NA|        NA|      0.54|        NA|         NA|         NA|         NA|         NA|
-|   45| Aya\_Hawari                   | Hearing | Group 2    | Novice   | NoviceASL     | HearingNoviceASL |       3.0|  18.00|     1.00|     17|     0.75|   0.6000|     0.90|     0.75|            NA|            NA|            NA|            NA|      0.28|        NA|      0.13|      0.24|      10.77|       2.65|       2.91|       6.65|      3.69|     10.04|     17.14|      9.29|            2.23|            7.22|           11.04|            3.21|          0.98|          0.56|          2.87|          0.67|            0.26|            0.10|            0.17|            1.01|         NA|       0.38|       0.04|         NA|        NA|        NA|      0.99|        NA|         NA|       0.67|       0.06|         NA|
-|   46| Hayley Nava                   | Hearing | Group 1    | Novice   | NoviceASL     | HearingNoviceASL |       2.0|  20.00|     2.00|     18|     0.55|   0.5000|     0.60|     0.55|            NA|            NA|            NA|            NA|      4.37|      6.60|      4.46|      1.19|      13.12|       9.99|      26.86|       4.48|      0.24|      0.18|      2.00|        NA|            0.03|            0.04|              NA|              NA|          0.03|            NA|            NA|            NA|              NA|              NA|            0.01|              NA|         NA|         NA|         NA|         NA|        NA|        NA|      0.02|        NA|         NA|         NA|         NA|         NA|
-|   47| Danielle\_Abraham             | Hearing | Group 1    | Novice   | NoviceASL     | HearingNoviceASL |       3.0|  20.00|     2.00|     18|     0.75|   0.3500|     0.60|     0.55|            NA|            NA|            NA|            NA|      1.07|      0.47|      0.89|      4.54|      15.27|      29.17|       1.57|       8.86|      2.78|      1.29|      3.88|      2.60|            0.85|            2.51|            2.20|            1.67|          0.62|          0.25|          2.12|          0.34|            0.25|            0.07|            0.33|              NA|       0.02|       0.04|       0.01|       0.01|        NA|      2.11|        NA|        NA|         NA|         NA|       0.84|         NA|
-|   48| Aman\_Nassir                  | Hearing | Group 1    | Novice   | NoviceASL     | HearingNoviceASL |       3.0|  21.00|     2.00|     19|     0.95|   0.6000|     0.70|     0.55|            NA|            NA|            NA|            NA|      4.81|      1.95|      2.85|      8.33|      15.54|      34.09|       6.77|       9.56|      0.17|      0.07|        NA|      0.08|            0.01|              NA|              NA|              NA|            NA|            NA|            NA|            NA|              NA|              NA|              NA|              NA|         NA|         NA|         NA|         NA|        NA|        NA|        NA|        NA|         NA|         NA|         NA|         NA|
-|   49| Phuong\_Tran                  | Hearing | Group 2    | Novice   | NoviceASL     | HearingNoviceASL |       3.0|  22.00|     2.00|     20|     0.65|   0.7500|     0.60|     0.65|            NA|          1.19|          0.16|          0.10|      6.60|     16.37|      0.10|      5.93|      10.92|       3.50|      11.22|      14.49|      0.03|      0.31|     20.19|      0.03|            0.15|              NA|            1.80|            0.02|            NA|            NA|          1.43|            NA|              NA|              NA|            0.39|              NA|         NA|         NA|         NA|         NA|        NA|        NA|      1.59|      0.52|         NA|       0.32|       0.16|       0.01|
-|   50| Jaylin\_Novice\_NotInstructed | Hearing | Group 2    | Novice   | NoviceASL     | HearingNoviceASL |       4.0|  22.00|     1.10|     21|     0.85|   0.8000|     0.80|     0.75|          0.51|          0.12|          0.12|          0.19|      1.72|      3.07|      2.19|      6.75|       8.45|      14.31|      15.05|       6.75|      3.74|      2.42|     12.08|      1.44|            0.20|            0.10|            3.66|            1.13|          0.56|          0.03|          0.72|          2.52|            0.17|            0.02|              NA|            0.16|         NA|       0.25|         NA|         NA|      0.02|        NA|      1.33|      0.03|         NA|       0.01|       0.21|         NA|
-|   51| Yasmine                       | Hearing | Group 1    | Novice   | NoviceASL     | HearingNoviceASL |       3.5|  19.00|     3.00|     16|     0.90|   0.9000|     0.80|     0.80|          0.02|            NA|            NA|            NA|      1.97|      1.30|      0.03|      0.06|      10.91|      10.77|       1.85|       5.13|      2.79|     14.62|      6.57|      8.28|            1.38|            5.34|            1.86|            2.15|          1.43|          1.29|          1.67|          0.84|            0.02|            0.35|            0.08|            0.01|         NA|         NA|       0.32|         NA|      1.01|      2.04|        NA|        NA|         NA|       0.04|       0.59|         NA|
-|   52| Austin\_Novice\_Instructed    | Hearing | Group 2    | Novice   | NoviceASL     | HearingNoviceASL |       4.0|  19.75|     2.75|     17|     0.85|   0.7000|     0.90|     0.70|            NA|            NA|            NA|            NA|      0.56|      0.10|      0.01|      0.36|      13.75|      17.37|       8.91|      15.50|      2.07|      2.25|     25.85|      3.82|            0.02|            0.05|            0.07|            0.02|          0.01|          0.03|          0.02|          0.02|              NA|            0.02|            0.02|              NA|       0.02|       0.01|       0.08|       0.03|        NA|        NA|        NA|        NA|       0.01|         NA|         NA|         NA|
-
+<table class="table table-striped table-hover table-condensed" style="font-size: 7px; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:right;">
+id
+</th>
+<th style="text-align:left;">
+participant
+</th>
+<th style="text-align:left;">
+hearing
+</th>
+<th style="text-align:left;">
+videogroup
+</th>
+<th style="text-align:left;">
+aoagroup
+</th>
+<th style="text-align:left;">
+languagegroup
+</th>
+<th style="text-align:left;">
+maingroup
+</th>
+<th style="text-align:right;">
+selfrate
+</th>
+<th style="text-align:right;">
+age
+</th>
+<th style="text-align:right;">
+signyrs
+</th>
+<th style="text-align:right;">
+aoasl
+</th>
+<th style="text-align:right;">
+acc.fw1
+</th>
+<th style="text-align:right;">
+acc.rv2
+</th>
+<th style="text-align:right;">
+acc.fw3
+</th>
+<th style="text-align:right;">
+acc.rv4
+</th>
+<th style="text-align:right;">
+forehead.fw1
+</th>
+<th style="text-align:right;">
+forehead.fw3
+</th>
+<th style="text-align:right;">
+forehead.rv2
+</th>
+<th style="text-align:right;">
+forehead.rv4
+</th>
+<th style="text-align:right;">
+eyes.fw1
+</th>
+<th style="text-align:right;">
+eyes.fw3
+</th>
+<th style="text-align:right;">
+eyes.rv2
+</th>
+<th style="text-align:right;">
+eyes.rv4
+</th>
+<th style="text-align:right;">
+mouth.fw1
+</th>
+<th style="text-align:right;">
+mouth.fw3
+</th>
+<th style="text-align:right;">
+mouth.rv2
+</th>
+<th style="text-align:right;">
+mouth.rv4
+</th>
+<th style="text-align:right;">
+chin.fw1
+</th>
+<th style="text-align:right;">
+chin.fw3
+</th>
+<th style="text-align:right;">
+chin.rv2
+</th>
+<th style="text-align:right;">
+chin.rv4
+</th>
+<th style="text-align:right;">
+upperchest.fw1
+</th>
+<th style="text-align:right;">
+upperchest.fw3
+</th>
+<th style="text-align:right;">
+upperchest.rv2
+</th>
+<th style="text-align:right;">
+upperchest.rv4
+</th>
+<th style="text-align:right;">
+midchest.fw1
+</th>
+<th style="text-align:right;">
+midchest.fw3
+</th>
+<th style="text-align:right;">
+midchest.rv2
+</th>
+<th style="text-align:right;">
+midchest.rv4
+</th>
+<th style="text-align:right;">
+lowerchest.fw1
+</th>
+<th style="text-align:right;">
+lowerchest.fw3
+</th>
+<th style="text-align:right;">
+lowerchest.rv2
+</th>
+<th style="text-align:right;">
+lowerchest.rv4
+</th>
+<th style="text-align:right;">
+belly.fw1
+</th>
+<th style="text-align:right;">
+belly.fw3
+</th>
+<th style="text-align:right;">
+belly.rv2
+</th>
+<th style="text-align:right;">
+belly.rv4
+</th>
+<th style="text-align:right;">
+left.fw1
+</th>
+<th style="text-align:right;">
+left.fw3
+</th>
+<th style="text-align:right;">
+left.rv2
+</th>
+<th style="text-align:right;">
+left.rv4
+</th>
+<th style="text-align:right;">
+right.fw1
+</th>
+<th style="text-align:right;">
+right.fw3
+</th>
+<th style="text-align:right;">
+right.rv2
+</th>
+<th style="text-align:right;">
+right.rv4
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+Jessika
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+EarlyASL
+</td>
+<td style="text-align:left;">
+DeafEarlyASL
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+24.00
+</td>
+<td style="text-align:right;">
+21.00
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.7500
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.23
+</td>
+<td style="text-align:right;">
+5.51
+</td>
+<td style="text-align:right;">
+3.70
+</td>
+<td style="text-align:right;">
+3.04
+</td>
+<td style="text-align:right;">
+6.37
+</td>
+<td style="text-align:right;">
+14.73
+</td>
+<td style="text-align:right;">
+25.33
+</td>
+<td style="text-align:right;">
+8.02
+</td>
+<td style="text-align:right;">
+11.58
+</td>
+<td style="text-align:right;">
+0.72
+</td>
+<td style="text-align:right;">
+7.61
+</td>
+<td style="text-align:right;">
+0.43
+</td>
+<td style="text-align:right;">
+0.31
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:left;">
+Derek
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+EarlyASL
+</td>
+<td style="text-align:left;">
+DeafEarlyASL
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+41.00
+</td>
+<td style="text-align:right;">
+38.00
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0.7000
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.65
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.53
+</td>
+<td style="text-align:right;">
+2.09
+</td>
+<td style="text-align:right;">
+3.08
+</td>
+<td style="text-align:right;">
+1.20
+</td>
+<td style="text-align:right;">
+16.98
+</td>
+<td style="text-align:right;">
+29.47
+</td>
+<td style="text-align:right;">
+5.44
+</td>
+<td style="text-align:right;">
+11.70
+</td>
+<td style="text-align:right;">
+3.29
+</td>
+<td style="text-align:right;">
+4.14
+</td>
+<td style="text-align:right;">
+0.52
+</td>
+<td style="text-align:right;">
+2.46
+</td>
+<td style="text-align:right;">
+0.22
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.27
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.32
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.20
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.38
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:left;">
+Vanessa\_Deaf
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+EarlyASL
+</td>
+<td style="text-align:left;">
+DeafEarlyASL
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+34.00
+</td>
+<td style="text-align:right;">
+30.00
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.7000
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0.65
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.12
+</td>
+<td style="text-align:right;">
+0.32
+</td>
+<td style="text-align:right;">
+1.77
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+2.22
+</td>
+<td style="text-align:right;">
+15.87
+</td>
+<td style="text-align:right;">
+17.98
+</td>
+<td style="text-align:right;">
+32.13
+</td>
+<td style="text-align:right;">
+11.72
+</td>
+<td style="text-align:right;">
+0.52
+</td>
+<td style="text-align:right;">
+0.57
+</td>
+<td style="text-align:right;">
+3.36
+</td>
+<td style="text-align:right;">
+4.30
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.18
+</td>
+<td style="text-align:right;">
+0.23
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.06
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:left;">
+Josh
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+EarlyASL
+</td>
+<td style="text-align:left;">
+DeafEarlyASL
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+31.00
+</td>
+<td style="text-align:right;">
+27.00
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+0.95
+</td>
+<td style="text-align:right;">
+0.5000
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.72
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.06
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+19.77
+</td>
+<td style="text-align:right;">
+16.46
+</td>
+<td style="text-align:right;">
+28.94
+</td>
+<td style="text-align:right;">
+14.28
+</td>
+<td style="text-align:right;">
+6.19
+</td>
+<td style="text-align:right;">
+4.14
+</td>
+<td style="text-align:right;">
+9.58
+</td>
+<td style="text-align:right;">
+5.78
+</td>
+<td style="text-align:right;">
+0.12
+</td>
+<td style="text-align:right;">
+0.06
+</td>
+<td style="text-align:right;">
+0.34
+</td>
+<td style="text-align:right;">
+0.45
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.49
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.79
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.12
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:left;">
+Lynnette
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+EarlyASL
+</td>
+<td style="text-align:left;">
+DeafEarlyASL
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+39.00
+</td>
+<td style="text-align:right;">
+34.00
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.6500
+</td>
+<td style="text-align:right;">
+0.70
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.17
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+3.17
+</td>
+<td style="text-align:right;">
+0.08
+</td>
+<td style="text-align:right;">
+0.41
+</td>
+<td style="text-align:right;">
+0.37
+</td>
+<td style="text-align:right;">
+16.91
+</td>
+<td style="text-align:right;">
+1.82
+</td>
+<td style="text-align:right;">
+2.26
+</td>
+<td style="text-align:right;">
+1.44
+</td>
+<td style="text-align:right;">
+0.15
+</td>
+<td style="text-align:right;">
+0.76
+</td>
+<td style="text-align:right;">
+3.10
+</td>
+<td style="text-align:right;">
+0.06
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.06
+</td>
+<td style="text-align:right;">
+0.37
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:left;">
+Laura P (missing stories)
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+EarlyASL
+</td>
+<td style="text-align:left;">
+DeafEarlyASL
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+37.00
+</td>
+<td style="text-align:right;">
+29.00
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+0.95
+</td>
+<td style="text-align:right;">
+0.7500
+</td>
+<td style="text-align:right;">
+0.70
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+3.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.72
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+31.72
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+2.69
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.54
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.37
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.17
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:left;">
+Rebecca
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+EarlyASL
+</td>
+<td style="text-align:left;">
+DeafEarlyASL
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+38.00
+</td>
+<td style="text-align:right;">
+29.00
+</td>
+<td style="text-align:right;">
+9
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.4000
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+0.55
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+8.31
+</td>
+<td style="text-align:right;">
+0.40
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+2.06
+</td>
+<td style="text-align:right;">
+11.80
+</td>
+<td style="text-align:right;">
+2.16
+</td>
+<td style="text-align:right;">
+0.44
+</td>
+<td style="text-align:right;">
+3.09
+</td>
+<td style="text-align:right;">
+0.08
+</td>
+<td style="text-align:right;">
+0.32
+</td>
+<td style="text-align:right;">
+0.32
+</td>
+<td style="text-align:right;">
+0.46
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+3.90
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:left;">
+Cathy
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+EarlyASL
+</td>
+<td style="text-align:left;">
+DeafEarlyASL
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+39.00
+</td>
+<td style="text-align:right;">
+30.00
+</td>
+<td style="text-align:right;">
+9
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.7500
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+9
+</td>
+<td style="text-align:left;">
+Crystal
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+LateASL
+</td>
+<td style="text-align:left;">
+DeafLateASL
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+39.00
+</td>
+<td style="text-align:right;">
+29.00
+</td>
+<td style="text-align:right;">
+10
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.6667
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+4.78
+</td>
+<td style="text-align:right;">
+10.02
+</td>
+<td style="text-align:right;">
+18.82
+</td>
+<td style="text-align:right;">
+7.30
+</td>
+<td style="text-align:right;">
+13.26
+</td>
+<td style="text-align:right;">
+11.34
+</td>
+<td style="text-align:right;">
+17.52
+</td>
+<td style="text-align:right;">
+13.63
+</td>
+<td style="text-align:right;">
+0.14
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.10
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.16
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.07
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+10
+</td>
+<td style="text-align:left;">
+Chrissy G.
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+LateASL
+</td>
+<td style="text-align:left;">
+DeafLateASL
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+43.00
+</td>
+<td style="text-align:right;">
+27.00
+</td>
+<td style="text-align:right;">
+12
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.7000
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.65
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+11
+</td>
+<td style="text-align:left;">
+Adam
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+LateASL
+</td>
+<td style="text-align:left;">
+DeafLateASL
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+26.00
+</td>
+<td style="text-align:right;">
+13.00
+</td>
+<td style="text-align:right;">
+13
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0.7000
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+3.78
+</td>
+<td style="text-align:right;">
+4.90
+</td>
+<td style="text-align:right;">
+1.03
+</td>
+<td style="text-align:right;">
+2.28
+</td>
+<td style="text-align:right;">
+17.31
+</td>
+<td style="text-align:right;">
+31.70
+</td>
+<td style="text-align:right;">
+10.39
+</td>
+<td style="text-align:right;">
+10.89
+</td>
+<td style="text-align:right;">
+0.23
+</td>
+<td style="text-align:right;">
+0.44
+</td>
+<td style="text-align:right;">
+0.28
+</td>
+<td style="text-align:right;">
+0.06
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.22
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+12
+</td>
+<td style="text-align:left;">
+Brad
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+LateASL
+</td>
+<td style="text-align:left;">
+DeafLateASL
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+34.00
+</td>
+<td style="text-align:right;">
+21.00
+</td>
+<td style="text-align:right;">
+13
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+0.6000
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+3.46
+</td>
+<td style="text-align:right;">
+0.06
+</td>
+<td style="text-align:right;">
+0.42
+</td>
+<td style="text-align:right;">
+0.15
+</td>
+<td style="text-align:right;">
+17.29
+</td>
+<td style="text-align:right;">
+10.87
+</td>
+<td style="text-align:right;">
+11.42
+</td>
+<td style="text-align:right;">
+17.42
+</td>
+<td style="text-align:right;">
+0.15
+</td>
+<td style="text-align:right;">
+0.88
+</td>
+<td style="text-align:right;">
+0.56
+</td>
+<td style="text-align:right;">
+0.38
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.24
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.08
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+13
+</td>
+<td style="text-align:left;">
+Alicia
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+LateASL
+</td>
+<td style="text-align:left;">
+DeafLateASL
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+37.00
+</td>
+<td style="text-align:right;">
+23.00
+</td>
+<td style="text-align:right;">
+14
+</td>
+<td style="text-align:right;">
+0.95
+</td>
+<td style="text-align:right;">
+0.7000
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.07
+</td>
+<td style="text-align:right;">
+3.92
+</td>
+<td style="text-align:right;">
+1.05
+</td>
+<td style="text-align:right;">
+14.91
+</td>
+<td style="text-align:right;">
+8.17
+</td>
+<td style="text-align:right;">
+29.22
+</td>
+<td style="text-align:right;">
+13.42
+</td>
+<td style="text-align:right;">
+1.03
+</td>
+<td style="text-align:right;">
+2.23
+</td>
+<td style="text-align:right;">
+1.02
+</td>
+<td style="text-align:right;">
+1.11
+</td>
+<td style="text-align:right;">
+1.26
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.26
+</td>
+<td style="text-align:right;">
+0.36
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.29
+</td>
+<td style="text-align:right;">
+1.64
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.11
+</td>
+<td style="text-align:right;">
+0.16
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.13
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.65
+</td>
+<td style="text-align:right;">
+1.92
+</td>
+<td style="text-align:right;">
+0.38
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+14
+</td>
+<td style="text-align:left;">
+Joe
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+LateASL
+</td>
+<td style="text-align:left;">
+DeafLateASL
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+44.00
+</td>
+<td style="text-align:right;">
+29.00
+</td>
+<td style="text-align:right;">
+15
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.6000
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+15
+</td>
+<td style="text-align:left;">
+Svenna
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+NativeDeaf
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+32.00
+</td>
+<td style="text-align:right;">
+32.00
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.9000
+</td>
+<td style="text-align:right;">
+0.95
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+3.45
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+3.71
+</td>
+<td style="text-align:right;">
+0.86
+</td>
+<td style="text-align:right;">
+13.88
+</td>
+<td style="text-align:right;">
+19.59
+</td>
+<td style="text-align:right;">
+31.92
+</td>
+<td style="text-align:right;">
+18.38
+</td>
+<td style="text-align:right;">
+0.47
+</td>
+<td style="text-align:right;">
+1.87
+</td>
+<td style="text-align:right;">
+0.27
+</td>
+<td style="text-align:right;">
+1.73
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.07
+</td>
+<td style="text-align:right;">
+0.12
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.22
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+16
+</td>
+<td style="text-align:left;">
+Monica
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+NativeDeaf
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+24.00
+</td>
+<td style="text-align:right;">
+24.00
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0.8500
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+0.70
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+7.17
+</td>
+<td style="text-align:right;">
+5.89
+</td>
+<td style="text-align:right;">
+5.05
+</td>
+<td style="text-align:right;">
+1.34
+</td>
+<td style="text-align:right;">
+10.43
+</td>
+<td style="text-align:right;">
+15.25
+</td>
+<td style="text-align:right;">
+29.36
+</td>
+<td style="text-align:right;">
+5.59
+</td>
+<td style="text-align:right;">
+0.59
+</td>
+<td style="text-align:right;">
+0.33
+</td>
+<td style="text-align:right;">
+1.51
+</td>
+<td style="text-align:right;">
+4.21
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.13
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+17
+</td>
+<td style="text-align:left;">
+Valerie
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+NativeDeaf
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+29.00
+</td>
+<td style="text-align:right;">
+29.00
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.8000
+</td>
+<td style="text-align:right;">
+0.76
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.11
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+15.54
+</td>
+<td style="text-align:right;">
+3.33
+</td>
+<td style="text-align:right;">
+1.80
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+5.08
+</td>
+<td style="text-align:right;">
+32.94
+</td>
+<td style="text-align:right;">
+12.87
+</td>
+<td style="text-align:right;">
+0.50
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.40
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+18
+</td>
+<td style="text-align:left;">
+Lucy
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+NativeDeaf
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+37.00
+</td>
+<td style="text-align:right;">
+37.00
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.6500
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.15
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+16.40
+</td>
+<td style="text-align:right;">
+17.95
+</td>
+<td style="text-align:right;">
+35.04
+</td>
+<td style="text-align:right;">
+14.53
+</td>
+<td style="text-align:right;">
+0.41
+</td>
+<td style="text-align:right;">
+2.91
+</td>
+<td style="text-align:right;">
+1.21
+</td>
+<td style="text-align:right;">
+0.67
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+19
+</td>
+<td style="text-align:left;">
+Chrissy K
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+NativeDeaf
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+22.00
+</td>
+<td style="text-align:right;">
+22.00
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.8500
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+0.65
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+3.63
+</td>
+<td style="text-align:right;">
+1.24
+</td>
+<td style="text-align:right;">
+0.68
+</td>
+<td style="text-align:right;">
+0.13
+</td>
+<td style="text-align:right;">
+14.56
+</td>
+<td style="text-align:right;">
+14.24
+</td>
+<td style="text-align:right;">
+25.89
+</td>
+<td style="text-align:right;">
+8.27
+</td>
+<td style="text-align:right;">
+0.06
+</td>
+<td style="text-align:right;">
+6.22
+</td>
+<td style="text-align:right;">
+7.48
+</td>
+<td style="text-align:right;">
+8.67
+</td>
+<td style="text-align:right;">
+0.12
+</td>
+<td style="text-align:right;">
+0.15
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+1.91
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.06
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.25
+</td>
+<td style="text-align:right;">
+0.43
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.21
+</td>
+<td style="text-align:right;">
+0.47
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+20
+</td>
+<td style="text-align:left;">
+MarlaMarks Deaf
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+NativeDeaf
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+57.00
+</td>
+<td style="text-align:right;">
+57.00
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.6200
+</td>
+<td style="text-align:right;">
+0.95
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+7.31
+</td>
+<td style="text-align:right;">
+2.03
+</td>
+<td style="text-align:right;">
+1.25
+</td>
+<td style="text-align:right;">
+2.21
+</td>
+<td style="text-align:right;">
+10.35
+</td>
+<td style="text-align:right;">
+17.88
+</td>
+<td style="text-align:right;">
+14.58
+</td>
+<td style="text-align:right;">
+15.35
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.21
+</td>
+<td style="text-align:right;">
+0.52
+</td>
+<td style="text-align:right;">
+1.41
+</td>
+<td style="text-align:right;">
+0.10
+</td>
+<td style="text-align:right;">
+0.23
+</td>
+<td style="text-align:right;">
+0.19
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.12
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+21
+</td>
+<td style="text-align:left;">
+Alyssa\_Deaf
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+NativeDeaf
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+24.00
+</td>
+<td style="text-align:right;">
+22.00
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0.7000
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.31
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+4.90
+</td>
+<td style="text-align:right;">
+1.86
+</td>
+<td style="text-align:right;">
+0.12
+</td>
+<td style="text-align:right;">
+2.24
+</td>
+<td style="text-align:right;">
+15.03
+</td>
+<td style="text-align:right;">
+32.42
+</td>
+<td style="text-align:right;">
+13.22
+</td>
+<td style="text-align:right;">
+14.73
+</td>
+<td style="text-align:right;">
+0.21
+</td>
+<td style="text-align:right;">
+0.12
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.21
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.36
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.16
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+22
+</td>
+<td style="text-align:left;">
+Melissa
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+NativeDeaf
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+33.00
+</td>
+<td style="text-align:right;">
+33.00
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.86
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+6.20
+</td>
+<td style="text-align:right;">
+2.74
+</td>
+<td style="text-align:right;">
+3.61
+</td>
+<td style="text-align:right;">
+1.59
+</td>
+<td style="text-align:right;">
+10.90
+</td>
+<td style="text-align:right;">
+17.74
+</td>
+<td style="text-align:right;">
+31.92
+</td>
+<td style="text-align:right;">
+18.12
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.07
+</td>
+<td style="text-align:right;">
+0.23
+</td>
+<td style="text-align:right;">
+0.41
+</td>
+<td style="text-align:right;">
+0.23
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+23
+</td>
+<td style="text-align:left;">
+Lucinda
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+NativeDeaf
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+32.00
+</td>
+<td style="text-align:right;">
+32.00
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.6500
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+24
+</td>
+<td style="text-align:left;">
+Lindsay\_DeafAdult
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+NativeDeaf
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+37.00
+</td>
+<td style="text-align:right;">
+36.00
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.5500
+</td>
+<td style="text-align:right;">
+0.67
+</td>
+<td style="text-align:right;">
+0.60
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.16
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+2.38
+</td>
+<td style="text-align:right;">
+0.93
+</td>
+<td style="text-align:right;">
+0.96
+</td>
+<td style="text-align:right;">
+0.57
+</td>
+<td style="text-align:right;">
+16.07
+</td>
+<td style="text-align:right;">
+13.11
+</td>
+<td style="text-align:right;">
+2.65
+</td>
+<td style="text-align:right;">
+13.13
+</td>
+<td style="text-align:right;">
+2.74
+</td>
+<td style="text-align:right;">
+11.61
+</td>
+<td style="text-align:right;">
+3.33
+</td>
+<td style="text-align:right;">
+4.72
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.01
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.07
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.29
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+25
+</td>
+<td style="text-align:left;">
+Michael\_Deaf
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+NativeDeaf
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+30.00
+</td>
+<td style="text-align:right;">
+29.00
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.5000
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.21
+</td>
+<td style="text-align:right;">
+2.14
+</td>
+<td style="text-align:right;">
+0.69
+</td>
+<td style="text-align:right;">
+2.33
+</td>
+<td style="text-align:right;">
+1.32
+</td>
+<td style="text-align:right;">
+14.01
+</td>
+<td style="text-align:right;">
+10.74
+</td>
+<td style="text-align:right;">
+12.33
+</td>
+<td style="text-align:right;">
+2.76
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+0.84
+</td>
+<td style="text-align:right;">
+4.01
+</td>
+<td style="text-align:right;">
+0.30
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.08
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.18
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+26
+</td>
+<td style="text-align:left;">
+Erin
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+NativeDeaf
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+37.00
+</td>
+<td style="text-align:right;">
+36.00
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.95
+</td>
+<td style="text-align:right;">
+0.9500
+</td>
+<td style="text-align:right;">
+0.86
+</td>
+<td style="text-align:right;">
+0.95
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.25
+</td>
+<td style="text-align:right;">
+0.46
+</td>
+<td style="text-align:right;">
+8.70
+</td>
+<td style="text-align:right;">
+0.89
+</td>
+<td style="text-align:right;">
+20.23
+</td>
+<td style="text-align:right;">
+36.18
+</td>
+<td style="text-align:right;">
+3.02
+</td>
+<td style="text-align:right;">
+17.36
+</td>
+<td style="text-align:right;">
+0.73
+</td>
+<td style="text-align:right;">
+0.32
+</td>
+<td style="text-align:right;">
+0.10
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.21
+</td>
+<td style="text-align:right;">
+0.24
+</td>
+<td style="text-align:right;">
+0.17
+</td>
+<td style="text-align:right;">
+0.20
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+27
+</td>
+<td style="text-align:left;">
+Megan
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Late
+</td>
+<td style="text-align:left;">
+EarlyASL
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+4.0
+</td>
+<td style="text-align:right;">
+17.00
+</td>
+<td style="text-align:right;">
+10.00
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0.8000
+</td>
+<td style="text-align:right;">
+0.95
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+28
+</td>
+<td style="text-align:left;">
+Allison
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Late
+</td>
+<td style="text-align:left;">
+LateASL
+</td>
+<td style="text-align:left;">
+HearingLateASL
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+22.00
+</td>
+<td style="text-align:right;">
+10.00
+</td>
+<td style="text-align:right;">
+12
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0.5000
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+1.63
+</td>
+<td style="text-align:right;">
+0.92
+</td>
+<td style="text-align:right;">
+1.56
+</td>
+<td style="text-align:right;">
+14.00
+</td>
+<td style="text-align:right;">
+11.40
+</td>
+<td style="text-align:right;">
+16.03
+</td>
+<td style="text-align:right;">
+13.19
+</td>
+<td style="text-align:right;">
+6.04
+</td>
+<td style="text-align:right;">
+3.28
+</td>
+<td style="text-align:right;">
+1.72
+</td>
+<td style="text-align:right;">
+1.02
+</td>
+<td style="text-align:right;">
+0.23
+</td>
+<td style="text-align:right;">
+0.19
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.10
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.07
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.08
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.42
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+8.12
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+1.90
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+29
+</td>
+<td style="text-align:left;">
+DeAnnaHearingLate
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Late
+</td>
+<td style="text-align:left;">
+LateASL
+</td>
+<td style="text-align:left;">
+HearingLateASL
+</td>
+<td style="text-align:right;">
+4.5
+</td>
+<td style="text-align:right;">
+23.00
+</td>
+<td style="text-align:right;">
+9.00
+</td>
+<td style="text-align:right;">
+13
+</td>
+<td style="text-align:right;">
+0.70
+</td>
+<td style="text-align:right;">
+0.6500
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+2.36
+</td>
+<td style="text-align:right;">
+0.18
+</td>
+<td style="text-align:right;">
+0.27
+</td>
+<td style="text-align:right;">
+6.59
+</td>
+<td style="text-align:right;">
+13.27
+</td>
+<td style="text-align:right;">
+14.25
+</td>
+<td style="text-align:right;">
+11.68
+</td>
+<td style="text-align:right;">
+10.52
+</td>
+<td style="text-align:right;">
+4.74
+</td>
+<td style="text-align:right;">
+16.03
+</td>
+<td style="text-align:right;">
+4.89
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+2.70
+</td>
+<td style="text-align:right;">
+1.16
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.47
+</td>
+<td style="text-align:right;">
+0.93
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+2.26
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.15
+</td>
+<td style="text-align:right;">
+0.12
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.06
+</td>
+<td style="text-align:right;">
+1.54
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.31
+</td>
+<td style="text-align:right;">
+0.21
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+30
+</td>
+<td style="text-align:left;">
+Sara G
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Late
+</td>
+<td style="text-align:left;">
+LateASL
+</td>
+<td style="text-align:left;">
+HearingLateASL
+</td>
+<td style="text-align:right;">
+4.0
+</td>
+<td style="text-align:right;">
+29.00
+</td>
+<td style="text-align:right;">
+15.00
+</td>
+<td style="text-align:right;">
+14
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.7000
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.61
+</td>
+<td style="text-align:right;">
+1.57
+</td>
+<td style="text-align:right;">
+1.41
+</td>
+<td style="text-align:right;">
+0.58
+</td>
+<td style="text-align:right;">
+1.12
+</td>
+<td style="text-align:right;">
+30.28
+</td>
+<td style="text-align:right;">
+15.00
+</td>
+<td style="text-align:right;">
+12.47
+</td>
+<td style="text-align:right;">
+0.50
+</td>
+<td style="text-align:right;">
+7.97
+</td>
+<td style="text-align:right;">
+1.87
+</td>
+<td style="text-align:right;">
+4.50
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.48
+</td>
+<td style="text-align:right;">
+2.79
+</td>
+<td style="text-align:right;">
+0.25
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+2.23
+</td>
+<td style="text-align:right;">
+0.15
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.40
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.12
+</td>
+<td style="text-align:right;">
+0.74
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.86
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.29
+</td>
+<td style="text-align:right;">
+0.97
+</td>
+<td style="text-align:right;">
+0.68
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.16
+</td>
+<td style="text-align:right;">
+2.36
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+31
+</td>
+<td style="text-align:left;">
+JenniferHearingTerp
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Late
+</td>
+<td style="text-align:left;">
+LateASL
+</td>
+<td style="text-align:left;">
+HearingLateASL
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+32.00
+</td>
+<td style="text-align:right;">
+17.00
+</td>
+<td style="text-align:right;">
+15
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+0.6500
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.65
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.08
+</td>
+<td style="text-align:right;">
+0.36
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.31
+</td>
+<td style="text-align:right;">
+17.39
+</td>
+<td style="text-align:right;">
+4.63
+</td>
+<td style="text-align:right;">
+34.54
+</td>
+<td style="text-align:right;">
+19.00
+</td>
+<td style="text-align:right;">
+0.44
+</td>
+<td style="text-align:right;">
+0.10
+</td>
+<td style="text-align:right;">
+2.01
+</td>
+<td style="text-align:right;">
+0.32
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+32
+</td>
+<td style="text-align:left;">
+Desiree\_Nonnative Signer
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Late
+</td>
+<td style="text-align:left;">
+LateASL
+</td>
+<td style="text-align:left;">
+HearingLateASL
+</td>
+<td style="text-align:right;">
+4.0
+</td>
+<td style="text-align:right;">
+18.00
+</td>
+<td style="text-align:right;">
+5.00
+</td>
+<td style="text-align:right;">
+15
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.5000
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.11
+</td>
+<td style="text-align:right;">
+2.20
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.27
+</td>
+<td style="text-align:right;">
+14.85
+</td>
+<td style="text-align:right;">
+13.78
+</td>
+<td style="text-align:right;">
+24.69
+</td>
+<td style="text-align:right;">
+2.00
+</td>
+<td style="text-align:right;">
+2.36
+</td>
+<td style="text-align:right;">
+0.72
+</td>
+<td style="text-align:right;">
+11.45
+</td>
+<td style="text-align:right;">
+1.73
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.07
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+33
+</td>
+<td style="text-align:left;">
+Matt\_Hall\_LateAdultSigner
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Late
+</td>
+<td style="text-align:left;">
+LateASL
+</td>
+<td style="text-align:left;">
+HearingLateASL
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+29.00
+</td>
+<td style="text-align:right;">
+11.00
+</td>
+<td style="text-align:right;">
+18
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.6100
+</td>
+<td style="text-align:right;">
+0.95
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.58
+</td>
+<td style="text-align:right;">
+0.23
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+0.18
+</td>
+<td style="text-align:right;">
+11.76
+</td>
+<td style="text-align:right;">
+20.32
+</td>
+<td style="text-align:right;">
+32.88
+</td>
+<td style="text-align:right;">
+19.72
+</td>
+<td style="text-align:right;">
+5.93
+</td>
+<td style="text-align:right;">
+1.75
+</td>
+<td style="text-align:right;">
+4.22
+</td>
+<td style="text-align:right;">
+1.53
+</td>
+<td style="text-align:right;">
+0.17
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+34
+</td>
+<td style="text-align:left;">
+Tori
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Late
+</td>
+<td style="text-align:left;">
+LateASL
+</td>
+<td style="text-align:left;">
+HearingLateASL
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+30.00
+</td>
+<td style="text-align:right;">
+12.00
+</td>
+<td style="text-align:right;">
+18
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.5000
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+0.45
+</td>
+<td style="text-align:right;">
+0.28
+</td>
+<td style="text-align:right;">
+1.12
+</td>
+<td style="text-align:right;">
+2.47
+</td>
+<td style="text-align:right;">
+2.34
+</td>
+<td style="text-align:right;">
+7.53
+</td>
+<td style="text-align:right;">
+17.02
+</td>
+<td style="text-align:right;">
+7.41
+</td>
+<td style="text-align:right;">
+6.55
+</td>
+<td style="text-align:right;">
+3.61
+</td>
+<td style="text-align:right;">
+9.10
+</td>
+<td style="text-align:right;">
+0.72
+</td>
+<td style="text-align:right;">
+3.04
+</td>
+<td style="text-align:right;">
+2.48
+</td>
+<td style="text-align:right;">
+3.06
+</td>
+<td style="text-align:right;">
+1.45
+</td>
+<td style="text-align:right;">
+1.55
+</td>
+<td style="text-align:right;">
+1.65
+</td>
+<td style="text-align:right;">
+0.42
+</td>
+<td style="text-align:right;">
+1.53
+</td>
+<td style="text-align:right;">
+2.46
+</td>
+<td style="text-align:right;">
+0.22
+</td>
+<td style="text-align:right;">
+0.11
+</td>
+<td style="text-align:right;">
+0.16
+</td>
+<td style="text-align:right;">
+0.32
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+0.17
+</td>
+<td style="text-align:right;">
+0.34
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+0.07
+</td>
+<td style="text-align:right;">
+0.14
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.22
+</td>
+<td style="text-align:right;">
+0.27
+</td>
+<td style="text-align:right;">
+2.66
+</td>
+<td style="text-align:right;">
+1.09
+</td>
+<td style="text-align:right;">
+0.44
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.76
+</td>
+<td style="text-align:right;">
+0.15
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+35
+</td>
+<td style="text-align:left;">
+Amy L
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Late
+</td>
+<td style="text-align:left;">
+LateASL
+</td>
+<td style="text-align:left;">
+HearingLateASL
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+39.00
+</td>
+<td style="text-align:right;">
+20.00
+</td>
+<td style="text-align:right;">
+19
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.5500
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.06
+</td>
+<td style="text-align:right;">
+1.88
+</td>
+<td style="text-align:right;">
+20.00
+</td>
+<td style="text-align:right;">
+13.60
+</td>
+<td style="text-align:right;">
+15.14
+</td>
+<td style="text-align:right;">
+17.90
+</td>
+<td style="text-align:right;">
+16.92
+</td>
+<td style="text-align:right;">
+1.10
+</td>
+<td style="text-align:right;">
+3.23
+</td>
+<td style="text-align:right;">
+0.13
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.12
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+36
+</td>
+<td style="text-align:left;">
+Chris
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Late
+</td>
+<td style="text-align:left;">
+LateASL
+</td>
+<td style="text-align:left;">
+HearingLateASL
+</td>
+<td style="text-align:right;">
+4.0
+</td>
+<td style="text-align:right;">
+26.00
+</td>
+<td style="text-align:right;">
+7.00
+</td>
+<td style="text-align:right;">
+19
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.5500
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+0.65
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+0.34
+</td>
+<td style="text-align:right;">
+5.65
+</td>
+<td style="text-align:right;">
+3.14
+</td>
+<td style="text-align:right;">
+10.34
+</td>
+<td style="text-align:right;">
+21.82
+</td>
+<td style="text-align:right;">
+12.60
+</td>
+<td style="text-align:right;">
+8.80
+</td>
+<td style="text-align:right;">
+6.49
+</td>
+<td style="text-align:right;">
+14.37
+</td>
+<td style="text-align:right;">
+0.12
+</td>
+<td style="text-align:right;">
+1.30
+</td>
+<td style="text-align:right;">
+0.26
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.47
+</td>
+<td style="text-align:right;">
+0.19
+</td>
+<td style="text-align:right;">
+0.07
+</td>
+<td style="text-align:right;">
+0.24
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.37
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.45
+</td>
+<td style="text-align:right;">
+1.09
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+37
+</td>
+<td style="text-align:left;">
+Jilliean
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Late
+</td>
+<td style="text-align:left;">
+LateASL
+</td>
+<td style="text-align:left;">
+HearingLateASL
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+38.00
+</td>
+<td style="text-align:right;">
+18.00
+</td>
+<td style="text-align:right;">
+20
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.8500
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.91
+</td>
+<td style="text-align:right;">
+0.78
+</td>
+<td style="text-align:right;">
+2.34
+</td>
+<td style="text-align:right;">
+0.88
+</td>
+<td style="text-align:right;">
+16.13
+</td>
+<td style="text-align:right;">
+18.39
+</td>
+<td style="text-align:right;">
+32.60
+</td>
+<td style="text-align:right;">
+17.12
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.17
+</td>
+<td style="text-align:right;">
+1.82
+</td>
+<td style="text-align:right;">
+2.06
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.15
+</td>
+<td style="text-align:right;">
+0.25
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+38
+</td>
+<td style="text-align:left;">
+Cami
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Late
+</td>
+<td style="text-align:left;">
+LateASL
+</td>
+<td style="text-align:left;">
+HearingLateASL
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+28.00
+</td>
+<td style="text-align:right;">
+6.00
+</td>
+<td style="text-align:right;">
+22
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.8000
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.19
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.25
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.79
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+11.26
+</td>
+<td style="text-align:right;">
+4.54
+</td>
+<td style="text-align:right;">
+21.91
+</td>
+<td style="text-align:right;">
+5.14
+</td>
+<td style="text-align:right;">
+6.08
+</td>
+<td style="text-align:right;">
+16.85
+</td>
+<td style="text-align:right;">
+11.49
+</td>
+<td style="text-align:right;">
+15.09
+</td>
+<td style="text-align:right;">
+0.22
+</td>
+<td style="text-align:right;">
+0.23
+</td>
+<td style="text-align:right;">
+0.36
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.24
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.26
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.20
+</td>
+<td style="text-align:right;">
+0.26
+</td>
+<td style="text-align:right;">
+0.21
+</td>
+<td style="text-align:right;">
+0.21
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+39
+</td>
+<td style="text-align:left;">
+deniz
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Late
+</td>
+<td style="text-align:left;">
+LateASL
+</td>
+<td style="text-align:left;">
+HearingLateASL
+</td>
+<td style="text-align:right;">
+4.0
+</td>
+<td style="text-align:right;">
+33.00
+</td>
+<td style="text-align:right;">
+11.00
+</td>
+<td style="text-align:right;">
+22
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.5000
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+6.96
+</td>
+<td style="text-align:right;">
+13.98
+</td>
+<td style="text-align:right;">
+7.02
+</td>
+<td style="text-align:right;">
+7.71
+</td>
+<td style="text-align:right;">
+3.94
+</td>
+<td style="text-align:right;">
+2.35
+</td>
+<td style="text-align:right;">
+10.32
+</td>
+<td style="text-align:right;">
+11.38
+</td>
+<td style="text-align:right;">
+1.18
+</td>
+<td style="text-align:right;">
+0.21
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+0.22
+</td>
+<td style="text-align:right;">
+0.70
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.25
+</td>
+<td style="text-align:right;">
+1.20
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.51
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.18
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+40
+</td>
+<td style="text-align:left;">
+DustinHearingCODA
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+29.00
+</td>
+<td style="text-align:right;">
+29.00
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.5000
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+7.71
+</td>
+<td style="text-align:right;">
+11.36
+</td>
+<td style="text-align:right;">
+1.43
+</td>
+<td style="text-align:right;">
+10.34
+</td>
+<td style="text-align:right;">
+10.67
+</td>
+<td style="text-align:right;">
+10.45
+</td>
+<td style="text-align:right;">
+33.51
+</td>
+<td style="text-align:right;">
+9.50
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+1.58
+</td>
+<td style="text-align:right;">
+1.07
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+0.37
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.20
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.32
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+41
+</td>
+<td style="text-align:left;">
+DanFisher
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+5.0
+</td>
+<td style="text-align:right;">
+26.00
+</td>
+<td style="text-align:right;">
+25.00
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.95
+</td>
+<td style="text-align:right;">
+0.6000
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.88
+</td>
+<td style="text-align:right;">
+0.63
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.23
+</td>
+<td style="text-align:right;">
+8.95
+</td>
+<td style="text-align:right;">
+16.18
+</td>
+<td style="text-align:right;">
+1.35
+</td>
+<td style="text-align:right;">
+13.28
+</td>
+<td style="text-align:right;">
+5.11
+</td>
+<td style="text-align:right;">
+7.73
+</td>
+<td style="text-align:right;">
+6.88
+</td>
+<td style="text-align:right;">
+3.87
+</td>
+<td style="text-align:right;">
+0.18
+</td>
+<td style="text-align:right;">
+0.42
+</td>
+<td style="text-align:right;">
+0.07
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.08
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.70
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+42
+</td>
+<td style="text-align:left;">
+Stephanie
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Novice
+</td>
+<td style="text-align:left;">
+NoviceASL
+</td>
+<td style="text-align:left;">
+HearingNoviceASL
+</td>
+<td style="text-align:right;">
+3.0
+</td>
+<td style="text-align:right;">
+19.00
+</td>
+<td style="text-align:right;">
+4.00
+</td>
+<td style="text-align:right;">
+15
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.5000
+</td>
+<td style="text-align:right;">
+0.81
+</td>
+<td style="text-align:right;">
+0.70
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+2.49
+</td>
+<td style="text-align:right;">
+0.06
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.37
+</td>
+<td style="text-align:right;">
+13.61
+</td>
+<td style="text-align:right;">
+29.68
+</td>
+<td style="text-align:right;">
+5.09
+</td>
+<td style="text-align:right;">
+11.96
+</td>
+<td style="text-align:right;">
+2.23
+</td>
+<td style="text-align:right;">
+4.33
+</td>
+<td style="text-align:right;">
+7.36
+</td>
+<td style="text-align:right;">
+3.84
+</td>
+<td style="text-align:right;">
+1.58
+</td>
+<td style="text-align:right;">
+0.25
+</td>
+<td style="text-align:right;">
+1.88
+</td>
+<td style="text-align:right;">
+0.92
+</td>
+<td style="text-align:right;">
+0.55
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.17
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.63
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.29
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.20
+</td>
+<td style="text-align:right;">
+0.21
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+43
+</td>
+<td style="text-align:left;">
+Mauro
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Novice
+</td>
+<td style="text-align:left;">
+NoviceASL
+</td>
+<td style="text-align:left;">
+HearingNoviceASL
+</td>
+<td style="text-align:right;">
+2.0
+</td>
+<td style="text-align:right;">
+21.00
+</td>
+<td style="text-align:right;">
+3.00
+</td>
+<td style="text-align:right;">
+16
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0.7000
+</td>
+<td style="text-align:right;">
+0.65
+</td>
+<td style="text-align:right;">
+0.55
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.79
+</td>
+<td style="text-align:right;">
+4.18
+</td>
+<td style="text-align:right;">
+0.83
+</td>
+<td style="text-align:right;">
+4.20
+</td>
+<td style="text-align:right;">
+14.34
+</td>
+<td style="text-align:right;">
+15.81
+</td>
+<td style="text-align:right;">
+28.70
+</td>
+<td style="text-align:right;">
+13.28
+</td>
+<td style="text-align:right;">
+2.50
+</td>
+<td style="text-align:right;">
+0.68
+</td>
+<td style="text-align:right;">
+4.62
+</td>
+<td style="text-align:right;">
+0.33
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.47
+</td>
+<td style="text-align:right;">
+0.06
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.62
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.15
+</td>
+<td style="text-align:right;">
+0.13
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.32
+</td>
+<td style="text-align:right;">
+1.03
+</td>
+<td style="text-align:right;">
+0.22
+</td>
+<td style="text-align:right;">
+0.36
+</td>
+<td style="text-align:right;">
+0.42
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+44
+</td>
+<td style="text-align:left;">
+Cora
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Novice
+</td>
+<td style="text-align:left;">
+NoviceASL
+</td>
+<td style="text-align:left;">
+HearingNoviceASL
+</td>
+<td style="text-align:right;">
+3.0
+</td>
+<td style="text-align:right;">
+21.00
+</td>
+<td style="text-align:right;">
+4.00
+</td>
+<td style="text-align:right;">
+17
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.5500
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.60
+</td>
+<td style="text-align:right;">
+0.23
+</td>
+<td style="text-align:right;">
+0.45
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.12
+</td>
+<td style="text-align:right;">
+12.94
+</td>
+<td style="text-align:right;">
+18.88
+</td>
+<td style="text-align:right;">
+20.82
+</td>
+<td style="text-align:right;">
+15.47
+</td>
+<td style="text-align:right;">
+4.40
+</td>
+<td style="text-align:right;">
+0.52
+</td>
+<td style="text-align:right;">
+9.23
+</td>
+<td style="text-align:right;">
+4.02
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.07
+</td>
+<td style="text-align:right;">
+0.21
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.23
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.30
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.54
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:left;">
+Aya\_Hawari
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Novice
+</td>
+<td style="text-align:left;">
+NoviceASL
+</td>
+<td style="text-align:left;">
+HearingNoviceASL
+</td>
+<td style="text-align:right;">
+3.0
+</td>
+<td style="text-align:right;">
+18.00
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+17
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+0.6000
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.28
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.13
+</td>
+<td style="text-align:right;">
+0.24
+</td>
+<td style="text-align:right;">
+10.77
+</td>
+<td style="text-align:right;">
+2.65
+</td>
+<td style="text-align:right;">
+2.91
+</td>
+<td style="text-align:right;">
+6.65
+</td>
+<td style="text-align:right;">
+3.69
+</td>
+<td style="text-align:right;">
+10.04
+</td>
+<td style="text-align:right;">
+17.14
+</td>
+<td style="text-align:right;">
+9.29
+</td>
+<td style="text-align:right;">
+2.23
+</td>
+<td style="text-align:right;">
+7.22
+</td>
+<td style="text-align:right;">
+11.04
+</td>
+<td style="text-align:right;">
+3.21
+</td>
+<td style="text-align:right;">
+0.98
+</td>
+<td style="text-align:right;">
+0.56
+</td>
+<td style="text-align:right;">
+2.87
+</td>
+<td style="text-align:right;">
+0.67
+</td>
+<td style="text-align:right;">
+0.26
+</td>
+<td style="text-align:right;">
+0.10
+</td>
+<td style="text-align:right;">
+0.17
+</td>
+<td style="text-align:right;">
+1.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.38
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.99
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.67
+</td>
+<td style="text-align:right;">
+0.06
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+46
+</td>
+<td style="text-align:left;">
+Hayley Nava
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Novice
+</td>
+<td style="text-align:left;">
+NoviceASL
+</td>
+<td style="text-align:left;">
+HearingNoviceASL
+</td>
+<td style="text-align:right;">
+2.0
+</td>
+<td style="text-align:right;">
+20.00
+</td>
+<td style="text-align:right;">
+2.00
+</td>
+<td style="text-align:right;">
+18
+</td>
+<td style="text-align:right;">
+0.55
+</td>
+<td style="text-align:right;">
+0.5000
+</td>
+<td style="text-align:right;">
+0.60
+</td>
+<td style="text-align:right;">
+0.55
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+4.37
+</td>
+<td style="text-align:right;">
+6.60
+</td>
+<td style="text-align:right;">
+4.46
+</td>
+<td style="text-align:right;">
+1.19
+</td>
+<td style="text-align:right;">
+13.12
+</td>
+<td style="text-align:right;">
+9.99
+</td>
+<td style="text-align:right;">
+26.86
+</td>
+<td style="text-align:right;">
+4.48
+</td>
+<td style="text-align:right;">
+0.24
+</td>
+<td style="text-align:right;">
+0.18
+</td>
+<td style="text-align:right;">
+2.00
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+47
+</td>
+<td style="text-align:left;">
+Danielle\_Abraham
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Novice
+</td>
+<td style="text-align:left;">
+NoviceASL
+</td>
+<td style="text-align:left;">
+HearingNoviceASL
+</td>
+<td style="text-align:right;">
+3.0
+</td>
+<td style="text-align:right;">
+20.00
+</td>
+<td style="text-align:right;">
+2.00
+</td>
+<td style="text-align:right;">
+18
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+0.3500
+</td>
+<td style="text-align:right;">
+0.60
+</td>
+<td style="text-align:right;">
+0.55
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.07
+</td>
+<td style="text-align:right;">
+0.47
+</td>
+<td style="text-align:right;">
+0.89
+</td>
+<td style="text-align:right;">
+4.54
+</td>
+<td style="text-align:right;">
+15.27
+</td>
+<td style="text-align:right;">
+29.17
+</td>
+<td style="text-align:right;">
+1.57
+</td>
+<td style="text-align:right;">
+8.86
+</td>
+<td style="text-align:right;">
+2.78
+</td>
+<td style="text-align:right;">
+1.29
+</td>
+<td style="text-align:right;">
+3.88
+</td>
+<td style="text-align:right;">
+2.60
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+2.51
+</td>
+<td style="text-align:right;">
+2.20
+</td>
+<td style="text-align:right;">
+1.67
+</td>
+<td style="text-align:right;">
+0.62
+</td>
+<td style="text-align:right;">
+0.25
+</td>
+<td style="text-align:right;">
+2.12
+</td>
+<td style="text-align:right;">
+0.34
+</td>
+<td style="text-align:right;">
+0.25
+</td>
+<td style="text-align:right;">
+0.07
+</td>
+<td style="text-align:right;">
+0.33
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+2.11
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.84
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+48
+</td>
+<td style="text-align:left;">
+Aman\_Nassir
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Novice
+</td>
+<td style="text-align:left;">
+NoviceASL
+</td>
+<td style="text-align:left;">
+HearingNoviceASL
+</td>
+<td style="text-align:right;">
+3.0
+</td>
+<td style="text-align:right;">
+21.00
+</td>
+<td style="text-align:right;">
+2.00
+</td>
+<td style="text-align:right;">
+19
+</td>
+<td style="text-align:right;">
+0.95
+</td>
+<td style="text-align:right;">
+0.6000
+</td>
+<td style="text-align:right;">
+0.70
+</td>
+<td style="text-align:right;">
+0.55
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+4.81
+</td>
+<td style="text-align:right;">
+1.95
+</td>
+<td style="text-align:right;">
+2.85
+</td>
+<td style="text-align:right;">
+8.33
+</td>
+<td style="text-align:right;">
+15.54
+</td>
+<td style="text-align:right;">
+34.09
+</td>
+<td style="text-align:right;">
+6.77
+</td>
+<td style="text-align:right;">
+9.56
+</td>
+<td style="text-align:right;">
+0.17
+</td>
+<td style="text-align:right;">
+0.07
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.08
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+49
+</td>
+<td style="text-align:left;">
+Phuong\_Tran
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Novice
+</td>
+<td style="text-align:left;">
+NoviceASL
+</td>
+<td style="text-align:left;">
+HearingNoviceASL
+</td>
+<td style="text-align:right;">
+3.0
+</td>
+<td style="text-align:right;">
+22.00
+</td>
+<td style="text-align:right;">
+2.00
+</td>
+<td style="text-align:right;">
+20
+</td>
+<td style="text-align:right;">
+0.65
+</td>
+<td style="text-align:right;">
+0.7500
+</td>
+<td style="text-align:right;">
+0.60
+</td>
+<td style="text-align:right;">
+0.65
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.19
+</td>
+<td style="text-align:right;">
+0.16
+</td>
+<td style="text-align:right;">
+0.10
+</td>
+<td style="text-align:right;">
+6.60
+</td>
+<td style="text-align:right;">
+16.37
+</td>
+<td style="text-align:right;">
+0.10
+</td>
+<td style="text-align:right;">
+5.93
+</td>
+<td style="text-align:right;">
+10.92
+</td>
+<td style="text-align:right;">
+3.50
+</td>
+<td style="text-align:right;">
+11.22
+</td>
+<td style="text-align:right;">
+14.49
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.31
+</td>
+<td style="text-align:right;">
+20.19
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.15
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.80
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.43
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.39
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.59
+</td>
+<td style="text-align:right;">
+0.52
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.32
+</td>
+<td style="text-align:right;">
+0.16
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+50
+</td>
+<td style="text-align:left;">
+Jaylin\_Novice\_NotInstructed
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Novice
+</td>
+<td style="text-align:left;">
+NoviceASL
+</td>
+<td style="text-align:left;">
+HearingNoviceASL
+</td>
+<td style="text-align:right;">
+4.0
+</td>
+<td style="text-align:right;">
+22.00
+</td>
+<td style="text-align:right;">
+1.10
+</td>
+<td style="text-align:right;">
+21
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.8000
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+0.51
+</td>
+<td style="text-align:right;">
+0.12
+</td>
+<td style="text-align:right;">
+0.12
+</td>
+<td style="text-align:right;">
+0.19
+</td>
+<td style="text-align:right;">
+1.72
+</td>
+<td style="text-align:right;">
+3.07
+</td>
+<td style="text-align:right;">
+2.19
+</td>
+<td style="text-align:right;">
+6.75
+</td>
+<td style="text-align:right;">
+8.45
+</td>
+<td style="text-align:right;">
+14.31
+</td>
+<td style="text-align:right;">
+15.05
+</td>
+<td style="text-align:right;">
+6.75
+</td>
+<td style="text-align:right;">
+3.74
+</td>
+<td style="text-align:right;">
+2.42
+</td>
+<td style="text-align:right;">
+12.08
+</td>
+<td style="text-align:right;">
+1.44
+</td>
+<td style="text-align:right;">
+0.20
+</td>
+<td style="text-align:right;">
+0.10
+</td>
+<td style="text-align:right;">
+3.66
+</td>
+<td style="text-align:right;">
+1.13
+</td>
+<td style="text-align:right;">
+0.56
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.72
+</td>
+<td style="text-align:right;">
+2.52
+</td>
+<td style="text-align:right;">
+0.17
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.16
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.25
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.33
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.21
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+51
+</td>
+<td style="text-align:left;">
+Yasmine
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Novice
+</td>
+<td style="text-align:left;">
+NoviceASL
+</td>
+<td style="text-align:left;">
+HearingNoviceASL
+</td>
+<td style="text-align:right;">
+3.5
+</td>
+<td style="text-align:right;">
+19.00
+</td>
+<td style="text-align:right;">
+3.00
+</td>
+<td style="text-align:right;">
+16
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.9000
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.97
+</td>
+<td style="text-align:right;">
+1.30
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.06
+</td>
+<td style="text-align:right;">
+10.91
+</td>
+<td style="text-align:right;">
+10.77
+</td>
+<td style="text-align:right;">
+1.85
+</td>
+<td style="text-align:right;">
+5.13
+</td>
+<td style="text-align:right;">
+2.79
+</td>
+<td style="text-align:right;">
+14.62
+</td>
+<td style="text-align:right;">
+6.57
+</td>
+<td style="text-align:right;">
+8.28
+</td>
+<td style="text-align:right;">
+1.38
+</td>
+<td style="text-align:right;">
+5.34
+</td>
+<td style="text-align:right;">
+1.86
+</td>
+<td style="text-align:right;">
+2.15
+</td>
+<td style="text-align:right;">
+1.43
+</td>
+<td style="text-align:right;">
+1.29
+</td>
+<td style="text-align:right;">
+1.67
+</td>
+<td style="text-align:right;">
+0.84
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.35
+</td>
+<td style="text-align:right;">
+0.08
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.32
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.01
+</td>
+<td style="text-align:right;">
+2.04
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+0.59
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+52
+</td>
+<td style="text-align:left;">
+Austin\_Novice\_Instructed
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Novice
+</td>
+<td style="text-align:left;">
+NoviceASL
+</td>
+<td style="text-align:left;">
+HearingNoviceASL
+</td>
+<td style="text-align:right;">
+4.0
+</td>
+<td style="text-align:right;">
+19.75
+</td>
+<td style="text-align:right;">
+2.75
+</td>
+<td style="text-align:right;">
+17
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.7000
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.70
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.56
+</td>
+<td style="text-align:right;">
+0.10
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.36
+</td>
+<td style="text-align:right;">
+13.75
+</td>
+<td style="text-align:right;">
+17.37
+</td>
+<td style="text-align:right;">
+8.91
+</td>
+<td style="text-align:right;">
+15.50
+</td>
+<td style="text-align:right;">
+2.07
+</td>
+<td style="text-align:right;">
+2.25
+</td>
+<td style="text-align:right;">
+25.85
+</td>
+<td style="text-align:right;">
+3.82
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+0.07
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.08
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+</tbody>
+</table>
 Remove dropped participants (they have no main group name, or no data). These are who we dropped.
 
 ``` r
@@ -148,32 +8879,1017 @@ dropped <- rbind(dropped,manual) %>% arrange(id)
 data <- data %>%
   filter(is.na(maingroup)==FALSE) %>% 
   filter(participant!="Lucinda" & participant!="Joe")
-dropped
+kable(dropped) %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"))
 ```
 
-    ## # A tibble: 5 x 55
-    ##      id       participant hearing videogroup aoagroup languagegroup
-    ##   <int>             <chr>   <chr>      <chr>    <chr>         <chr>
-    ## 1    14               Joe    Deaf    Group 2    Early       LateASL
-    ## 2    23           Lucinda    Deaf    Group 2   Native        Native
-    ## 3    27             Megan Hearing    Group 2     Late      EarlyASL
-    ## 4    40 DustinHearingCODA Hearing    Group 2   Native        Native
-    ## 5    41         DanFisher Hearing    Group 1   Native        Native
-    ## # ... with 49 more variables: maingroup <chr>, selfrate <dbl>, age <dbl>,
-    ## #   signyrs <dbl>, aoasl <int>, acc.fw1 <dbl>, acc.rv2 <dbl>,
-    ## #   acc.fw3 <dbl>, acc.rv4 <dbl>, forehead.fw1 <dbl>, forehead.fw3 <dbl>,
-    ## #   forehead.rv2 <dbl>, forehead.rv4 <dbl>, eyes.fw1 <dbl>,
-    ## #   eyes.fw3 <dbl>, eyes.rv2 <dbl>, eyes.rv4 <dbl>, mouth.fw1 <dbl>,
-    ## #   mouth.fw3 <dbl>, mouth.rv2 <dbl>, mouth.rv4 <dbl>, chin.fw1 <dbl>,
-    ## #   chin.fw3 <dbl>, chin.rv2 <dbl>, chin.rv4 <dbl>, upperchest.fw1 <dbl>,
-    ## #   upperchest.fw3 <dbl>, upperchest.rv2 <dbl>, upperchest.rv4 <dbl>,
-    ## #   midchest.fw1 <dbl>, midchest.fw3 <dbl>, midchest.rv2 <dbl>,
-    ## #   midchest.rv4 <dbl>, lowerchest.fw1 <dbl>, lowerchest.fw3 <dbl>,
-    ## #   lowerchest.rv2 <dbl>, lowerchest.rv4 <dbl>, belly.fw1 <dbl>,
-    ## #   belly.fw3 <dbl>, belly.rv2 <dbl>, belly.rv4 <dbl>, left.fw1 <dbl>,
-    ## #   left.fw3 <dbl>, left.rv2 <dbl>, left.rv4 <dbl>, right.fw1 <dbl>,
-    ## #   right.fw3 <dbl>, right.rv2 <dbl>, right.rv4 <dbl>
-
+<table class="table table-striped table-hover table-condensed" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:right;">
+id
+</th>
+<th style="text-align:left;">
+participant
+</th>
+<th style="text-align:left;">
+hearing
+</th>
+<th style="text-align:left;">
+videogroup
+</th>
+<th style="text-align:left;">
+aoagroup
+</th>
+<th style="text-align:left;">
+languagegroup
+</th>
+<th style="text-align:left;">
+maingroup
+</th>
+<th style="text-align:right;">
+selfrate
+</th>
+<th style="text-align:right;">
+age
+</th>
+<th style="text-align:right;">
+signyrs
+</th>
+<th style="text-align:right;">
+aoasl
+</th>
+<th style="text-align:right;">
+acc.fw1
+</th>
+<th style="text-align:right;">
+acc.rv2
+</th>
+<th style="text-align:right;">
+acc.fw3
+</th>
+<th style="text-align:right;">
+acc.rv4
+</th>
+<th style="text-align:right;">
+forehead.fw1
+</th>
+<th style="text-align:right;">
+forehead.fw3
+</th>
+<th style="text-align:right;">
+forehead.rv2
+</th>
+<th style="text-align:right;">
+forehead.rv4
+</th>
+<th style="text-align:right;">
+eyes.fw1
+</th>
+<th style="text-align:right;">
+eyes.fw3
+</th>
+<th style="text-align:right;">
+eyes.rv2
+</th>
+<th style="text-align:right;">
+eyes.rv4
+</th>
+<th style="text-align:right;">
+mouth.fw1
+</th>
+<th style="text-align:right;">
+mouth.fw3
+</th>
+<th style="text-align:right;">
+mouth.rv2
+</th>
+<th style="text-align:right;">
+mouth.rv4
+</th>
+<th style="text-align:right;">
+chin.fw1
+</th>
+<th style="text-align:right;">
+chin.fw3
+</th>
+<th style="text-align:right;">
+chin.rv2
+</th>
+<th style="text-align:right;">
+chin.rv4
+</th>
+<th style="text-align:right;">
+upperchest.fw1
+</th>
+<th style="text-align:right;">
+upperchest.fw3
+</th>
+<th style="text-align:right;">
+upperchest.rv2
+</th>
+<th style="text-align:right;">
+upperchest.rv4
+</th>
+<th style="text-align:right;">
+midchest.fw1
+</th>
+<th style="text-align:right;">
+midchest.fw3
+</th>
+<th style="text-align:right;">
+midchest.rv2
+</th>
+<th style="text-align:right;">
+midchest.rv4
+</th>
+<th style="text-align:right;">
+lowerchest.fw1
+</th>
+<th style="text-align:right;">
+lowerchest.fw3
+</th>
+<th style="text-align:right;">
+lowerchest.rv2
+</th>
+<th style="text-align:right;">
+lowerchest.rv4
+</th>
+<th style="text-align:right;">
+belly.fw1
+</th>
+<th style="text-align:right;">
+belly.fw3
+</th>
+<th style="text-align:right;">
+belly.rv2
+</th>
+<th style="text-align:right;">
+belly.rv4
+</th>
+<th style="text-align:right;">
+left.fw1
+</th>
+<th style="text-align:right;">
+left.fw3
+</th>
+<th style="text-align:right;">
+left.rv2
+</th>
+<th style="text-align:right;">
+left.rv4
+</th>
+<th style="text-align:right;">
+right.fw1
+</th>
+<th style="text-align:right;">
+right.fw3
+</th>
+<th style="text-align:right;">
+right.rv2
+</th>
+<th style="text-align:right;">
+right.rv4
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+14
+</td>
+<td style="text-align:left;">
+Joe
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+LateASL
+</td>
+<td style="text-align:left;">
+DeafLateASL
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+44
+</td>
+<td style="text-align:right;">
+29
+</td>
+<td style="text-align:right;">
+15
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.60
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+23
+</td>
+<td style="text-align:left;">
+Lucinda
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+NativeDeaf
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+32
+</td>
+<td style="text-align:right;">
+32
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.65
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+27
+</td>
+<td style="text-align:left;">
+Megan
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Late
+</td>
+<td style="text-align:left;">
+EarlyASL
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+17
+</td>
+<td style="text-align:right;">
+10
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0.95
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+40
+</td>
+<td style="text-align:left;">
+DustinHearingCODA
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+29
+</td>
+<td style="text-align:right;">
+29
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.50
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+7.71
+</td>
+<td style="text-align:right;">
+11.36
+</td>
+<td style="text-align:right;">
+1.43
+</td>
+<td style="text-align:right;">
+10.34
+</td>
+<td style="text-align:right;">
+10.67
+</td>
+<td style="text-align:right;">
+10.45
+</td>
+<td style="text-align:right;">
+33.51
+</td>
+<td style="text-align:right;">
+9.50
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+1.58
+</td>
+<td style="text-align:right;">
+1.07
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+0.37
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.20
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.32
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+41
+</td>
+<td style="text-align:left;">
+DanFisher
+</td>
+<td style="text-align:left;">
+Hearing
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+Native
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+26
+</td>
+<td style="text-align:right;">
+25
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.95
+</td>
+<td style="text-align:right;">
+0.60
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.88
+</td>
+<td style="text-align:right;">
+0.63
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.23
+</td>
+<td style="text-align:right;">
+8.95
+</td>
+<td style="text-align:right;">
+16.18
+</td>
+<td style="text-align:right;">
+1.35
+</td>
+<td style="text-align:right;">
+13.28
+</td>
+<td style="text-align:right;">
+5.11
+</td>
+<td style="text-align:right;">
+7.73
+</td>
+<td style="text-align:right;">
+6.88
+</td>
+<td style="text-align:right;">
+3.87
+</td>
+<td style="text-align:right;">
+0.18
+</td>
+<td style="text-align:right;">
+0.42
+</td>
+<td style="text-align:right;">
+0.07
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.08
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.7
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+</tbody>
+</table>
 Now we'll reshape the data. Based on Rain's UNM talk, this is what Group 1 & 2 saw:
 
 | No. | Group1              | Group2              |
@@ -183,7 +9899,7 @@ Now we'll reshape the data. Based on Rain's UNM talk, this is what Group 1 & 2 s
 | 3   | Cinderella Fwd      | King Mias Fwd       |
 | 4   | Goldilocks Rev      | Red Riding Hood Rev |
 
-Let's add that information to our data when we reshape it. Here's the final, "cleaned-up" dataset that we're going to use for all further analysis.
+Let's add that information to our data when we reshape it.
 
 ``` r
 # I tried writing a function to do this using column names as arguments. 
@@ -289,28 +10005,867 @@ data <- data %>%
   select(id,participant,hearing,videogroup,aoagroup,languagegroup,maingroup,video,story,
          direction,age,selfrate,signyrs,aoasl,acc,forehead,eyes,mouth,chin,upperchest,
          midchest,lowerchest,belly,left,right)
-data
 ```
 
-    ## # A tibble: 188 x 25
-    ##       id  participant hearing videogroup aoagroup languagegroup
-    ##    <int>        <chr>  <fctr>     <fctr>   <fctr>        <fctr>
-    ##  1     1      Jessika    Deaf    Group 1    Early      EarlyASL
-    ##  2     1      Jessika    Deaf    Group 1    Early      EarlyASL
-    ##  3     1      Jessika    Deaf    Group 1    Early      EarlyASL
-    ##  4     1      Jessika    Deaf    Group 1    Early      EarlyASL
-    ##  5     2        Derek    Deaf    Group 1    Early      EarlyASL
-    ##  6     2        Derek    Deaf    Group 1    Early      EarlyASL
-    ##  7     2        Derek    Deaf    Group 1    Early      EarlyASL
-    ##  8     2        Derek    Deaf    Group 1    Early      EarlyASL
-    ##  9     3 Vanessa_Deaf    Deaf    Group 2    Early      EarlyASL
-    ## 10     3 Vanessa_Deaf    Deaf    Group 2    Early      EarlyASL
-    ## # ... with 178 more rows, and 19 more variables: maingroup <fctr>,
-    ## #   video <fctr>, story <fctr>, direction <fctr>, age <dbl>,
-    ## #   selfrate <dbl>, signyrs <dbl>, aoasl <int>, acc <dbl>, forehead <dbl>,
-    ## #   eyes <dbl>, mouth <dbl>, chin <dbl>, upperchest <dbl>, midchest <dbl>,
-    ## #   lowerchest <dbl>, belly <dbl>, left <dbl>, right <dbl>
+Here's the final, "cleaned-up" dataset that we're going to use for all further analysis. Just the first 10 rows. Notice that there are now story and direction columns, and AOI-only columns, and each participant has 4 observation rows (one observation per story). So, more rows, less columns.
 
+``` r
+kable(head(data, n=10)) %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+
+<table class="table table-striped table-hover table-condensed" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:right;">
+id
+</th>
+<th style="text-align:left;">
+participant
+</th>
+<th style="text-align:left;">
+hearing
+</th>
+<th style="text-align:left;">
+videogroup
+</th>
+<th style="text-align:left;">
+aoagroup
+</th>
+<th style="text-align:left;">
+languagegroup
+</th>
+<th style="text-align:left;">
+maingroup
+</th>
+<th style="text-align:left;">
+video
+</th>
+<th style="text-align:left;">
+story
+</th>
+<th style="text-align:left;">
+direction
+</th>
+<th style="text-align:right;">
+age
+</th>
+<th style="text-align:right;">
+selfrate
+</th>
+<th style="text-align:right;">
+signyrs
+</th>
+<th style="text-align:right;">
+aoasl
+</th>
+<th style="text-align:right;">
+acc
+</th>
+<th style="text-align:right;">
+forehead
+</th>
+<th style="text-align:right;">
+eyes
+</th>
+<th style="text-align:right;">
+mouth
+</th>
+<th style="text-align:right;">
+chin
+</th>
+<th style="text-align:right;">
+upperchest
+</th>
+<th style="text-align:right;">
+midchest
+</th>
+<th style="text-align:right;">
+lowerchest
+</th>
+<th style="text-align:right;">
+belly
+</th>
+<th style="text-align:right;">
+left
+</th>
+<th style="text-align:right;">
+right
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+Jessika
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+EarlyASL
+</td>
+<td style="text-align:left;">
+DeafEarlyASL
+</td>
+<td style="text-align:left;">
+fw1
+</td>
+<td style="text-align:left;">
+RedRidingHood
+</td>
+<td style="text-align:left;">
+forward
+</td>
+<td style="text-align:right;">
+24
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+21
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+5.51
+</td>
+<td style="text-align:right;">
+14.73
+</td>
+<td style="text-align:right;">
+0.72
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+Jessika
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+EarlyASL
+</td>
+<td style="text-align:left;">
+DeafEarlyASL
+</td>
+<td style="text-align:left;">
+fw3
+</td>
+<td style="text-align:left;">
+Cinderella
+</td>
+<td style="text-align:left;">
+forward
+</td>
+<td style="text-align:right;">
+24
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+21
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+0.90
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+3.70
+</td>
+<td style="text-align:right;">
+25.33
+</td>
+<td style="text-align:right;">
+7.61
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+Jessika
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+EarlyASL
+</td>
+<td style="text-align:left;">
+DeafEarlyASL
+</td>
+<td style="text-align:left;">
+rv2
+</td>
+<td style="text-align:left;">
+KingMidas
+</td>
+<td style="text-align:left;">
+reversed
+</td>
+<td style="text-align:right;">
+24
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+21
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+3.04
+</td>
+<td style="text-align:right;">
+8.02
+</td>
+<td style="text-align:right;">
+0.43
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+Jessika
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+EarlyASL
+</td>
+<td style="text-align:left;">
+DeafEarlyASL
+</td>
+<td style="text-align:left;">
+rv4
+</td>
+<td style="text-align:left;">
+Goldilocks
+</td>
+<td style="text-align:left;">
+reversed
+</td>
+<td style="text-align:right;">
+24
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+21
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0.23
+</td>
+<td style="text-align:right;">
+6.37
+</td>
+<td style="text-align:right;">
+11.58
+</td>
+<td style="text-align:right;">
+0.31
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:left;">
+Derek
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+EarlyASL
+</td>
+<td style="text-align:left;">
+DeafEarlyASL
+</td>
+<td style="text-align:left;">
+fw1
+</td>
+<td style="text-align:left;">
+RedRidingHood
+</td>
+<td style="text-align:left;">
+forward
+</td>
+<td style="text-align:right;">
+41
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+38
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.53
+</td>
+<td style="text-align:right;">
+16.98
+</td>
+<td style="text-align:right;">
+3.29
+</td>
+<td style="text-align:right;">
+0.22
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:left;">
+Derek
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+EarlyASL
+</td>
+<td style="text-align:left;">
+DeafEarlyASL
+</td>
+<td style="text-align:left;">
+fw3
+</td>
+<td style="text-align:left;">
+Cinderella
+</td>
+<td style="text-align:left;">
+forward
+</td>
+<td style="text-align:right;">
+41
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+38
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+2.09
+</td>
+<td style="text-align:right;">
+29.47
+</td>
+<td style="text-align:right;">
+4.14
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:left;">
+Derek
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+EarlyASL
+</td>
+<td style="text-align:left;">
+DeafEarlyASL
+</td>
+<td style="text-align:left;">
+rv2
+</td>
+<td style="text-align:left;">
+KingMidas
+</td>
+<td style="text-align:left;">
+reversed
+</td>
+<td style="text-align:right;">
+41
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+38
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+0.70
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+3.08
+</td>
+<td style="text-align:right;">
+5.44
+</td>
+<td style="text-align:right;">
+0.52
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.38
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:left;">
+Derek
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 1
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+EarlyASL
+</td>
+<td style="text-align:left;">
+DeafEarlyASL
+</td>
+<td style="text-align:left;">
+rv4
+</td>
+<td style="text-align:left;">
+Goldilocks
+</td>
+<td style="text-align:left;">
+reversed
+</td>
+<td style="text-align:right;">
+41
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+38
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+0.65
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1.20
+</td>
+<td style="text-align:right;">
+11.70
+</td>
+<td style="text-align:right;">
+2.46
+</td>
+<td style="text-align:right;">
+0.27
+</td>
+<td style="text-align:right;">
+0.32
+</td>
+<td style="text-align:right;">
+0.20
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:left;">
+Vanessa\_Deaf
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+EarlyASL
+</td>
+<td style="text-align:left;">
+DeafEarlyASL
+</td>
+<td style="text-align:left;">
+fw1
+</td>
+<td style="text-align:left;">
+Goldilocks
+</td>
+<td style="text-align:left;">
+forward
+</td>
+<td style="text-align:right;">
+34
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+30
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.32
+</td>
+<td style="text-align:right;">
+15.87
+</td>
+<td style="text-align:right;">
+0.52
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.23
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:left;">
+Vanessa\_Deaf
+</td>
+<td style="text-align:left;">
+Deaf
+</td>
+<td style="text-align:left;">
+Group 2
+</td>
+<td style="text-align:left;">
+Early
+</td>
+<td style="text-align:left;">
+EarlyASL
+</td>
+<td style="text-align:left;">
+DeafEarlyASL
+</td>
+<td style="text-align:left;">
+fw3
+</td>
+<td style="text-align:left;">
+KingMidas
+</td>
+<td style="text-align:left;">
+forward
+</td>
+<td style="text-align:right;">
+34
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+30
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+1.77
+</td>
+<td style="text-align:right;">
+17.98
+</td>
+<td style="text-align:right;">
+0.57
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+</tbody>
+</table>
 Participant Demographics
 ------------------------
 
@@ -324,18 +10879,135 @@ groupmeans <- data %>%
             selfrate = mean(selfrate),
             signyrs = mean(signyrs),
             aoasl = mean(aoasl))
-groupmeans
+kable(groupmeans)
 ```
 
-    ## # A tibble: 5 x 6
-    ##          maingroup     n      age selfrate   signyrs      aoasl
-    ##             <fctr> <dbl>    <dbl>    <dbl>     <dbl>      <dbl>
-    ## 1     DeafEarlyASL     8 35.37500 5.000000 29.750000  5.6250000
-    ## 2      DeafLateASL     5 35.80000 5.000000 22.600000 12.4000000
-    ## 3   HearingLateASL    12 28.91667 4.625000 11.750000 17.2500000
-    ## 4 HearingNoviceASL    11 20.25000 3.045455  2.440909 17.6363636
-    ## 5       NativeDeaf    11 32.90909 5.000000 32.454545  0.2727273
-
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+maingroup
+</th>
+<th style="text-align:right;">
+n
+</th>
+<th style="text-align:right;">
+age
+</th>
+<th style="text-align:right;">
+selfrate
+</th>
+<th style="text-align:right;">
+signyrs
+</th>
+<th style="text-align:right;">
+aoasl
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+DeafEarlyASL
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+35.37500
+</td>
+<td style="text-align:right;">
+5.000000
+</td>
+<td style="text-align:right;">
+29.750000
+</td>
+<td style="text-align:right;">
+5.6250000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+DeafLateASL
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+35.80000
+</td>
+<td style="text-align:right;">
+5.000000
+</td>
+<td style="text-align:right;">
+22.600000
+</td>
+<td style="text-align:right;">
+12.4000000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HearingLateASL
+</td>
+<td style="text-align:right;">
+12
+</td>
+<td style="text-align:right;">
+28.91667
+</td>
+<td style="text-align:right;">
+4.625000
+</td>
+<td style="text-align:right;">
+11.750000
+</td>
+<td style="text-align:right;">
+17.2500000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HearingNoviceASL
+</td>
+<td style="text-align:right;">
+11
+</td>
+<td style="text-align:right;">
+20.25000
+</td>
+<td style="text-align:right;">
+3.045454
+</td>
+<td style="text-align:right;">
+2.440909
+</td>
+<td style="text-align:right;">
+17.6363636
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NativeDeaf
+</td>
+<td style="text-align:right;">
+11
+</td>
+<td style="text-align:right;">
+32.90909
+</td>
+<td style="text-align:right;">
+5.000000
+</td>
+<td style="text-align:right;">
+32.454546
+</td>
+<td style="text-align:right;">
+0.2727273
+</td>
+</tr>
+</tbody>
+</table>
 Accuracy Data Analysis
 ----------------------
 
@@ -357,7 +11029,7 @@ ggplot(data,aes(maingroup,acc,fill=direction)) +
 
     ## Warning: Removed 4 rows containing non-finite values (stat_boxplot).
 
-![](datanotebook_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-5-1.png)
+![](datanotebook_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-6-1.png)
 
 ``` r
 # Error bar chart
@@ -368,7 +11040,7 @@ ggplot(accdata,aes(maingroup,acc.mean,color=direction)) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 
-![](datanotebook_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-6-1.png)
+![](datanotebook_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-1.png)
 
 Let's test for statistical significance. A simple ANOVA tell us there is a main effect of group and direction, but no interactions. Tukey's HSD posthoc tells us that Hearing Novice ASL is significantly different from Deaf Native.
 
@@ -377,21 +11049,117 @@ Let's test for statistical significance. A simple ANOVA tell us there is a main 
 data$maingroup <- relevel(data$maingroup, ref="NativeDeaf")
 # Run the ANOVA
 acc.anova <- aov(data=data,acc ~ maingroup*direction)
-summary(acc.anova)
+kable(xtable(acc.anova))
 ```
 
-    ##                      Df Sum Sq Mean Sq F value   Pr(>F)    
-    ## maingroup             4 0.2139  0.0535   4.202  0.00284 ** 
-    ## direction             1 0.8993  0.8993  70.656 1.47e-14 ***
-    ## maingroup:direction   4 0.0558  0.0140   1.097  0.35971    
-    ## Residuals           174 2.2146  0.0127                     
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 4 observations deleted due to missingness
-
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+Df
+</th>
+<th style="text-align:right;">
+Sum Sq
+</th>
+<th style="text-align:right;">
+Mean Sq
+</th>
+<th style="text-align:right;">
+F value
+</th>
+<th style="text-align:right;">
+Pr(&gt;F)
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+maingroup
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+0.2139149
+</td>
+<td style="text-align:right;">
+0.0534787
+</td>
+<td style="text-align:right;">
+4.201872
+</td>
+<td style="text-align:right;">
+0.0028423
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+direction
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.8992635
+</td>
+<td style="text-align:right;">
+0.8992635
+</td>
+<td style="text-align:right;">
+70.655946
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroup:direction
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+0.0558439
+</td>
+<td style="text-align:right;">
+0.0139610
+</td>
+<td style="text-align:right;">
+1.096926
+</td>
+<td style="text-align:right;">
+0.3597090
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Residuals
+</td>
+<td style="text-align:right;">
+174
+</td>
+<td style="text-align:right;">
+2.2145603
+</td>
+<td style="text-align:right;">
+0.0127274
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+</tbody>
+</table>
 ``` r
 # Run the posthoc on main group
-TukeyHSD(acc.anova,'maingroup',conf.level = 0.95)
+TukeyHSD(acc.anova,'maingroup',conf.level = 0.95) 
 ```
 
     ##   Tukey multiple comparisons of means
@@ -476,7 +11244,7 @@ ggplot(accdata2,aes(maingroup,acc.mean,color=direction)) +
 
     ## Warning: Removed 3 rows containing missing values (geom_errorbar).
 
-![](datanotebook_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-9-1.png)
+![](datanotebook_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-10-1.png)
 
 Boy! Seems King Midas had a strong reversal effect, while Red Riding Hood had a weak reversal effect. Maybe we should put those in as random effects variables in a mixed model, along with participants too. With mixed models, you define predictor variables (what we're interested in; aka, fixed effects) and grouping (what we're not interested in, aka, random effects). This is overkill for simple accuracy data but this will help set us up for eye tracking analysis and **importantly reviewers may ask us about item-level effects given we have just 4 stories.**
 
