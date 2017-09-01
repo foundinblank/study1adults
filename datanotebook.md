@@ -1192,3 +1192,5 @@ Eye Data
 --------
 
 To come!
+
+Here, I need to write some text about why we made the adult AOIs the way they are. And maybe do a secondary analysis combining upperchest+middlechest and belly+lowerchest to larger AOIs.
