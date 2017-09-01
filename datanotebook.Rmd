@@ -3,9 +3,9 @@ title: "Study 1 Adult Data Analysis"
 author: "Adam Stone, PhD"
 date: "August 31, 2017"
 output:
-  github_document:
-    toc: yes
-    toc_depth: 2
+  # github_document:
+  #   toc: yes
+  #   toc_depth: 2
   html_notebook:
     code_folding: hide
     theme: united
@@ -89,7 +89,7 @@ data <- read_csv('finaladultdata.csv', col_types=
                      right.rv4 = col_double()
                      )
 )
-kable(data) %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"), font_size=7)
+kable(data) %>% kable_styling(bootstrap_options = c("striped", "hover","condensed","responsive"), font_size=7)
 ```
 
 Remove dropped participants (they have no main group name, or no data). These are who we dropped. 
