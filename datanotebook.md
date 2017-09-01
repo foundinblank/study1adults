@@ -13,7 +13,7 @@ Importing and Reshaping Data
 
 Here we're going to import the data, remove dropped participants, and reshape the data so story and direction are grouping variables (and the dataset will be more tall than wide). Let's see all our data first (scroll horizontally).
 
-<table class="table table-striped table-hover table-condensed" style="font-size: 7px; margin-left: auto; margin-right: auto;">
+<table class="table table-striped table-hover table-condensed table-responsive" style="font-size: 7px; width: auto !important; ">
 <thead>
 <tr>
 <th style="text-align:right;">
@@ -8879,10 +8879,10 @@ dropped <- rbind(dropped,manual) %>% arrange(id)
 data <- data %>%
   filter(is.na(maingroup)==FALSE) %>% 
   filter(participant!="Lucinda" & participant!="Joe")
-kable(dropped) %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"))
+kable(dropped) %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"), full_width = F, position = "left")
 ```
 
-<table class="table table-striped table-hover table-condensed" style="margin-left: auto; margin-right: auto;">
+<table class="table table-striped table-hover table-condensed" style="width: auto !important; ">
 <thead>
 <tr>
 <th style="text-align:right;">
@@ -11042,35 +11042,36 @@ ggplot(accdata,aes(maingroup,acc.mean,color=direction)) +
 
 ![](datanotebook_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-1.png)
 
-Let's test for statistical significance. A simple ANOVA tell us there is a main effect of group and direction, but no interactions. Tukey's HSD posthoc tells us that Hearing Novice ASL is significantly different from Deaf Native.
+Let's test for statistical significance. A simple ANOVA tell us there is a main effect of group and direction, but no interactions.
 
 ``` r
 # Let's set Native Deaf as the reference level to compare all other
 data$maingroup <- relevel(data$maingroup, ref="NativeDeaf")
 # Run the ANOVA
 acc.anova <- aov(data=data,acc ~ maingroup*direction)
-kable(xtable(acc.anova))
+kable(tidy(acc.anova))
 ```
 
 <table>
 <thead>
 <tr>
 <th style="text-align:left;">
+term
 </th>
 <th style="text-align:right;">
-Df
+df
 </th>
 <th style="text-align:right;">
-Sum Sq
+sumsq
 </th>
 <th style="text-align:right;">
-Mean Sq
+meansq
 </th>
 <th style="text-align:right;">
-F value
+statistic
 </th>
 <th style="text-align:right;">
-Pr(&gt;F)
+p.value
 </th>
 </tr>
 </thead>
@@ -11157,68 +11158,341 @@ NA
 </tr>
 </tbody>
 </table>
+Tukey's HSD posthoc tells us that Hearing Novice ASL is significantly different from Deaf Native.
+
 ``` r
 # Run the posthoc on main group
-TukeyHSD(acc.anova,'maingroup',conf.level = 0.95) 
+acc.posthoc <- TukeyHSD(acc.anova,'maingroup',conf.level = 0.95) 
+kable(tidy(acc.posthoc))
 ```
 
-    ##   Tukey multiple comparisons of means
-    ##     95% family-wise confidence level
-    ## 
-    ## Fit: aov(formula = acc ~ maingroup * direction, data = data)
-    ## 
-    ## $maingroup
-    ##                                        diff         lwr           upr
-    ## DeafEarlyASL-NativeDeaf         -0.04080357 -0.11377589  0.0321687518
-    ## DeafLateASL-NativeDeaf          -0.01661190 -0.10422251  0.0709986993
-    ## HearingLateASL-NativeDeaf       -0.03017857 -0.09588652  0.0355293817
-    ## HearingNoviceASL-NativeDeaf     -0.09483766 -0.16192494 -0.0277503815
-    ## DeafLateASL-DeafEarlyASL         0.02419167 -0.06743370  0.1158170296
-    ## HearingLateASL-DeafEarlyASL      0.01062500 -0.06034770  0.0815977010
-    ## HearingNoviceASL-DeafEarlyASL   -0.05403409 -0.12628568  0.0182175003
-    ## HearingLateASL-DeafLateASL      -0.01356667 -0.09951888  0.0723855426
-    ## HearingNoviceASL-DeafLateASL    -0.07822576 -0.16523697  0.0087854511
-    ## HearingNoviceASL-HearingLateASL -0.06465909 -0.12956570  0.0002475157
-    ##                                     p adj
-    ## DeafEarlyASL-NativeDeaf         0.5370847
-    ## DeafLateASL-NativeDeaf          0.9849659
-    ## HearingLateASL-NativeDeaf       0.7123224
-    ## HearingNoviceASL-NativeDeaf     0.0012958
-    ## DeafLateASL-DeafEarlyASL        0.9497930
-    ## HearingLateASL-DeafEarlyASL     0.9938691
-    ## HearingNoviceASL-DeafEarlyASL   0.2416462
-    ## HearingLateASL-DeafLateASL      0.9924915
-    ## HearingNoviceASL-DeafLateASL    0.1003415
-    ## HearingNoviceASL-HearingLateASL 0.0514107
-
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+term
+</th>
+<th style="text-align:left;">
+comparison
+</th>
+<th style="text-align:right;">
+estimate
+</th>
+<th style="text-align:right;">
+conf.low
+</th>
+<th style="text-align:right;">
+conf.high
+</th>
+<th style="text-align:right;">
+adj.p.value
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+maingroup
+</td>
+<td style="text-align:left;">
+DeafEarlyASL-NativeDeaf
+</td>
+<td style="text-align:right;">
+-0.0408036
+</td>
+<td style="text-align:right;">
+-0.1137759
+</td>
+<td style="text-align:right;">
+0.0321688
+</td>
+<td style="text-align:right;">
+0.5370847
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroup
+</td>
+<td style="text-align:left;">
+DeafLateASL-NativeDeaf
+</td>
+<td style="text-align:right;">
+-0.0166119
+</td>
+<td style="text-align:right;">
+-0.1042225
+</td>
+<td style="text-align:right;">
+0.0709987
+</td>
+<td style="text-align:right;">
+0.9849659
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroup
+</td>
+<td style="text-align:left;">
+HearingLateASL-NativeDeaf
+</td>
+<td style="text-align:right;">
+-0.0301786
+</td>
+<td style="text-align:right;">
+-0.0958865
+</td>
+<td style="text-align:right;">
+0.0355294
+</td>
+<td style="text-align:right;">
+0.7123224
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroup
+</td>
+<td style="text-align:left;">
+HearingNoviceASL-NativeDeaf
+</td>
+<td style="text-align:right;">
+-0.0948377
+</td>
+<td style="text-align:right;">
+-0.1619249
+</td>
+<td style="text-align:right;">
+-0.0277504
+</td>
+<td style="text-align:right;">
+0.0012958
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroup
+</td>
+<td style="text-align:left;">
+DeafLateASL-DeafEarlyASL
+</td>
+<td style="text-align:right;">
+0.0241917
+</td>
+<td style="text-align:right;">
+-0.0674337
+</td>
+<td style="text-align:right;">
+0.1158170
+</td>
+<td style="text-align:right;">
+0.9497930
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroup
+</td>
+<td style="text-align:left;">
+HearingLateASL-DeafEarlyASL
+</td>
+<td style="text-align:right;">
+0.0106250
+</td>
+<td style="text-align:right;">
+-0.0603477
+</td>
+<td style="text-align:right;">
+0.0815977
+</td>
+<td style="text-align:right;">
+0.9938691
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroup
+</td>
+<td style="text-align:left;">
+HearingNoviceASL-DeafEarlyASL
+</td>
+<td style="text-align:right;">
+-0.0540341
+</td>
+<td style="text-align:right;">
+-0.1262857
+</td>
+<td style="text-align:right;">
+0.0182175
+</td>
+<td style="text-align:right;">
+0.2416462
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroup
+</td>
+<td style="text-align:left;">
+HearingLateASL-DeafLateASL
+</td>
+<td style="text-align:right;">
+-0.0135667
+</td>
+<td style="text-align:right;">
+-0.0995189
+</td>
+<td style="text-align:right;">
+0.0723855
+</td>
+<td style="text-align:right;">
+0.9924915
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroup
+</td>
+<td style="text-align:left;">
+HearingNoviceASL-DeafLateASL
+</td>
+<td style="text-align:right;">
+-0.0782258
+</td>
+<td style="text-align:right;">
+-0.1652370
+</td>
+<td style="text-align:right;">
+0.0087855
+</td>
+<td style="text-align:right;">
+0.1003415
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroup
+</td>
+<td style="text-align:left;">
+HearingNoviceASL-HearingLateASL
+</td>
+<td style="text-align:right;">
+-0.0646591
+</td>
+<td style="text-align:right;">
+-0.1295657
+</td>
+<td style="text-align:right;">
+0.0002475
+</td>
+<td style="text-align:right;">
+0.0514107
+</td>
+</tr>
+</tbody>
+</table>
 Group coefficients are here. Remember our reference level ("control") is Native Deaf. Their forward accuracy is 85% with a reversal effect of -9%. ASL, Forward. Mean accuracy for that is 84%, and its reversal effect is -14%. All the other values are to be added to these coefficients. Hearing Novice ASL's forward accuracy was 78%, with a reversal effect of -6%!
 
 ``` r
 #Coefficients
-acc.anova$coefficients
+kable(tidy(acc.anova$coefficients))
 ```
 
-    ##                                 (Intercept) 
-    ##                                  0.84761905 
-    ##                       maingroupDeafEarlyASL 
-    ##                                 -0.01011905 
-    ##                        maingroupDeafLateASL 
-    ##                                  0.01904762 
-    ##                     maingroupHearingLateASL 
-    ##                                  0.01904762 
-    ##                   maingroupHearingNoviceASL 
-    ##                                 -0.06534632 
-    ##                           directionreversed 
-    ##                                 -0.08238095 
-    ##     maingroupDeafEarlyASL:directionreversed 
-    ##                                 -0.06136905 
-    ##      maingroupDeafLateASL:directionreversed 
-    ##                                 -0.07131905 
-    ##   maingroupHearingLateASL:directionreversed 
-    ##                                 -0.09845238 
-    ## maingroupHearingNoviceASL:directionreversed 
-    ##                                 -0.05898268
-
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+names
+</th>
+<th style="text-align:right;">
+x
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+(Intercept)
+</td>
+<td style="text-align:right;">
+0.8476190
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroupDeafEarlyASL
+</td>
+<td style="text-align:right;">
+-0.0101190
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroupDeafLateASL
+</td>
+<td style="text-align:right;">
+0.0190476
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroupHearingLateASL
+</td>
+<td style="text-align:right;">
+0.0190476
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroupHearingNoviceASL
+</td>
+<td style="text-align:right;">
+-0.0653463
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+directionreversed
+</td>
+<td style="text-align:right;">
+-0.0823810
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroupDeafEarlyASL:directionreversed
+</td>
+<td style="text-align:right;">
+-0.0613690
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroupDeafLateASL:directionreversed
+</td>
+<td style="text-align:right;">
+-0.0713190
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroupHearingLateASL:directionreversed
+</td>
+<td style="text-align:right;">
+-0.0984524
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroupHearingNoviceASL:directionreversed
+</td>
+<td style="text-align:right;">
+-0.0589827
+</td>
+</tr>
+</tbody>
+</table>
 In summary, ANOVA tells us there are main effects of group and direction, no interactions. All of which is a good thing. But I'm curious if there's any item-level effects we should be watching out for. Because there are 4 different stories. Let's plot those out.
 
 ``` r
@@ -11244,7 +11518,7 @@ ggplot(accdata2,aes(maingroup,acc.mean,color=direction)) +
 
     ## Warning: Removed 3 rows containing missing values (geom_errorbar).
 
-![](datanotebook_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-10-1.png)
+![](datanotebook_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-11-1.png)
 
 Boy! Seems King Midas had a strong reversal effect, while Red Riding Hood had a weak reversal effect. Maybe we should put those in as random effects variables in a mixed model, along with participants too. With mixed models, you define predictor variables (what we're interested in; aka, fixed effects) and grouping (what we're not interested in, aka, random effects). This is overkill for simple accuracy data but this will help set us up for eye tracking analysis and **importantly reviewers may ask us about item-level effects given we have just 4 stories.**
 
@@ -11257,7 +11531,8 @@ acc.lm <- lmer(data=data, acc ~ maingroup*direction + (direction|id) + (1|story)
 summary(acc.lm)
 ```
 
-    ## Linear mixed model fit by REML ['lmerMod']
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
     ## Formula: acc ~ maingroup * direction + (direction | id) + (1 | story)
     ##    Data: data
     ## 
@@ -11276,17 +11551,30 @@ summary(acc.lm)
     ## Number of obs: 184, groups:  id, 47; story, 4
     ## 
     ## Fixed effects:
-    ##                                              Estimate Std. Error t value
-    ## (Intercept)                                  0.848275   0.029336  28.916
-    ## maingroupDeafEarlyASL                       -0.009193   0.036101  -0.255
-    ## maingroupDeafLateASL                         0.013256   0.042936   0.309
-    ## maingroupHearingLateASL                      0.017338   0.032445   0.534
-    ## maingroupHearingNoviceASL                   -0.066577   0.033120  -2.010
-    ## directionreversed                           -0.084140   0.033221  -2.533
-    ## maingroupDeafEarlyASL:directionreversed     -0.062773   0.050839  -1.235
-    ## maingroupDeafLateASL:directionreversed      -0.064972   0.060418  -1.075
-    ## maingroupHearingLateASL:directionreversed   -0.094585   0.045618  -2.073
-    ## maingroupHearingNoviceASL:directionreversed -0.056074   0.046556  -1.204
+    ##                                              Estimate Std. Error        df
+    ## (Intercept)                                  0.848275   0.029336 15.850000
+    ## maingroupDeafEarlyASL                       -0.009193   0.036101 40.230000
+    ## maingroupDeafLateASL                         0.013256   0.042936 42.850000
+    ## maingroupHearingLateASL                      0.017338   0.032445 40.320000
+    ## maingroupHearingNoviceASL                   -0.066577   0.033120 40.240000
+    ## directionreversed                           -0.084140   0.033221 42.500000
+    ## maingroupDeafEarlyASL:directionreversed     -0.062773   0.050839 41.490000
+    ## maingroupDeafLateASL:directionreversed      -0.064972   0.060418 44.250000
+    ## maingroupHearingLateASL:directionreversed   -0.094585   0.045618 41.690000
+    ## maingroupHearingNoviceASL:directionreversed -0.056074   0.046556 41.600000
+    ##                                             t value Pr(>|t|)    
+    ## (Intercept)                                  28.916 3.77e-15 ***
+    ## maingroupDeafEarlyASL                        -0.255   0.8003    
+    ## maingroupDeafLateASL                          0.309   0.7590    
+    ## maingroupHearingLateASL                       0.534   0.5960    
+    ## maingroupHearingNoviceASL                    -2.010   0.0512 .  
+    ## directionreversed                            -2.533   0.0151 *  
+    ## maingroupDeafEarlyASL:directionreversed      -1.235   0.2239    
+    ## maingroupDeafLateASL:directionreversed       -1.075   0.2880    
+    ## maingroupHearingLateASL:directionreversed    -2.073   0.0443 *  
+    ## maingroupHearingNoviceASL:directionreversed  -1.204   0.2352    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr) mnDEASL mnDLASL mnHLASL mnHNASL drctnr mDEASL: mDLASL:
@@ -11310,6 +11598,237 @@ summary(acc.lm)
     ## mngrpHLASL:        
     ## mngrpHNASL:  0.520
 
+Here are the coefficients in a nicer format.
+
+``` r
+kable(xtable(coef(summary(acc.lm))))
+```
+
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+Estimate
+</th>
+<th style="text-align:right;">
+Std. Error
+</th>
+<th style="text-align:right;">
+df
+</th>
+<th style="text-align:right;">
+t value
+</th>
+<th style="text-align:right;">
+Pr(&gt;|t|)
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+(Intercept)
+</td>
+<td style="text-align:right;">
+0.8482745
+</td>
+<td style="text-align:right;">
+0.0293360
+</td>
+<td style="text-align:right;">
+15.85368
+</td>
+<td style="text-align:right;">
+28.9158383
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroupDeafEarlyASL
+</td>
+<td style="text-align:right;">
+-0.0091929
+</td>
+<td style="text-align:right;">
+0.0361013
+</td>
+<td style="text-align:right;">
+40.23455
+</td>
+<td style="text-align:right;">
+-0.2546429
+</td>
+<td style="text-align:right;">
+0.8002960
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroupDeafLateASL
+</td>
+<td style="text-align:right;">
+0.0132559
+</td>
+<td style="text-align:right;">
+0.0429360
+</td>
+<td style="text-align:right;">
+42.84986
+</td>
+<td style="text-align:right;">
+0.3087355
+</td>
+<td style="text-align:right;">
+0.7590188
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroupHearingLateASL
+</td>
+<td style="text-align:right;">
+0.0173377
+</td>
+<td style="text-align:right;">
+0.0324449
+</td>
+<td style="text-align:right;">
+40.32404
+</td>
+<td style="text-align:right;">
+0.5343751
+</td>
+<td style="text-align:right;">
+0.5960162
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroupHearingNoviceASL
+</td>
+<td style="text-align:right;">
+-0.0665769
+</td>
+<td style="text-align:right;">
+0.0331204
+</td>
+<td style="text-align:right;">
+40.24487
+</td>
+<td style="text-align:right;">
+-2.0101461
+</td>
+<td style="text-align:right;">
+0.0511512
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+directionreversed
+</td>
+<td style="text-align:right;">
+-0.0841397
+</td>
+<td style="text-align:right;">
+0.0332213
+</td>
+<td style="text-align:right;">
+42.49642
+</td>
+<td style="text-align:right;">
+-2.5327054
+</td>
+<td style="text-align:right;">
+0.0150961
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroupDeafEarlyASL:directionreversed
+</td>
+<td style="text-align:right;">
+-0.0627735
+</td>
+<td style="text-align:right;">
+0.0508390
+</td>
+<td style="text-align:right;">
+41.48933
+</td>
+<td style="text-align:right;">
+-1.2347494
+</td>
+<td style="text-align:right;">
+0.2238713
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroupDeafLateASL:directionreversed
+</td>
+<td style="text-align:right;">
+-0.0649725
+</td>
+<td style="text-align:right;">
+0.0604178
+</td>
+<td style="text-align:right;">
+44.24773
+</td>
+<td style="text-align:right;">
+-1.0753858
+</td>
+<td style="text-align:right;">
+0.2880311
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroupHearingLateASL:directionreversed
+</td>
+<td style="text-align:right;">
+-0.0945849
+</td>
+<td style="text-align:right;">
+0.0456176
+</td>
+<td style="text-align:right;">
+41.68601
+</td>
+<td style="text-align:right;">
+-2.0734275
+</td>
+<td style="text-align:right;">
+0.0443499
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+maingroupHearingNoviceASL:directionreversed
+</td>
+<td style="text-align:right;">
+-0.0560737
+</td>
+<td style="text-align:right;">
+0.0465557
+</td>
+<td style="text-align:right;">
+41.60102
+</td>
+<td style="text-align:right;">
+-1.2044443
+</td>
+<td style="text-align:right;">
+0.2352258
+</td>
+</tr>
+</tbody>
+</table>
 Eye Data
 --------
 
