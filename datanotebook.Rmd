@@ -1,7 +1,7 @@
 ---
 title: "Study 1 Adult Data Analysis"
 author: "Adam Stone, PhD" 
-date: '`r format(Sys.Date(), "%M-%d-%Y")`'
+date: '`r format(Sys.Date(), "%m-%d-%Y")`'
 #date: "September 4, 2017"
 output:
   github_document:
@@ -17,7 +17,7 @@ output:
     df_print: paged
 ---
 
-## Importing and Reshaping Data
+# Importing and Reshaping Data
 Here we're going to import the data, remove dropped participants, and reshape the data so story and direction are grouping variables (and the dataset will be more tall than wide). Let's see ALL of our data first (scroll horizontally).
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
@@ -236,7 +236,7 @@ Here's the final, "cleaned-up" dataset that we're going to use for all further a
 select(data,-participant)
 ```
 
-## Participant Demographics
+# Participant Demographics
 Now we can easily get group means.
 ```{r}
 groupmeans <- data %>%
@@ -250,7 +250,7 @@ kable(groupmeans, digits=1) %>% kable_styling(bootstrap_options = c("striped", "
 #groupmeans
 ```
 
-## Accuracy Data Analysis
+# Accuracy Data Analysis
 And accuracy violins and error bar charts for forward vs. backward stories. 
 ```{r}
 # Summarizing means and SDs
@@ -349,7 +349,7 @@ ggplot(data, aes(x=videogroup, y=acc, fill=videogroup)) +
 
 So Group 1 has a lot more bad test results compared to Group 2. But maybe that's a good reason to be using mixed models, and we can account for that by allowing subjects and items (and item order, by definition...I think) to vary randomly. 
 
-## Eye Gaze Data 
+# Eye Gaze Data 
 These are our current AOIs. 
 1. Forehead (above eyes)
 2. Eyes
@@ -368,7 +368,7 @@ It's possible to do a secondary analysis combining some of these AOIs (in partic
 
 *Why 4 AOIs for Torso?* At the same time, all papers, tend to just classify the body as "body" with no further breakdown, or two-part breakdown. We know there is a lot of different things happening in that area for signers, too, plus we're lookina at CHILDREN with different language experiences, so they may be interested in different things than adults. So just makes sense to break down body into different regions. 
 
-### Face AOIs
+## Face AOIs (for Rain to look at)
 Let's visualize first of all. 
 ```{r}
 # Reduce dataset to face AOIs only
@@ -381,14 +381,16 @@ ggplot(data.face,aes(x=maingroup,y=looking,fill=direction)) +
   theme(axis.text.x=element_text(angle=45,hjust=1)) +
   facet_wrap("aoi")
 ```
-Okay, right away I see some issues - I want to check for outliers but I'm not sure what could count as an outlier. All 4 stories are different lengths - 30 seconds would be fine for King Midas (0:37) but impossible for Red Riding Hood (0:18) so outliers need to be *relative* to the story length itself. Let's back up and do histograms for each story. 
+Okay, right away I see some issues - I want to check for outliers but I'm not sure what could count as an outlier. All 4 stories are different lengths - a data point at 30 seconds would be fine for King Midas (0:37) but impossible for Red Riding Hood (0:18) so outliers need to be *relative* to the story length itself. Let's back up and do histograms for each story. 
 
 ```{r}
 ggplot(data.face,aes(x=looking)) +
   geom_histogram(binwidth=1) +
-  facet_wrap("story")
+  facet_wrap("story") +
+  xlab("secs") +
+  ggtitle("Face AOI sums for each story for each participant")
 ```
-Loooks good but I see weird outliers for Cinderella and Red Riding Hood - those single data points are way out past the video length (and that's just the face AOIs!). Let's sum up *all* AOIs across each story for each participant...back to the big dataset, and we'll do histograms again.
+Loooks good but I see weird outliers for Cinderella and Red Riding Hood - those single data points are past the video length (and that's just the face AOIs!). Let's sum up *all* AOIs across each story for each participant...back to the big dataset, and we'll do histograms again.
 ```{r}
 aoisum <- data %>%
   group_by(id,story) %>%
@@ -397,11 +399,15 @@ aoisum <- data %>%
   arrange(story)
 ggplot(aoisum,aes(x=total)) +
   geom_histogram(binwidth=1) +
-  facet_wrap("story")
+  facet_wrap("story") +
+  xlab("secs") +
+  ggtitle("Sum of ALL AOIs for each participant for each story")
 ```
-Okay, we see two issues: 
-1. Some barely watched the story at all. We should remove those. 
-2. A few watched the story longer than the video length itself. Those should be investigated.
+The tall bars are near the end of the story, right? So we see two issues: 
+1. Some barely watched the story at all. (Those are the ones with bars at or near zero). We should remove those. We need a rule for it. 
+2. A few people's AOI data has total seconds higher than the video itself! (Those are the ones with very short bars to the right of the very tall bars.) Those should be investigated, something went wrong in the data. 
+
+I'll highlight those rows that's for #1 and #2 and send to Rain to look at.  
 
 
 

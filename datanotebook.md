@@ -1,15 +1,16 @@
 Study 1 Adult Data Analysis
 ================
 Adam Stone, PhD
-00-04-2017
+09-04-2017
 
 -   [Importing and Reshaping Data](#importing-and-reshaping-data)
 -   [Participant Demographics](#participant-demographics)
 -   [Accuracy Data Analysis](#accuracy-data-analysis)
 -   [Eye Gaze Data](#eye-gaze-data)
+    -   [Face AOIs (for Rain to look at)](#face-aois-for-rain-to-look-at)
 
 Importing and Reshaping Data
-----------------------------
+============================
 
 Here we're going to import the data, remove dropped participants, and reshape the data so story and direction are grouping variables (and the dataset will be more tall than wide). Let's see ALL of our data first (scroll horizontally).
 
@@ -228,7 +229,7 @@ select(data,-participant)
     ## #   belly <dbl>, left <dbl>, right <dbl>
 
 Participant Demographics
-------------------------
+========================
 
 Now we can easily get group means.
 
@@ -374,7 +375,7 @@ NativeDeaf
 ```
 
 Accuracy Data Analysis
-----------------------
+======================
 
 And accuracy violins and error bar charts for forward vs. backward stories.
 
@@ -1276,7 +1277,7 @@ ggplot(data, aes(x=videogroup, y=acc, fill=videogroup)) +
 So Group 1 has a lot more bad test results compared to Group 2. But maybe that's a good reason to be using mixed models, and we can account for that by allowing subjects and items (and item order, by definition...I think) to vary randomly.
 
 Eye Gaze Data
--------------
+=============
 
 These are our current AOIs. 1. Forehead (above eyes) 2. Eyes 3. Mouth 4. Chin (below chin) 5. Upper Chest 6. Middle Chest 7. Lower Chest 8. Belly 9. Left 10. Right
 
@@ -1286,7 +1287,8 @@ It's possible to do a secondary analysis combining some of these AOIs (in partic
 
 *Why 4 AOIs for Torso?* At the same time, all papers, tend to just classify the body as "body" with no further breakdown, or two-part breakdown. We know there is a lot of different things happening in that area for signers, too, plus we're lookina at CHILDREN with different language experiences, so they may be interested in different things than adults. So just makes sense to break down body into different regions.
 
-### Face AOIs
+Face AOIs (for Rain to look at)
+-------------------------------
 
 Let's visualize first of all.
 
@@ -1304,17 +1306,19 @@ ggplot(data.face,aes(x=maingroup,y=looking,fill=direction)) +
 
     ## Warning: Removed 192 rows containing non-finite values (stat_boxplot).
 
-![](datanotebook_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-16-1.png) Okay, right away I see some issues - I want to check for outliers but I'm not sure what could count as an outlier. All 4 stories are different lengths - 30 seconds would be fine for King Midas (0:37) but impossible for Red Riding Hood (0:18) so outliers need to be *relative* to the story length itself. Let's back up and do histograms for each story.
+![](datanotebook_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-16-1.png) Okay, right away I see some issues - I want to check for outliers but I'm not sure what could count as an outlier. All 4 stories are different lengths - a data point at 30 seconds would be fine for King Midas (0:37) but impossible for Red Riding Hood (0:18) so outliers need to be *relative* to the story length itself. Let's back up and do histograms for each story.
 
 ``` r
 ggplot(data.face,aes(x=looking)) +
   geom_histogram(binwidth=1) +
-  facet_wrap("story")
+  facet_wrap("story") +
+  xlab("secs") +
+  ggtitle("Face AOI sums for each story for each participant")
 ```
 
     ## Warning: Removed 192 rows containing non-finite values (stat_bin).
 
-![](datanotebook_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-17-1.png) Loooks good but I see weird outliers for Cinderella and Red Riding Hood - those single data points are way out past the video length (and that's just the face AOIs!). Let's sum up *all* AOIs across each story for each participant...back to the big dataset, and we'll do histograms again.
+![](datanotebook_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-17-1.png) Loooks good but I see weird outliers for Cinderella and Red Riding Hood - those single data points are past the video length (and that's just the face AOIs!). Let's sum up *all* AOIs across each story for each participant...back to the big dataset, and we'll do histograms again.
 
 ``` r
 aoisum <- data %>%
@@ -1324,10 +1328,14 @@ aoisum <- data %>%
   arrange(story)
 ggplot(aoisum,aes(x=total)) +
   geom_histogram(binwidth=1) +
-  facet_wrap("story")
+  facet_wrap("story") +
+  xlab("secs") +
+  ggtitle("Sum of ALL AOIs for each participant for each story")
 ```
 
-![](datanotebook_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-18-1.png) Okay, we see two issues: 1. Some barely watched the story at all. We should remove those. 2. A few watched the story longer than the video length itself. Those should be investigated.
+![](datanotebook_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-18-1.png) The tall bars are near the end of the story, right? So we see two issues: 1. Some barely watched the story at all. (Those are the ones with bars at or near zero). We should remove those. We need a rule for it. 2. A few people's AOI data has total seconds higher than the video itself! (Those are the ones with very short bars to the right of the very tall bars.) Those should be investigated, something went wrong in the data.
+
+I'll highlight those rows that's for \#1 and \#2 and send to Rain to look at.
 
 <!-- acc.lm <- lmer(data=data, acc ~ maingroup*direction + (direction|id) + (1|story)) -->
 <!-- summary(acc.lm) -->
