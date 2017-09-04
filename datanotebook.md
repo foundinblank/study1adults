@@ -1,33 +1,32 @@
 Study 1 Adult Data Analysis
 ================
 Adam Stone, PhD
-August 31, 2017
+00-04-2017
 
 -   [Importing and Reshaping Data](#importing-and-reshaping-data)
 -   [Participant Demographics](#participant-demographics)
 -   [Accuracy Data Analysis](#accuracy-data-analysis)
--   [Eye Data](#eye-data)
+-   [Eye Gaze Data](#eye-gaze-data)
 
 Importing and Reshaping Data
 ----------------------------
 
 Here we're going to import the data, remove dropped participants, and reshape the data so story and direction are grouping variables (and the dataset will be more tall than wide). Let's see ALL of our data first (scroll horizontally).
 
-    ## # A tibble: 52 x 55
-    ##       id               participant hearing videogroup aoagroup
-    ##    <int>                     <chr>   <chr>      <chr>    <chr>
-    ##  1     1                   Jessika    Deaf    Group 1    Early
-    ##  2     2                     Derek    Deaf    Group 1    Early
-    ##  3     3              Vanessa_Deaf    Deaf    Group 2    Early
-    ##  4     4                      Josh    Deaf    Group 2    Early
-    ##  5     5                  Lynnette    Deaf    Group 1    Early
-    ##  6     6 Laura P (missing stories)    Deaf    Group 1    Early
-    ##  7     7                   Rebecca    Deaf    Group 1    Early
-    ##  8     8                     Cathy    Deaf    Group 2    Early
-    ##  9     9                   Crystal    Deaf    Group 2    Early
-    ## 10    10                Chrissy G.    Deaf    Group 1    Early
-    ## # ... with 42 more rows, and 50 more variables: languagegroup <chr>,
-    ## #   maingroup <chr>, selfrate <dbl>, age <dbl>, signyrs <dbl>,
+    ## # A tibble: 52 x 54
+    ##       id hearing videogroup aoagroup languagegroup    maingroup selfrate
+    ##    <int>   <chr>      <chr>    <chr>         <chr>        <chr>    <dbl>
+    ##  1     1    Deaf    Group 1    Early      EarlyASL DeafEarlyASL        5
+    ##  2     2    Deaf    Group 1    Early      EarlyASL DeafEarlyASL        5
+    ##  3     3    Deaf    Group 2    Early      EarlyASL DeafEarlyASL        5
+    ##  4     4    Deaf    Group 2    Early      EarlyASL DeafEarlyASL        5
+    ##  5     5    Deaf    Group 1    Early      EarlyASL DeafEarlyASL        5
+    ##  6     6    Deaf    Group 1    Early      EarlyASL DeafEarlyASL        5
+    ##  7     7    Deaf    Group 1    Early      EarlyASL DeafEarlyASL        5
+    ##  8     8    Deaf    Group 2    Early      EarlyASL DeafEarlyASL        5
+    ##  9     9    Deaf    Group 2    Early       LateASL  DeafLateASL        5
+    ## 10    10    Deaf    Group 1    Early       LateASL  DeafLateASL        5
+    ## # ... with 42 more rows, and 47 more variables: age <dbl>, signyrs <dbl>,
     ## #   aoasl <int>, acc.fw1 <dbl>, acc.rv2 <dbl>, acc.fw3 <dbl>,
     ## #   acc.rv4 <dbl>, forehead.fw1 <dbl>, forehead.fw3 <dbl>,
     ## #   forehead.rv2 <dbl>, forehead.rv4 <dbl>, eyes.fw1 <dbl>,
@@ -52,20 +51,25 @@ data <- data %>%
   filter(is.na(maingroup)==FALSE) %>% 
   filter(participant!="Lucinda" & participant!="Joe")
 #kable(select(dropped,participant,maingroup,age)) %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"), full_width = F, position = "left")
-dropped
+select(data,-participant)
 ```
 
-    ## # A tibble: 5 x 55
-    ##      id       participant hearing videogroup aoagroup languagegroup
-    ##   <int>             <chr>   <chr>      <chr>    <chr>         <chr>
-    ## 1    14               Joe    Deaf    Group 2    Early       LateASL
-    ## 2    23           Lucinda    Deaf    Group 2   Native        Native
-    ## 3    27             Megan Hearing    Group 2     Late      EarlyASL
-    ## 4    40 DustinHearingCODA Hearing    Group 2   Native        Native
-    ## 5    41         DanFisher Hearing    Group 1   Native        Native
-    ## # ... with 49 more variables: maingroup <chr>, selfrate <dbl>, age <dbl>,
-    ## #   signyrs <dbl>, aoasl <int>, acc.fw1 <dbl>, acc.rv2 <dbl>,
-    ## #   acc.fw3 <dbl>, acc.rv4 <dbl>, forehead.fw1 <dbl>, forehead.fw3 <dbl>,
+    ## # A tibble: 47 x 54
+    ##       id hearing videogroup aoagroup languagegroup    maingroup selfrate
+    ##    <int>   <chr>      <chr>    <chr>         <chr>        <chr>    <dbl>
+    ##  1     1    Deaf    Group 1    Early      EarlyASL DeafEarlyASL        5
+    ##  2     2    Deaf    Group 1    Early      EarlyASL DeafEarlyASL        5
+    ##  3     3    Deaf    Group 2    Early      EarlyASL DeafEarlyASL        5
+    ##  4     4    Deaf    Group 2    Early      EarlyASL DeafEarlyASL        5
+    ##  5     5    Deaf    Group 1    Early      EarlyASL DeafEarlyASL        5
+    ##  6     6    Deaf    Group 1    Early      EarlyASL DeafEarlyASL        5
+    ##  7     7    Deaf    Group 1    Early      EarlyASL DeafEarlyASL        5
+    ##  8     8    Deaf    Group 2    Early      EarlyASL DeafEarlyASL        5
+    ##  9     9    Deaf    Group 2    Early       LateASL  DeafLateASL        5
+    ## 10    10    Deaf    Group 1    Early       LateASL  DeafLateASL        5
+    ## # ... with 37 more rows, and 47 more variables: age <dbl>, signyrs <dbl>,
+    ## #   aoasl <int>, acc.fw1 <dbl>, acc.rv2 <dbl>, acc.fw3 <dbl>,
+    ## #   acc.rv4 <dbl>, forehead.fw1 <dbl>, forehead.fw3 <dbl>,
     ## #   forehead.rv2 <dbl>, forehead.rv4 <dbl>, eyes.fw1 <dbl>,
     ## #   eyes.fw3 <dbl>, eyes.rv2 <dbl>, eyes.rv4 <dbl>, mouth.fw1 <dbl>,
     ## #   mouth.fw3 <dbl>, mouth.rv2 <dbl>, mouth.rv4 <dbl>, chin.fw1 <dbl>,
@@ -78,14 +82,14 @@ dropped
     ## #   left.fw3 <dbl>, left.rv2 <dbl>, left.rv4 <dbl>, right.fw1 <dbl>,
     ## #   right.fw3 <dbl>, right.rv2 <dbl>, right.rv4 <dbl>
 
-Now we'll reshape the data. Based on Rain's UNM talk, this is what Group 1 & 2 saw:
+Now we'll reshape the data. Based on Rain's UNM talk, this is what Group 1 & 2 saw: **Note, I've switched the groups around from Rain's UNM talk**
 
 | No. | Group1              | Group2              |
 |:----|:--------------------|:--------------------|
-| 1   | Red Riding Hood Fwd | Goldilocks Fwd      |
-| 2   | King Midas Rev      | Cinderella Rev      |
-| 3   | Cinderella Fwd      | King Mias Fwd       |
-| 4   | Goldilocks Rev      | Red Riding Hood Rev |
+| 1   | Goldilocks Fwd      | Red Riding Hood Fwd |
+| 2   | Cinderella Rev      | King Midas Rev      |
+| 3   | King Midas Fwd      | Cinderella Fwd      |
+| 4   | Red Riding Hood Rev | Goldilocks Rev      |
 
 Let's add that information to our data when we reshape it. You can look at the code below if you want.
 
@@ -163,18 +167,20 @@ group1 <- filter(data,videogroup=="Group 1")
 group2 <- filter(data,videogroup=="Group 2")
 
 # Now define levels for story and direction based on that table above
-group1 <- mutate(group1,story = ifelse(video == "fw1","RedRidingHood",
-                                       ifelse(video == "rv2","KingMidas",
-                                              ifelse(video =="fw3","Cinderella","Goldilocks"))))
-group1 <- mutate(group1,direction = ifelse(video == "fw1","forward",
-                                       ifelse(video == "rv2","reversed",
-                                              ifelse(video == "fw3","forward","reversed"))))
-group2 <- mutate(group2,story = ifelse(video == "fw1","Goldilocks",
+group1 <- mutate(group1,story = ifelse(video == "fw1","Goldilocks",
                                        ifelse(video == "rv2","Cinderella",
-                                              ifelse(video=="fw3","KingMidas","RedRidingHood"))))
-group2 <- mutate(group2,direction = ifelse(video == "fw1","forward",
+                                            ifelse(video=="fw3","KingMidas","RedRidingHood"))))
+group1 <- mutate(group1,direction = ifelse(video == "fw1","forward",
                                            ifelse(video == "rv2","reversed",
                                                   ifelse(video == "fw3","forward","reversed"))))
+group2 <- mutate(group2,story = ifelse(video == "fw1","RedRidingHood",
+                                       ifelse(video == "rv2","KingMidas",
+                                              ifelse(video =="fw3","Cinderella","Goldilocks"))))
+group2 <- mutate(group2,direction = ifelse(video == "fw1","forward",
+                                       ifelse(video == "rv2","reversed",
+                                              ifelse(video == "fw3","forward","reversed"))))
+
+
 
 # Join groups back together and view
 data <- rbind(group1,group2)
@@ -199,27 +205,27 @@ Here's the final, "cleaned-up" dataset that we're going to use for all further a
 
 ``` r
 #kable(head(data, n=10)) %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
-data
+select(data,-participant)
 ```
 
-    ## # A tibble: 188 x 25
-    ##       id  participant hearing videogroup aoagroup languagegroup
-    ##    <int>        <chr>  <fctr>     <fctr>   <fctr>        <fctr>
-    ##  1     1      Jessika    Deaf    Group 1    Early      EarlyASL
-    ##  2     1      Jessika    Deaf    Group 1    Early      EarlyASL
-    ##  3     1      Jessika    Deaf    Group 1    Early      EarlyASL
-    ##  4     1      Jessika    Deaf    Group 1    Early      EarlyASL
-    ##  5     2        Derek    Deaf    Group 1    Early      EarlyASL
-    ##  6     2        Derek    Deaf    Group 1    Early      EarlyASL
-    ##  7     2        Derek    Deaf    Group 1    Early      EarlyASL
-    ##  8     2        Derek    Deaf    Group 1    Early      EarlyASL
-    ##  9     3 Vanessa_Deaf    Deaf    Group 2    Early      EarlyASL
-    ## 10     3 Vanessa_Deaf    Deaf    Group 2    Early      EarlyASL
-    ## # ... with 178 more rows, and 19 more variables: maingroup <fctr>,
-    ## #   video <fctr>, story <fctr>, direction <fctr>, age <dbl>,
-    ## #   selfrate <dbl>, signyrs <dbl>, aoasl <int>, acc <dbl>, forehead <dbl>,
-    ## #   eyes <dbl>, mouth <dbl>, chin <dbl>, upperchest <dbl>, midchest <dbl>,
-    ## #   lowerchest <dbl>, belly <dbl>, left <dbl>, right <dbl>
+    ## # A tibble: 188 x 24
+    ##       id hearing videogroup aoagroup languagegroup    maingroup  video
+    ##    <int>  <fctr>     <fctr>   <fctr>        <fctr>       <fctr> <fctr>
+    ##  1     1    Deaf    Group 1    Early      EarlyASL DeafEarlyASL    fw1
+    ##  2     1    Deaf    Group 1    Early      EarlyASL DeafEarlyASL    fw3
+    ##  3     1    Deaf    Group 1    Early      EarlyASL DeafEarlyASL    rv2
+    ##  4     1    Deaf    Group 1    Early      EarlyASL DeafEarlyASL    rv4
+    ##  5     2    Deaf    Group 1    Early      EarlyASL DeafEarlyASL    fw1
+    ##  6     2    Deaf    Group 1    Early      EarlyASL DeafEarlyASL    fw3
+    ##  7     2    Deaf    Group 1    Early      EarlyASL DeafEarlyASL    rv2
+    ##  8     2    Deaf    Group 1    Early      EarlyASL DeafEarlyASL    rv4
+    ##  9     3    Deaf    Group 2    Early      EarlyASL DeafEarlyASL    fw1
+    ## 10     3    Deaf    Group 2    Early      EarlyASL DeafEarlyASL    fw3
+    ## # ... with 178 more rows, and 17 more variables: story <fctr>,
+    ## #   direction <fctr>, age <dbl>, selfrate <dbl>, signyrs <dbl>,
+    ## #   aoasl <int>, acc <dbl>, forehead <dbl>, eyes <dbl>, mouth <dbl>,
+    ## #   chin <dbl>, upperchest <dbl>, midchest <dbl>, lowerchest <dbl>,
+    ## #   belly <dbl>, left <dbl>, right <dbl>
 
 Participant Demographics
 ------------------------
@@ -370,7 +376,7 @@ NativeDeaf
 Accuracy Data Analysis
 ----------------------
 
-And accuracy boxplots and error bar charts for forward vs. backward stories.
+And accuracy violins and error bar charts for forward vs. backward stories.
 
 ``` r
 # Summarizing means and SDs
@@ -381,12 +387,12 @@ accdata <- data %>%
 
 #Boxplot
 ggplot(data,aes(maingroup,acc,fill=direction)) + 
-  geom_boxplot() +
+  geom_violin() +
   scale_y_continuous(limits=c(0,1)) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 
-    ## Warning: Removed 4 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 4 rows containing non-finite values (stat_ydensity).
 
 ![](datanotebook_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-6-1.png)
 
@@ -1188,9 +1194,140 @@ maingroupHearingNoviceASL:directionreversed
 </tr>
 </tbody>
 </table>
-Eye Data
---------
+One more thing I just remembered. What if a reviewer asks if Group 1 differed from Group 2 (in other words, was there an effect of stimulus order)? Easy to do now that our data is nicely organized (or "tidy").
 
-To come!
+``` r
+acc.lm.order <- lm(data=data, acc ~ videogroup)
+kable(tidy(summary(acc.lm.order)),digits=4)
+```
 
-Here, I need to write some text about why we made the adult AOIs the way they are. And maybe do a secondary analysis combining upperchest+middlechest and belly+lowerchest to larger AOIs.
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+term
+</th>
+<th style="text-align:right;">
+estimate
+</th>
+<th style="text-align:right;">
+std.error
+</th>
+<th style="text-align:right;">
+statistic
+</th>
+<th style="text-align:right;">
+p.value
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+(Intercept)
+</td>
+<td style="text-align:right;">
+0.7461
+</td>
+<td style="text-align:right;">
+0.0142
+</td>
+<td style="text-align:right;">
+52.5216
+</td>
+<td style="text-align:right;">
+0.0000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+videogroupGroup 2
+</td>
+<td style="text-align:right;">
+0.0412
+</td>
+<td style="text-align:right;">
+0.0199
+</td>
+<td style="text-align:right;">
+2.0726
+</td>
+<td style="text-align:right;">
+0.0396
+</td>
+</tr>
+</tbody>
+</table>
+Yikes. Group has an significant effect (p = 0.0396). On average they perform 4% better than Group 1. What's going on here...let's chart it.
+
+``` r
+ggplot(data, aes(x=videogroup, y=acc, fill=videogroup)) + 
+#  geom_point(position="jitter") +
+  geom_violin() +
+  geom_jitter(width=.3)
+```
+
+    ## Warning: Removed 4 rows containing non-finite values (stat_ydensity).
+
+    ## Warning: Removed 4 rows containing missing values (geom_point).
+
+![](datanotebook_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-15-1.png)
+
+So Group 1 has a lot more bad test results compared to Group 2. But maybe that's a good reason to be using mixed models, and we can account for that by allowing subjects and items (and item order, by definition...I think) to vary randomly.
+
+Eye Gaze Data
+-------------
+
+These are our current AOIs. 1. Forehead (above eyes) 2. Eyes 3. Mouth 4. Chin (below chin) 5. Upper Chest 6. Middle Chest 7. Lower Chest 8. Belly 9. Left 10. Right
+
+It's possible to do a secondary analysis combining some of these AOIs (in particular, maybe 5-6 and 7-8 can be combined into Torso Upper Half and Torso Lower Half). Anyway, the face AOIs are important, and the division of them into 4 areas is theoretically motivated and also previously seen in the literature.
+
+*Why 4 AOIs on Face?* Emmorey et al. (2008) did this same setup. We generally know people fixate on the face across all conditions and langauge experiences, but **where** on the face is important for us to know. So these 4 AOIs.
+
+*Why 4 AOIs for Torso?* At the same time, all papers, tend to just classify the body as "body" with no further breakdown, or two-part breakdown. We know there is a lot of different things happening in that area for signers, too, plus we're lookina at CHILDREN with different language experiences, so they may be interested in different things than adults. So just makes sense to break down body into different regions.
+
+### Face AOIs
+
+Let's visualize first of all.
+
+``` r
+# Reduce dataset to face AOIs only
+data.face <- select(data,-upperchest,-midchest,-lowerchest,-belly,-left,-right)
+# Reshape data so we can easily facet our charts based on face AOIs
+data.face <- data.face %>% gather(aoi,looking,forehead:chin)
+# Graph!
+ggplot(data.face,aes(x=maingroup,y=looking,fill=direction)) +
+  geom_boxplot() +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) +
+  facet_wrap("aoi")
+```
+
+    ## Warning: Removed 192 rows containing non-finite values (stat_boxplot).
+
+![](datanotebook_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-16-1.png) Okay, right away I see some issues - I want to check for outliers but I'm not sure what could count as an outlier. All 4 stories are different lengths - 30 seconds would be fine for King Midas (0:37) but impossible for Red Riding Hood (0:18) so outliers need to be *relative* to the story length itself. Let's back up and do histograms for each story.
+
+``` r
+ggplot(data.face,aes(x=looking)) +
+  geom_histogram(binwidth=1) +
+  facet_wrap("story")
+```
+
+    ## Warning: Removed 192 rows containing non-finite values (stat_bin).
+
+![](datanotebook_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-17-1.png) Loooks good but I see weird outliers for Cinderella and Red Riding Hood - those single data points are way out past the video length (and that's just the face AOIs!). Let's sum up *all* AOIs across each story for each participant...back to the big dataset, and we'll do histograms again.
+
+``` r
+aoisum <- data %>%
+  group_by(id,story) %>%
+  summarize(total = sum(forehead,eyes,mouth,chin,upperchest,
+                     midchest,lowerchest,belly,left,right,na.rm=TRUE)) %>%
+  arrange(story)
+ggplot(aoisum,aes(x=total)) +
+  geom_histogram(binwidth=1) +
+  facet_wrap("story")
+```
+
+![](datanotebook_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-18-1.png) Okay, we see two issues: 1. Some barely watched the story at all. We should remove those. 2. A few watched the story longer than the video length itself. Those should be investigated.
+
+<!-- acc.lm <- lmer(data=data, acc ~ maingroup*direction + (direction|id) + (1|story)) -->
+<!-- summary(acc.lm) -->
