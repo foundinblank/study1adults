@@ -1,6 +1,6 @@
-#Welcome! :sunglasses:
+# Welcome! :sunglasses:
 
-##Here we're going to divide this into different "data notebooks" listed below:
+## Here we're going to divide this into different "data notebooks" listed below:
 
 1. Importing and Organizing Data
 1. Story Comprehension Analysis
