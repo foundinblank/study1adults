@@ -1,3 +1,7 @@
+---
+layout: default
+---
+
 # Welcome to study1adults! 
 *Adam Stone, PhD*  
 *Research Supervisor: Dr. Rain Bosworth*  
