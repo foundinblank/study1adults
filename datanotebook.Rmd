@@ -404,7 +404,7 @@ ggplot(data,aes(x=total)) +
 ```
 The tall bars are near the end of the story, right? So we see two issues: 
 1. Some barely watched the story at all. (Those are the ones with bars at or near zero). We should remove those. We need a rule for it. 
-2. A few people's AOI data has total seconds higher than the video itself! (Those are the ones with very short bars to the right of the very tall bars.) Those should be investigated, something went wrong in the data. 
+1. A few people's AOI data has total seconds higher than the video itself! (Those are the ones with very short bars to the right of the very tall bars.) Those should be investigated, something went wrong in the data. 
 
 I'll highlight those rows that's for #2 and send to Rain to look at.  
 
@@ -458,6 +458,16 @@ lowlookingid <- filter(data,quarter==FALSE) %>%
   arrange(participant)
 write.csv(lowlookingid, file="lessthan25.csv")
 select(lowlookingid,-participant)
+```
+
+```{r}
+ggplot(filter(data,direction=="reversed"),aes(x=aoasl,y=acc)) +
+  geom_point() +
+  geom_smooth(method="lm")
+```
+```{r}
+aoa.model <- lm(acc ~ aoasl, data=filter(data,direction=="reversed"))
+summary(aoa.model)
 ```
 
 
