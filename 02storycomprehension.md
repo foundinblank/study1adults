@@ -1,4 +1,4 @@
-study1adults Story Comprehension Analysis
+Story Comprehension Analysis (study1adults)
 ================
 Adam Stone, PhD
 09-05-2017

@@ -1,5 +1,5 @@
 ---
-title: "study1adults Data Import"
+title: "Data Import & Cleaning (study1adults)"
 author: "Adam Stone, PhD" 
 date: '`r format(Sys.Date(), "%m-%d-%Y")`'
 #date: "September 4, 2017"

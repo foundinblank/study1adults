@@ -1,10 +1,11 @@
-study1adults Data Import
+Data Import & Cleaning (study1adults)
 ================
 Adam Stone, PhD
 09-05-2017
 
 -   [Importing and Reshaping Data](#importing-and-reshaping-data)
 -   [Participant Demographics](#participant-demographics)
+-   [Save the dataset for further analysis](#save-the-dataset-for-further-analysis)
 
 Importing and Reshaping Data
 ============================
@@ -369,4 +370,13 @@ NativeDeaf
 </table>
 ``` r
 #groupmeans
+```
+
+Save the dataset for further analysis
+=====================================
+
+We'll save this nice clean dataset now and call it `cleandata.csv`.
+
+``` r
+write.csv(data,"cleandata.csv",row.names=FALSE)
 ```
