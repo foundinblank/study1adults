@@ -1,17 +1,14 @@
-Story Comprehension Analysis (study1adults)
+Lexical Recall Analysis (study1adults)
 ================
 Adam Stone, PhD
-09-05-2017
+09-06-2017
 
--   [Picking up where we left off](#picking-up-where-we-left-off)
+-   [Re-Initializing](#re-initializing)
 -   [Analysis by Groups](#analysis-by-groups)
 -   [AOA Modeling](#aoa-modeling)
--   [This below needs to be moved into 03eyegaze](#this-below-needs-to-be-moved-into-03eyegaze)
--   [Eye Gaze Data](#eye-gaze-data)
-    -   [Face AOIs (for Rain to look at)](#face-aois-for-rain-to-look-at)
 
-Picking up where we left off
-----------------------------
+Re-Initializing
+===============
 
 This assumes you've already done 01dataimportclean and so there'll be a nice new .csv file to re-import here. Also we gotta import all the libraries again.
 
@@ -127,7 +124,7 @@ ggplot(data,aes(maingroup,acc,fill=direction)) +
 
     ## Warning: Removed 4 rows containing non-finite values (stat_ydensity).
 
-![](02storycomprehension_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-2-1.png)
+![](02lexicalrecall_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-2-1.png)
 
 ``` r
 # Error bar chart
@@ -138,7 +135,7 @@ ggplot(accdata,aes(maingroup,acc.mean,color=direction)) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 
-![](02storycomprehension_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-3-1.png)
+![](02lexicalrecall_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-3-1.png)
 
 Let's test for statistical significance. A simple ANOVA tell us there is a main effect of group and direction, but no interactions.
 
@@ -616,7 +613,7 @@ ggplot(accdata2,aes(maingroup,acc.mean,color=direction)) +
 
     ## Warning: Removed 3 rows containing missing values (geom_errorbar).
 
-![](02storycomprehension_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-1.png)
+![](02lexicalrecall_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-1.png)
 
 Boy! Seems King Midas had a strong reversal effect, while Red Riding Hood had a weak reversal effect. Maybe we should put those in as random effects variables in a mixed model, along with participants too. With mixed models, you define predictor variables (what we're interested in; aka, fixed effects) and grouping (what we're not interested in, aka, random effects). This is overkill for simple accuracy data but this will help set us up for eye tracking analysis and **importantly reviewers may ask us about item-level effects given we have just 4 stories.**
 
@@ -1004,7 +1001,7 @@ ggplot(data, aes(x=videogroup, y=acc, fill=videogroup)) +
 
     ## Warning: Removed 4 rows containing missing values (geom_point).
 
-![](02storycomprehension_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-11-1.png)
+![](02lexicalrecall_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-11-1.png)
 
 So Group 1 has a lot more bad test results compared to Group 2. But maybe that's a good reason to be using mixed models, and we can account for that by allowing subjects and items (and item order, by definition...I think) to vary randomly.
 
@@ -1023,7 +1020,7 @@ ggplot(filter(data,direction=="reversed"),aes(x=aoasl,y=acc)) +
 
     ## Warning: Removed 2 rows containing missing values (geom_point).
 
-![](02storycomprehension_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-12-1.png)
+![](02lexicalrecall_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-12-1.png)
 
 ``` r
 aoa.model <- lm(acc ~ aoasl, data=filter(data,direction=="reversed"))
@@ -1049,158 +1046,6 @@ summary(aoa.model)
     ##   (2 observations deleted due to missingness)
     ## Multiple R-squared:  0.07369,    Adjusted R-squared:  0.0634 
     ## F-statistic: 7.159 on 1 and 90 DF,  p-value: 0.008859
-
-This below needs to be moved into 03eyegaze
-===========================================
-
-Eye Gaze Data
-=============
-
-These are our current AOIs. 1. Forehead (above eyes) 2. Eyes 3. Mouth 4. Chin (below chin) 5. Upper Chest 6. Middle Chest 7. Lower Chest 8. Belly 9. Left 10. Right
-
-It's possible to do a secondary analysis combining some of these AOIs (in particular, maybe 5-6 and 7-8 can be combined into Torso Upper Half and Torso Lower Half). Anyway, the face AOIs are important, and the division of them into 4 areas is theoretically motivated and also previously seen in the literature.
-
-*Why 4 AOIs on Face?* Emmorey et al. (2008) did this same setup. We generally know people fixate on the face across all conditions and langauge experiences, but **where** on the face is important for us to know. So these 4 AOIs.
-
-*Why 4 AOIs for Torso?* At the same time, all papers, tend to just classify the body as "body" with no further breakdown, or two-part breakdown. We know there is a lot of different things happening in that area for signers, too, plus we're lookina at CHILDREN with different language experiences, so they may be interested in different things than adults. So just makes sense to break down body into different regions.
-
-Face AOIs (for Rain to look at)
--------------------------------
-
-Let's visualize first of all.
-
-``` r
-# Reduce dataset to face AOIs only
-data.face <- select(data,-upperchest,-midchest,-lowerchest,-belly,-left,-right)
-# Reshape data so we can easily facet our charts based on face AOIs
-data.face <- data.face %>% gather(aoi,looking,forehead:chin)
-# Graph!
-ggplot(data.face,aes(x=maingroup,y=looking,fill=direction)) +
-  geom_boxplot() +
-  theme(axis.text.x=element_text(angle=45,hjust=1)) +
-  facet_wrap("aoi")
-```
-
-    ## Warning: Removed 192 rows containing non-finite values (stat_boxplot).
-
-![](02storycomprehension_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-14-1.png) Okay, right away I see some issues - I want to check for outliers but I'm not sure what could count as an outlier. All 4 stories are different lengths - a data point at 30 seconds would be fine for King Midas (0:37) but impossible for Red Riding Hood (0:18) so outliers need to be *relative* to the story length itself. Let's back up and do histograms for each story.
-
-``` r
-ggplot(data.face,aes(x=looking)) +
-  geom_histogram(binwidth=1) +
-  facet_wrap("story") +
-  xlab("secs") +
-  ggtitle("Face AOI sums for each story for each participant")
-```
-
-    ## Warning: Removed 192 rows containing non-finite values (stat_bin).
-
-![](02storycomprehension_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-15-1.png) Loooks good but I see weird outliers for Cinderella and Red Riding Hood - those single data points are past the video length (and that's just the face AOIs!). Let's sum up *all* AOIs across each story for each participant...back to the big dataset, and we'll do histograms again.
-
-``` r
-data2 <- data %>%
-  group_by(id,story) %>%
-  mutate(total = sum(forehead,eyes,mouth,chin,upperchest,
-                     midchest,lowerchest,belly,left,right,na.rm=TRUE))
-ggplot(data2,aes(x=total)) +
-  geom_histogram(binwidth=1) +
-  facet_wrap("story") +
-  xlab("secs") +
-  ggtitle("Sum of ALL AOIs for each participant for each story")
-```
-
-![](02storycomprehension_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-16-1.png) The tall bars are near the end of the story, right? So we see two issues: 1. Some barely watched the story at all. (Those are the ones with bars at or near zero). We should remove those. We need a rule for it. 1. A few people's AOI data has total seconds higher than the video itself! (Those are the ones with very short bars to the right of the very tall bars.) Those should be investigated, something went wrong in the data.
-
-I'll highlight those rows that's for \#2 and send to Rain to look at.
-
-But maybe a good way for diagnosing problem trials is to look at each AOI for each story, instead of sums of AOIs. Any outliers can be easily seen in the histograms. Let's reshape the data again and generate histograms.
-
-``` r
-data.reshape <- data2 %>% gather(aoi,looking,forehead:total)
-ggplot(data.reshape,aes(x=looking)) +
-  geom_histogram(binwidth=1) +
-  facet_grid(aoi ~ story) +
-  xlab("secs") +
-  ggtitle("Looking times of each AOI for each participant for each story")
-```
-
-    ## Warning: Removed 881 rows containing non-finite values (stat_bin).
-
-![](02storycomprehension_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-17-1.png)
-
-Nohting really huge jumps out except Cinderella/Mouth and that's one of \#2's that I've already marked up for Rain. Maybe Red Riding Hood/Chin but that's also someone I've marked up.
-
-Cool. Now I want to know how many people have really low looking times for each story. We can do this easily. Here's a table for how many have looking time sums that are less than 25% of the story, or less than 50% of the story.
-
-``` r
-# Split into 4 datasets (1 each story)
-data.cinderella <- filter(data2,story == "Cinderella")
-data.goldilocks <- filter(data2,story == "Goldilocks")
-data.kingmidas <- filter(data2,story == "KingMidas")
-data.redridinghood <- filter(data2,story== "RedRidingHood")
-
-# FALSE = less than quarter or total story length
-data.cinderella$quarter <- data.cinderella$total >= 5.5
-data.cinderella$half <- data.cinderella$total >= 11
-data.goldilocks$quarter <- data.goldilocks$total >=  5.25
-data.goldilocks$half <- data.goldilocks$total >= 10.5
-data.kingmidas$quarter <- data.kingmidas$total >= 9.25
-data.kingmidas$half <- data.kingmidas$total >= 18.5
-data.redridinghood$quarter <- data.redridinghood$total >= 4.5
-data.redridinghood$half <- data.redridinghood$total >= 9
-
-# Put it back together
-data2 <- bind_rows(data.cinderella,data.goldilocks,data.kingmidas,data.redridinghood)
-
-# Calculations
-lowlooking <- data2 %>%
-  group_by(story) %>%
-  summarize(lessthan25 = sum(!quarter),
-            lessthan50 = sum(!half),
-            total = sum(!quarter,quarter))
-lowlooking
-```
-
-    ## # A tibble: 4 x 4
-    ##           story lessthan25 lessthan50 total
-    ##          <fctr>      <int>      <int> <int>
-    ## 1    Cinderella          5          9    47
-    ## 2    Goldilocks          6          6    47
-    ## 3     KingMidas          4          7    47
-    ## 4 RedRidingHood          5          7    47
-
-``` r
-lowlookingid <- filter(data2,quarter==FALSE) %>% 
-  ungroup() %>%
-  select(id,participant,hearing,videogroup,story,direction,total) %>%
-  arrange(participant)
-write.csv(lowlookingid, file="lessthan25.csv")
-select(lowlookingid,-participant)
-```
-
-    ## # A tibble: 20 x 6
-    ##       id hearing videogroup         story direction total
-    ##    <int>  <fctr>     <fctr>        <fctr>    <fctr> <dbl>
-    ##  1     8    Deaf    Group 2    Cinderella   forward  0.00
-    ##  2     8    Deaf    Group 2    Goldilocks  reversed  0.00
-    ##  3     8    Deaf    Group 2     KingMidas  reversed  0.00
-    ##  4     8    Deaf    Group 2 RedRidingHood   forward  0.00
-    ##  5    10    Deaf    Group 1    Cinderella  reversed  0.00
-    ##  6    10    Deaf    Group 1    Goldilocks   forward  0.00
-    ##  7    10    Deaf    Group 1     KingMidas   forward  0.00
-    ##  8    10    Deaf    Group 1 RedRidingHood  reversed  0.00
-    ##  9    32 Hearing    Group 2    Goldilocks  reversed  4.08
-    ## 10    31 Hearing    Group 2    Cinderella   forward  4.73
-    ## 11     6    Deaf    Group 1    Cinderella  reversed  0.00
-    ## 12     6    Deaf    Group 1    Goldilocks   forward  0.00
-    ## 13     6    Deaf    Group 1 RedRidingHood  reversed  3.80
-    ## 14     5    Deaf    Group 1     KingMidas   forward  2.91
-    ## 15     5    Deaf    Group 1 RedRidingHood  reversed  1.96
-    ## 16    25    Deaf    Group 2    Goldilocks  reversed  4.62
-    ## 17     7    Deaf    Group 1    Cinderella  reversed  0.81
-    ## 18     7    Deaf    Group 1     KingMidas   forward  6.84
-    ## 19    30 Hearing    Group 1    Goldilocks   forward  2.56
-    ## 20    17    Deaf    Group 1 RedRidingHood  reversed  0.52
 
 <!-- acc.lm <- lmer(data=data, acc ~ maingroup*direction + (direction|id) + (1|story)) -->
 <!-- summary(acc.lm) -->

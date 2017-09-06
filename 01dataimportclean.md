@@ -1,7 +1,7 @@
 Data Import & Cleaning (study1adults)
 ================
 Adam Stone, PhD
-09-05-2017
+09-06-2017
 
 -   [Importing and Reshaping Data](#importing-and-reshaping-data)
 -   [Participant Demographics](#participant-demographics)
@@ -380,3 +380,5 @@ We'll save this nice clean dataset now and call it `cleandata.csv`.
 ``` r
 write.csv(data,"cleandata.csv",row.names=FALSE)
 ```
+
+Happy? You can proceed to [Lexical Recall Analysis](02lexicalrecall.nb.html) or [Eye Gaze Analysis](03eyegaze.nb.html).
