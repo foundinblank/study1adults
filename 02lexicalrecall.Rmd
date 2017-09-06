@@ -18,7 +18,7 @@ output:
 ---
 
 # Re-Initializing
-This assumes you've already done 01dataimportclean and so there'll be a nice new .csv file to re-import here. Also we gotta import all the libraries again. 
+This assumes you've already done [01dataimportclean](01dataimportclean.nb.html) and so there'll be a nice new .csv file to re-import here. Also we gotta import all the libraries again. 
 ```{r}
 # Import packages we'll need.
 library(tidyverse)
@@ -70,7 +70,7 @@ data <- data %>%
 
 
 # Analysis by Groups
-And accuracy violins and error bar charts for forward vs. backward stories. 
+Lexical recall accuracy violins and error bar charts for forward vs. backward stories. 
 ```{r}
 # Summarizing means and SDs
 accdata <- data %>%
@@ -79,7 +79,7 @@ accdata <- data %>%
   summarize(acc.mean = mean(acc, na.rm=TRUE),
             acc.sd = sd(acc, na.rm=TRUE))
 
-#Boxplot
+#Violin plot
 ggplot(data,aes(maingroup,acc,fill=direction)) + 
   geom_violin() +
   scale_y_continuous(limits=c(0,1)) +

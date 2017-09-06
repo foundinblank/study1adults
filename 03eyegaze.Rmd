@@ -18,7 +18,7 @@ output:
 ---
 
 # Re-Initializing
-This assumes you've already done 01dataimportclean and so there'll be a nice new .csv file to re-import here. Also we gotta import all the libraries again. This shouldn't depend on anything we did for 02 Lexical Recall Analysis. 
+This assumes you've already done [01dataimportclean](01dataimportclean.nb.html) and so there'll be a nice new .csv file to re-import here. Also we gotta import all the libraries again. This shouldn't depend on anything we did for 02 Lexical Recall Analysis. 
 ```{r}
 # Import packages we'll need.
 library(tidyverse)

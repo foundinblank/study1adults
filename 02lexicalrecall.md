@@ -105,7 +105,7 @@ data <- data %>%
 Analysis by Groups
 ==================
 
-And accuracy violins and error bar charts for forward vs. backward stories.
+Lexical recall accuracy violins and error bar charts for forward vs. backward stories.
 
 ``` r
 # Summarizing means and SDs
@@ -115,7 +115,7 @@ accdata <- data %>%
   summarize(acc.mean = mean(acc, na.rm=TRUE),
             acc.sd = sd(acc, na.rm=TRUE))
 
-#Boxplot
+#Violin plot
 ggplot(data,aes(maingroup,acc,fill=direction)) + 
   geom_violin() +
   scale_y_continuous(limits=c(0,1)) +

@@ -100,14 +100,13 @@ select(data,-participant)
 Remove dropped participants (they have no main group name, or no data). These are who we dropped. 
 
 ```{r, message=FALSE, warning=FALSE}
-dropped <- filter(data, is.na(maingroup)==TRUE)
+nodata <- filter(data, is.na(maingroup)==TRUE)
 manual <- filter(data,participant=="Lucinda" | participant=="Joe")
-dropped <- rbind(dropped,manual) %>% arrange(id)
+dropped <- rbind(nodata,manual) %>% arrange(id)
 data <- data %>%
-  filter(is.na(maingroup)==FALSE) %>% 
-  filter(participant!="Lucinda" & participant!="Joe")
+  anti_join(dropped)
 #kable(select(dropped,participant,maingroup,age)) %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"), full_width = F, position = "left")
-select(data,-participant)
+select(dropped,-participant)
 ```
 
 Now we'll reshape the data. Based on Rain's UNM talk, this is what Group 1 & 2 saw:
