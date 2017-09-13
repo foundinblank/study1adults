@@ -100,13 +100,17 @@ select(data,-participant)
 Remove dropped participants (they have no main group name, or no data). These are who we dropped. 
 
 ```{r, message=FALSE, warning=FALSE}
-nodata <- filter(data, is.na(maingroup)==TRUE)
-manual <- filter(data,participant=="Lucinda" | participant=="Joe")
+# Removes those with no maingroup name
+nodata <- filter(data, is.na(maingroup)==TRUE) 
+# Removes those with no data
+manual <- filter(data,participant=="Lucinda" | participant=="Joe" | participant=="Cathy") 
+# Make table of all dropped participants
 dropped <- rbind(nodata,manual) %>% arrange(id)
 data <- data %>%
   anti_join(dropped)
 #kable(select(dropped,participant,maingroup,age)) %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"), full_width = F, position = "left")
-select(dropped,-participant)
+#select(dropped,-participant)
+dropped
 ```
 
 Now we'll reshape the data. Based on Rain's UNM talk, this is what Group 1 & 2 saw:
@@ -214,7 +218,7 @@ group2 <- mutate(group2,direction = ifelse(video == "fw1","forward",
 data <- rbind(group1,group2)
 data <- arrange(data,id,video)
 
-# Convert some columns to factors
+# Convert some columns to factors, reorder columns, and calculate totals
 data <- data %>%
   mutate(hearing = as.factor(hearing)) %>%
   mutate(videogroup = as.factor(videogroup)) %>%
@@ -226,7 +230,11 @@ data <- data %>%
   mutate(direction = as.factor(direction)) %>%
   select(id,participant,hearing,videogroup,aoagroup,languagegroup,maingroup,video,story,
          direction,age,selfrate,signyrs,aoasl,acc,forehead,eyes,mouth,chin,upperchest,
-         midchest,lowerchest,belly,left,right)
+         midchest,lowerchest,belly,left,right) %>%
+  group_by(id,story) %>%
+  mutate(total = sum(forehead,eyes,mouth,chin,upperchest,
+                     midchest,lowerchest,belly,left,right,na.rm=TRUE)) %>%
+  ungroup()
 
 ```
 Here's the final, "cleaned-up" dataset that we're going to use for all further analysis. Just the first 10 rows. Notice that there are now story and direction columns, and AOI-only columns, and each participant has 4 observation rows (one observation per story). So, more rows, less columns.  

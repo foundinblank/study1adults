@@ -54,7 +54,8 @@ data <- read_csv('cleandata.csv',col_types =
                         lowerchest = col_double(),
                         belly = col_double(),
                         left = col_double(),
-                        right = col_double()
+                        right = col_double(),
+                        total = col_double()
                    ))
 # And factorize
 data <- data %>%
@@ -111,11 +112,11 @@ ggplot(data.face,aes(x=looking)) +
 ```
 Loooks good but I see weird outliers for Cinderella and Red Riding Hood - those single data points are past the video length (and that's just the face AOIs!). Let's sum up *all* AOIs across each story for each participant...back to the big dataset, and we'll do histograms again.
 ```{r}
-data2 <- data %>%
-  group_by(id,story) %>%
-  mutate(total = sum(forehead,eyes,mouth,chin,upperchest,
-                     midchest,lowerchest,belly,left,right,na.rm=TRUE))
-ggplot(data2,aes(x=total)) +
+# data2 <- data %>%
+#   group_by(id,story) %>%
+#   mutate(total = sum(forehead,eyes,mouth,chin,upperchest,
+#                      midchest,lowerchest,belly,left,right,na.rm=TRUE))
+ggplot(data,aes(x=total)) +
   geom_histogram(binwidth=1) +
   facet_wrap("story") +
   xlab("secs") +
@@ -130,7 +131,7 @@ I'll highlight those rows that's for #2 and send to Rain to look at.
 But maybe a good way for diagnosing problem trials is to look at each AOI for each story, instead of sums of AOIs. Any outliers can be easily seen in the histograms. Let's reshape the data again and generate histograms. 
  
 ```{r fig.width = 12, fig.height = 12}
-data.reshape <- data2 %>% gather(aoi,looking,forehead:total)
+data.reshape <- data %>% gather(aoi,looking,forehead:total)
 ggplot(data.reshape,aes(x=looking)) +
   geom_histogram(binwidth=1) +
   facet_grid(aoi ~ story) +
@@ -143,10 +144,10 @@ Nohting really huge jumps out except Cinderella/Mouth and that's one of #2's tha
 Cool. Now I want to know how many people have really low looking times for each story. We can do this easily. Here's a table for how many have looking time sums that are less than 25% of the story, or less than 50% of the story.
 ```{r}
 # Split into 4 datasets (1 each story)
-data.cinderella <- filter(data2,story == "Cinderella")
-data.goldilocks <- filter(data2,story == "Goldilocks")
-data.kingmidas <- filter(data2,story == "KingMidas")
-data.redridinghood <- filter(data2,story== "RedRidingHood")
+data.cinderella <- filter(data,story == "Cinderella")
+data.goldilocks <- filter(data,story == "Goldilocks")
+data.kingmidas <- filter(data,story == "KingMidas")
+data.redridinghood <- filter(data,story== "RedRidingHood")
 
 # FALSE = less than quarter or total story length
 data.cinderella$quarter <- data.cinderella$total >= 5.5

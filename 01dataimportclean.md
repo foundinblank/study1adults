@@ -1,7 +1,7 @@
 Data Import & Cleaning (study1adults)
 ================
 Adam Stone, PhD
-09-06-2017
+09-13-2017
 
 -   [Importing and Reshaping Data](#importing-and-reshaping-data)
 -   [Participant Demographics](#participant-demographics)
@@ -43,30 +43,29 @@ Here we're going to import the data, remove dropped participants, and reshape th
 Remove dropped participants (they have no main group name, or no data). These are who we dropped.
 
 ``` r
-dropped <- filter(data, is.na(maingroup)==TRUE)
-manual <- filter(data,participant=="Lucinda" | participant=="Joe")
-dropped <- rbind(dropped,manual) %>% arrange(id)
+# Removes those with no maingroup name
+nodata <- filter(data, is.na(maingroup)==TRUE) 
+# Removes those with no data
+manual <- filter(data,participant=="Lucinda" | participant=="Joe" | participant=="Cathy") 
+# Make table of all dropped participants
+dropped <- rbind(nodata,manual) %>% arrange(id)
 data <- data %>%
-  filter(is.na(maingroup)==FALSE) %>% 
-  filter(participant!="Lucinda" & participant!="Joe")
+  anti_join(dropped)
 #kable(select(dropped,participant,maingroup,age)) %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"), full_width = F, position = "left")
-select(data,-participant)
+#select(dropped,-participant)
+dropped
 ```
 
-    ## # A tibble: 47 x 54
-    ##       id hearing videogroup aoagroup languagegroup    maingroup selfrate
-    ##    <int>   <chr>      <chr>    <chr>         <chr>        <chr>    <dbl>
-    ##  1     1    Deaf    Group 1    Early      EarlyASL DeafEarlyASL        5
-    ##  2     2    Deaf    Group 1    Early      EarlyASL DeafEarlyASL        5
-    ##  3     3    Deaf    Group 2    Early      EarlyASL DeafEarlyASL        5
-    ##  4     4    Deaf    Group 2    Early      EarlyASL DeafEarlyASL        5
-    ##  5     5    Deaf    Group 1    Early      EarlyASL DeafEarlyASL        5
-    ##  6     6    Deaf    Group 1    Early      EarlyASL DeafEarlyASL        5
-    ##  7     7    Deaf    Group 1    Early      EarlyASL DeafEarlyASL        5
-    ##  8     8    Deaf    Group 2    Early      EarlyASL DeafEarlyASL        5
-    ##  9     9    Deaf    Group 2    Early       LateASL  DeafLateASL        5
-    ## 10    10    Deaf    Group 1    Early       LateASL  DeafLateASL        5
-    ## # ... with 37 more rows, and 47 more variables: age <dbl>, signyrs <dbl>,
+    ## # A tibble: 6 x 55
+    ##      id participant hearing videogroup aoagroup languagegroup    maingroup
+    ##   <int>       <chr>   <chr>      <chr>    <chr>         <chr>        <chr>
+    ## 1     8       Cathy    Deaf    Group 2    Early      EarlyASL DeafEarlyASL
+    ## 2    14         Joe    Deaf    Group 2    Early       LateASL  DeafLateASL
+    ## 3    23     Lucinda    Deaf    Group 2   Native        Native   NativeDeaf
+    ## 4    27       Megan Hearing    Group 2     Late      EarlyASL         <NA>
+    ## 5    40      Dustin Hearing    Group 2   Native        Native         <NA>
+    ## 6    41         Dan Hearing    Group 1   Native        Native         <NA>
+    ## # ... with 48 more variables: selfrate <dbl>, age <dbl>, signyrs <dbl>,
     ## #   aoasl <int>, acc.fw1 <dbl>, acc.rv2 <dbl>, acc.fw3 <dbl>,
     ## #   acc.rv4 <dbl>, forehead.fw1 <dbl>, forehead.fw3 <dbl>,
     ## #   forehead.rv2 <dbl>, forehead.rv4 <dbl>, eyes.fw1 <dbl>,
@@ -185,7 +184,7 @@ group2 <- mutate(group2,direction = ifelse(video == "fw1","forward",
 data <- rbind(group1,group2)
 data <- arrange(data,id,video)
 
-# Convert some columns to factors
+# Convert some columns to factors, reorder columns, and calculate totals
 data <- data %>%
   mutate(hearing = as.factor(hearing)) %>%
   mutate(videogroup = as.factor(videogroup)) %>%
@@ -197,7 +196,11 @@ data <- data %>%
   mutate(direction = as.factor(direction)) %>%
   select(id,participant,hearing,videogroup,aoagroup,languagegroup,maingroup,video,story,
          direction,age,selfrate,signyrs,aoasl,acc,forehead,eyes,mouth,chin,upperchest,
-         midchest,lowerchest,belly,left,right)
+         midchest,lowerchest,belly,left,right) %>%
+  group_by(id,story) %>%
+  mutate(total = sum(forehead,eyes,mouth,chin,upperchest,
+                     midchest,lowerchest,belly,left,right,na.rm=TRUE)) %>%
+  ungroup()
 ```
 
 Here's the final, "cleaned-up" dataset that we're going to use for all further analysis. Just the first 10 rows. Notice that there are now story and direction columns, and AOI-only columns, and each participant has 4 observation rows (one observation per story). So, more rows, less columns.
@@ -207,7 +210,7 @@ Here's the final, "cleaned-up" dataset that we're going to use for all further a
 select(data,-participant)
 ```
 
-    ## # A tibble: 188 x 24
+    ## # A tibble: 184 x 25
     ##       id hearing videogroup aoagroup languagegroup    maingroup  video
     ##    <int>  <fctr>     <fctr>   <fctr>        <fctr>       <fctr> <fctr>
     ##  1     1    Deaf    Group 1    Early      EarlyASL DeafEarlyASL    fw1
@@ -220,11 +223,11 @@ select(data,-participant)
     ##  8     2    Deaf    Group 1    Early      EarlyASL DeafEarlyASL    rv4
     ##  9     3    Deaf    Group 2    Early      EarlyASL DeafEarlyASL    fw1
     ## 10     3    Deaf    Group 2    Early      EarlyASL DeafEarlyASL    fw3
-    ## # ... with 178 more rows, and 17 more variables: story <fctr>,
+    ## # ... with 174 more rows, and 18 more variables: story <fctr>,
     ## #   direction <fctr>, age <dbl>, selfrate <dbl>, signyrs <dbl>,
     ## #   aoasl <int>, acc <dbl>, forehead <dbl>, eyes <dbl>, mouth <dbl>,
     ## #   chin <dbl>, upperchest <dbl>, midchest <dbl>, lowerchest <dbl>,
-    ## #   belly <dbl>, left <dbl>, right <dbl>
+    ## #   belly <dbl>, left <dbl>, right <dbl>, total <dbl>
 
 Participant Demographics
 ========================
@@ -271,19 +274,19 @@ aoasl
 DeafEarlyASL
 </td>
 <td style="text-align:right;">
-8
+7
 </td>
 <td style="text-align:right;">
-35.4
+34.9
 </td>
 <td style="text-align:right;">
 5.0
 </td>
 <td style="text-align:right;">
-29.8
+29.7
 </td>
 <td style="text-align:right;">
-5.6
+5.1
 </td>
 </tr>
 <tr>

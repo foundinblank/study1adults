@@ -1,7 +1,7 @@
 Eye Gaze Analysis (study1adults)
 ================
 Adam Stone, PhD
-09-06-2017
+09-13-2017
 
 -   [Re-Initializing](#re-initializing)
 -   [AOIs](#aois)
@@ -10,7 +10,7 @@ Adam Stone, PhD
 Re-Initializing
 ===============
 
-This assumes you've already done 01dataimportclean and so there'll be a nice new .csv file to re-import here. Also we gotta import all the libraries again. This shouldn't depend on anything we did for 02 Lexical Recall Analysis.
+This assumes you've already done [01dataimportclean](01dataimportclean.nb.html) and so there'll be a nice new .csv file to re-import here. Also we gotta import all the libraries again. This shouldn't depend on anything we did for 02 Lexical Recall Analysis.
 
 ``` r
 # Import packages we'll need.
@@ -88,7 +88,8 @@ data <- read_csv('cleandata.csv',col_types =
                         lowerchest = col_double(),
                         belly = col_double(),
                         left = col_double(),
-                        right = col_double()
+                        right = col_double(),
+                        total = col_double()
                    ))
 # And factorize
 data <- data %>%
@@ -130,7 +131,7 @@ ggplot(data.face,aes(x=maingroup,y=looking,fill=direction)) +
   facet_wrap("aoi")
 ```
 
-    ## Warning: Removed 192 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 157 rows containing non-finite values (stat_boxplot).
 
 ![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-2-1.png) Okay, right away I see some issues - I want to check for outliers but I'm not sure what could count as an outlier. All 4 stories are different lengths - a data point at 30 seconds would be fine for King Midas (0:37) but impossible for Red Riding Hood (0:18) so outliers need to be *relative* to the story length itself. Let's back up and do histograms for each story.
 
@@ -142,16 +143,16 @@ ggplot(data.face,aes(x=looking)) +
   ggtitle("Face AOI sums for each story for each participant")
 ```
 
-    ## Warning: Removed 192 rows containing non-finite values (stat_bin).
+    ## Warning: Removed 157 rows containing non-finite values (stat_bin).
 
 ![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-3-1.png) Loooks good but I see weird outliers for Cinderella and Red Riding Hood - those single data points are past the video length (and that's just the face AOIs!). Let's sum up *all* AOIs across each story for each participant...back to the big dataset, and we'll do histograms again.
 
 ``` r
-data2 <- data %>%
-  group_by(id,story) %>%
-  mutate(total = sum(forehead,eyes,mouth,chin,upperchest,
-                     midchest,lowerchest,belly,left,right,na.rm=TRUE))
-ggplot(data2,aes(x=total)) +
+# data2 <- data %>%
+#   group_by(id,story) %>%
+#   mutate(total = sum(forehead,eyes,mouth,chin,upperchest,
+#                      midchest,lowerchest,belly,left,right,na.rm=TRUE))
+ggplot(data,aes(x=total)) +
   geom_histogram(binwidth=1) +
   facet_wrap("story") +
   xlab("secs") +
@@ -165,7 +166,7 @@ I'll highlight those rows that's for \#2 and send to Rain to look at.
 But maybe a good way for diagnosing problem trials is to look at each AOI for each story, instead of sums of AOIs. Any outliers can be easily seen in the histograms. Let's reshape the data again and generate histograms.
 
 ``` r
-data.reshape <- data2 %>% gather(aoi,looking,forehead:total)
+data.reshape <- data %>% gather(aoi,looking,forehead:total)
 ggplot(data.reshape,aes(x=looking)) +
   geom_histogram(binwidth=1) +
   facet_grid(aoi ~ story) +
@@ -173,7 +174,7 @@ ggplot(data.reshape,aes(x=looking)) +
   ggtitle("Looking times of each AOI for each participant for each story")
 ```
 
-    ## Warning: Removed 881 rows containing non-finite values (stat_bin).
+    ## Warning: Removed 812 rows containing non-finite values (stat_bin).
 
 ![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-5-1.png)
 
@@ -183,10 +184,10 @@ Cool. Now I want to know how many people have really low looking times for each 
 
 ``` r
 # Split into 4 datasets (1 each story)
-data.cinderella <- filter(data2,story == "Cinderella")
-data.goldilocks <- filter(data2,story == "Goldilocks")
-data.kingmidas <- filter(data2,story == "KingMidas")
-data.redridinghood <- filter(data2,story== "RedRidingHood")
+data.cinderella <- filter(data,story == "Cinderella")
+data.goldilocks <- filter(data,story == "Goldilocks")
+data.kingmidas <- filter(data,story == "KingMidas")
+data.redridinghood <- filter(data,story== "RedRidingHood")
 
 # FALSE = less than quarter or total story length
 data.cinderella$quarter <- data.cinderella$total >= 5.5
@@ -213,10 +214,10 @@ lowlooking
     ## # A tibble: 4 x 4
     ##           story lessthan25 lessthan50 total
     ##          <fctr>      <int>      <int> <int>
-    ## 1    Cinderella          5          9    47
-    ## 2    Goldilocks          6          6    47
-    ## 3     KingMidas          4          7    47
-    ## 4 RedRidingHood          5          7    47
+    ## 1    Cinderella          4          8    46
+    ## 2    Goldilocks          3          4    46
+    ## 3     KingMidas          3          5    46
+    ## 4 RedRidingHood          3          4    46
 
 ``` r
 lowlookingid <- filter(data2,quarter==FALSE) %>% 
@@ -227,29 +228,22 @@ write.csv(lowlookingid, file="lessthan25.csv")
 select(lowlookingid,-participant)
 ```
 
-    ## # A tibble: 20 x 6
+    ## # A tibble: 13 x 6
     ##       id hearing videogroup         story direction total
     ##    <int>  <fctr>     <fctr>        <fctr>    <fctr> <dbl>
-    ##  1     8    Deaf    Group 2    Cinderella   forward  0.00
-    ##  2     8    Deaf    Group 2    Goldilocks  reversed  0.00
-    ##  3     8    Deaf    Group 2     KingMidas  reversed  0.00
-    ##  4     8    Deaf    Group 2 RedRidingHood   forward  0.00
-    ##  5    10    Deaf    Group 1    Cinderella  reversed  0.00
-    ##  6    10    Deaf    Group 1    Goldilocks   forward  0.00
-    ##  7    10    Deaf    Group 1     KingMidas   forward  0.00
-    ##  8    10    Deaf    Group 1 RedRidingHood  reversed  0.00
-    ##  9    32 Hearing    Group 2    Goldilocks  reversed  4.08
-    ## 10    31 Hearing    Group 2    Cinderella   forward  4.73
-    ## 11     6    Deaf    Group 1    Cinderella  reversed  0.00
-    ## 12     6    Deaf    Group 1    Goldilocks   forward  0.00
-    ## 13     6    Deaf    Group 1 RedRidingHood  reversed  3.80
-    ## 14     5    Deaf    Group 1     KingMidas   forward  2.91
-    ## 15     5    Deaf    Group 1 RedRidingHood  reversed  1.96
-    ## 16    25    Deaf    Group 2    Goldilocks  reversed  4.62
-    ## 17     7    Deaf    Group 1    Cinderella  reversed  0.81
-    ## 18     7    Deaf    Group 1     KingMidas   forward  6.84
-    ## 19    30 Hearing    Group 1    Goldilocks   forward  2.56
-    ## 20    17    Deaf    Group 1 RedRidingHood  reversed  0.52
+    ##  1    10    Deaf    Group 1    Cinderella  reversed  4.62
+    ##  2    10    Deaf    Group 1     KingMidas   forward  2.66
+    ##  3    32 Hearing    Group 2    Goldilocks  reversed  4.08
+    ##  4    31 Hearing    Group 2    Cinderella   forward  4.73
+    ##  5     6    Deaf    Group 1    Cinderella  reversed  4.43
+    ##  6     6    Deaf    Group 1 RedRidingHood  reversed  3.80
+    ##  7     5    Deaf    Group 1     KingMidas   forward  2.91
+    ##  8     5    Deaf    Group 1 RedRidingHood  reversed  1.96
+    ##  9    25    Deaf    Group 2    Goldilocks  reversed  4.62
+    ## 10     7    Deaf    Group 1    Cinderella  reversed  0.81
+    ## 11     7    Deaf    Group 1     KingMidas   forward  6.84
+    ## 12    30 Hearing    Group 1    Goldilocks   forward  2.56
+    ## 13    17    Deaf    Group 1 RedRidingHood  reversed  0.52
 
 You’ll have to decide how to put the AOIs in an ANOVA. All of them together is too many. And you cannot put ALL the AOIs in. If they all sum to 100% (which they currently do), then the observations are not independent. Also, you can’t put AOIs that have near-zero values in with AOIs that have super high values, you’ll get whopping significance that is too obvious to reveal anything meaningful.
 
