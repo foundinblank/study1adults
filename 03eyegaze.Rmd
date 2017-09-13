@@ -88,8 +88,8 @@ It's possible to do a secondary analysis combining some of these AOIs (in partic
 
 *Why 4 AOIs for Torso?* At the same time, all papers, tend to just classify the body as "body" with no further breakdown, or two-part breakdown. We know there is a lot of different things happening in that area for signers, too, plus we're lookina at CHILDREN with different language experiences, so they may be interested in different things than adults. So just makes sense to break down body into different regions. 
 
-# Face AOIs
-Let's visualize first of all. 
+## Data Diagnosing 
+This is my process of documenting how I'm weeding through data and making sure all's good. Let's visualize first of all. 
 ```{r}
 # Reduce dataset to face AOIs only
 data.face <- select(data,-upperchest,-midchest,-lowerchest,-belly,-left,-right)
@@ -110,7 +110,7 @@ ggplot(data.face,aes(x=looking)) +
   xlab("secs") +
   ggtitle("Face AOI sums for each story for each participant")
 ```
-Loooks good but I see weird outliers for Cinderella and Red Riding Hood - those single data points are past the video length (and that's just the face AOIs!). Let's sum up *all* AOIs across each story for each participant...back to the big dataset, and we'll do histograms again.
+Loooks good but I see weird outliers for Red Riding Hood (before Cinderalla too, which I fixed) - those single data points are past the video length (and that's just the face AOIs!). Let's sum up *all* AOIs across each story for each participant...back to the big dataset, and we'll do histograms again.
 ```{r}
 # data2 <- data %>%
 #   group_by(id,story) %>%
@@ -139,7 +139,7 @@ ggplot(data.reshape,aes(x=looking)) +
   ggtitle("Looking times of each AOI for each participant for each story")
 ```
 
-Nohting really huge jumps out except Cinderella/Mouth and that's one of #2's that I've already marked up for Rain. Maybe Red Riding Hood/Chin but that's also someone I've marked up. 
+Need to mark this up. 
 
 Cool. Now I want to know how many people have really low looking times for each story. We can do this easily. Here's a table for how many have looking time sums that are less than 25% of the story, or less than 50% of the story.
 ```{r}
@@ -160,10 +160,10 @@ data.redridinghood$quarter <- data.redridinghood$total >= 4.5
 data.redridinghood$half <- data.redridinghood$total >= 9
 
 # Put it back together
-data2 <- bind_rows(data.cinderella,data.goldilocks,data.kingmidas,data.redridinghood)
+data <- bind_rows(data.cinderella,data.goldilocks,data.kingmidas,data.redridinghood)
 
 # Calculations
-lowlooking <- data2 %>%
+lowlooking <- data %>%
   group_by(story) %>%
   summarize(lessthan25 = sum(!quarter),
             lessthan50 = sum(!half),
@@ -172,7 +172,7 @@ lowlooking
 ```
 
 ```{r rows.print=20}
-lowlookingid <- filter(data2,quarter==FALSE) %>% 
+lowlookingid <- filter(data,quarter==FALSE) %>% 
   ungroup() %>%
   select(id,participant,hearing,videogroup,story,direction,total) %>%
   arrange(participant)
@@ -180,16 +180,134 @@ write.csv(lowlookingid, file="lessthan25.csv")
 select(lowlookingid,-participant)
 ```
 
+So I will filter out the data with <25% looking time. Maybe the threshold should be higher, but we'll revisit that later. 
+```{r}
+originalrows <- nrow(data)
+data <- filter(data,quarter==TRUE)
+difference <- originalrows - nrow(data)
+```
+So `r difference` stories were dropped from the previous total of `r originalrows` stories for a new total of `r nrow(data)` stories. 
 
-You’ll have to decide how to put the AOIs in an ANOVA. All of them together is too many.  And you cannot put ALL the AOIs in.  If they all sum to 100% (which they currently do), then the observations are not independent.     Also, you can’t put AOIs that have near-zero values in with AOIs that have super high values, you’ll get whopping significance that is too obvious to reveal anything meaningful. 
+# Percentage Data Prep and Visualization
+We need to work with percentages, because of participants' idiosyntractic eye behavior. Some blink a lot, some don't, so automatically the maximum number of eye gaze data points each participant is able to contribute is different. For that reason we work with percent of total data points on a per-participant basis. That's also why we took out stories with <25% looking data. Now here's the boxplots for each AOI.
+```{r}
+# data2 uses percentage data!
+data2 <- data %>%
+  mutate_at(vars(forehead:right), funs(./total)) %>%
+  select(-total, -quarter, -half) %>%
+  gather(aoi,percent,forehead:right)
+
+ggplot(data2, aes(x=aoi,y=percent)) +
+  geom_boxplot() 
+```
+
+
+# Big Five AOIs
+> You’ll have to decide how to put the AOIs in an ANOVA. All of them together is too many.  And you cannot put ALL the AOIs in. If they all sum to 100% (which they currently do), then the observations are not independent. Also, you can’t put AOIs that have near-zero values in with AOIs that have super high values, you’ll get whopping significance that is too obvious to reveal anything meaningful. 
+
+Based on the boxplot there are five AOIs that got hit the most: forehead, eyes, mouth, chin, and upperchest. 
+
+*Important reference levels*
+- AOI reference level is eyes
+- MainGroup reference level is NativeDeaf
  
-First, check the most important stats:   Subject Groups, Video Condition, and some AOIs that are on the central body like: eyes, nose, mouth, neck, chest, below chest.   You can combine some.   If you see that no one ever looked at the forehead, you can dispense of that, and say that in the paper when you rationalize your AOIs used for stats.    There might be a significant group main effect, OR a group  main effect for reversed and not for forward, and furthermore, maybe only the late AoA groups show a reversal effect. 
+## Stats
+
+> First, check the most important stats: Subject Groups, Video Condition, and some AOIs that are on the central body like: eyes, nose, mouth, neck, chest, below chest. You can combine some. If you see that no one ever looked at the forehead, you can dispense of that, and say that in the paper when you rationalize your AOIs used for stats. There might be a significant group main effect, OR a group main effect for reversed and not for forward, and furthermore, maybe only the late AoA groups show a reversal effect. 
+
+Let's jump straight to a big linear mixed model for the Big 5. We'll try both groups and regressing on AoA. Here are the ANOVA tables in order:
+1. Linear model (no random terms) with MainGroups
+1. Linear mixed model with MainGroups
+1. Linear model (no random terms) with AoASL and Hearing
+1. Linear mixed model with AoASL and Hearing
+
+
+```{r}
+data.big5 <- filter(data2,aoi == "forehead" | aoi == "eyes" 
+                    | aoi == "mouth" | aoi == "chin" | aoi == "upperchest") %>%
+  mutate(aoi = as.factor(aoi))
+data.big5$aoi <- relevel(data.big5$aoi, ref="eyes")
+data.big5$maingroup <- relevel(data.big5$maingroup, ref="NativeDeaf")
+model.group.lm <- lm(data = data.big5,percent ~ aoi * maingroup * direction)
+anova(model.group.lm)
+model.group.lmm <- lmer(data = data.big5,percent ~ aoi * maingroup * direction + 
+                      (1|participant) + (1|story))
+anova(model.group.lmm)
+model.aoa.lm <- lm(data = data.big5,percent ~ aoi * aoasl * direction * hearing)
+anova(model.aoa.lm)
+model.aoa.lmm <- lmer(data = data.big5,percent ~ aoi * aoasl * direction * hearing + 
+                      (1|participant) + (1|story))
+anova(model.aoa.lmm)
+```
+But that can be complicated because of so many possible interactions (groups x aois x direction x hearing) in the posthoc analyses. We'll try separating for direction. Because we think there is no difference among groups for forward, but there should be for reverse. 
+
+
+```{r}
+data.big5.fw <- filter(data.big5,direction=="forward")
+data.big5.rv <- filter(data.big5,direction=="reversed")
+model.group.fw <- lmer(data = data.big5.fw,percent ~ aoi * maingroup  + 
+                      (1|participant) + (1|story))
+anova(model.group.fw)
+model.group.rv <- lmer(data = data.big5.rv,percent ~ aoi * maingroup  + 
+                      (1|participant) + (1|story))
+anova(model.group.rv)
+```
+
+What if we use AoA as linear and then deaf/hearing
+```{r}
+model.group.fw <- lmer(data = data.big5.fw,percent ~ aoi * aoasl * hearing  + 
+                      (1|participant) + (1|story))
+anova(model.group.fw)
+model.group.rv <- lmer(data = data.big5.rv,percent ~ aoi * aoasl * hearing  + 
+                      (1|participant) + (1|story))
+anova(model.group.rv)
+```
+
+## Visualizations
+Getting a bit confused, yeah...let's plot these out (which I should have done before diving into stats tests).
  
-Then, how about a section on Percent Looking for AOI’s examines whether there are side biases by doing an ANOVA with the entire Left vs Right side as 2 AOI levels, with Subject Groups, and Forward and Reversed.   If there are side biases, hopefully it is for the later AoA groups, then this means they are being drawn to the hands more than native signers.  It’s possible that this is driven by where the signer puts her dominant hand or by a hemispheric bias.  
+```{r}
+ggplot(data.big5) + 
+  geom_boxplot(aes(x=maingroup,y=percent,color=direction)) +
+  facet_wrap("aoi") + 
+  theme(axis.text.x=element_text(angle=45,hjust=1))
+```
+Or a heat map! This can be pretty useful.  This one is both forward/reverse
+```{r}
+data.big5.reduce <- data.big5 %>%
+  group_by(maingroup,aoi) %>%
+  summarize(meanlooking = mean(percent, na.rm=TRUE))
+ggplot(data.big5.reduce, aes(x = maingroup, y = aoi)) +
+  geom_tile(aes(fill=meanlooking),na.rm=TRUE) + 
+  scale_fill_gradient(low = "lightblue",high = "steelblue") 
+```
+Let's divide by direction...
+```{r}
+data.big5.reduce <- data.big5 %>%
+  group_by(maingroup,aoi,direction) %>%
+  summarize(meanlooking = mean(percent, na.rm=TRUE)) %>%
+  ungroup() %>%
+  mutate(aoi = factor(aoi,levels=c("upperchest","chin","mouth","eyes","forehead")))
+ggplot(data.big5.reduce, aes(x = maingroup, y = aoi)) +
+  geom_tile(aes(fill=meanlooking),na.rm=TRUE) + 
+  scale_fill_gradient(low = "lightblue",high = "steelblue") +
+  facet_wrap("direction") +
+  theme(axis.text.x=element_text(angle=45,hjust=1))
+```
+
+That's cool. We can work on this. But what I REALLY wanted to do next was to do line plots, with lines for direction AND deafness, and x-axis being AOA and y-axis being percent looking. And the facet would be AOI. That can work. Let me try this. Well, it's not exactly right. First thing in the morning. 
+
+```{r}
+ggplot(data.big5, aes(x=aoasl,y=percent)) +
+  geom_point(aes(color=direction)) +
+  geom_line(aes(color=direction)) + 
+  facet_grid(aoi ~ hearing)
+```
+> Then, how about a section on Percent Looking for AOI’s examines whether there are side biases by doing an ANOVA with the entire Left vs Right side as 2 AOI levels, with Subject Groups, and Forward and Reversed.   If there are side biases, hopefully it is for the later AoA groups, then this means they are being drawn to the hands more than native signers.  It’s possible that this is driven by where the signer puts her dominant hand or by a hemispheric bias.  
  
-Maybe even the native signers have a little side bias too for other reasons, but I doubt it.   This is kind of the hand-gravity idea, because there is nothing ever in the sides but arms and hands.
+> Maybe even the native signers have a little side bias too for other reasons, but I doubt it.   This is kind of the hand-gravity idea, because there is nothing ever in the sides but arms and hands.
  
-If nothing is significant with side biases, you still write all this up in a section in the paper and in the Discussion revisit that saying there were no side biases found.
+> If nothing is significant with side biases, you still write all this up in a section in the paper and in the Discussion revisit that saying there were no side biases found.
  
-Then when you do a multiple regression analysis, which will be looking at whether gaze behavior can be used to predict accuracy on lexical recall, this will have hearing status, AoA, lexical recall accuracy …. For reversed and not forward?   You can’t put both in.  And a few of the AOI measures, maybe just one.  Maybe a looking-ratio.  Maybe a measure of scatter?  I don't know.  That's where viewing space comes in, and that's saved for later.  If we end up saving this for later, that's fine.    
+> Then when you do a multiple regression analysis, which will be looking at whether gaze behavior can be used to predict accuracy on lexical recall, this will have hearing status, AoA, lexical recall accuracy …. For reversed and not forward?   You can’t put both in.  And a few of the AOI measures, maybe just one.  Maybe a looking-ratio.  Maybe a measure of scatter?  I don't know.  That's where viewing space comes in, and that's saved for later.  If we end up saving this for later, that's fine.    
 
