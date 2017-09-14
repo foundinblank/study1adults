@@ -91,7 +91,7 @@ It's possible to do a secondary analysis combining some of these AOIs (in partic
 *Why 2 AOIs for left vs right?* People have talked how sign language impacts left vs right visual field asymmetries, as related to hemispheric laterality for language processing, so it is worth checking this.  If we do find an asymmetry, we will then just touch upon this literature in the discussion, but also acknowledge that it could be the signer’s hand dominance that drives a lateral asymmetry too, not just a hemispheric asymmetry.  Meaning, if the signer is right handed, her dominant hand might have some “gravity” in the viewer’s left visual field.  (And we can check this with the future analysis of dynamic hand AOIs.)
 
 
-# Data Diagnosing 
+# Data Cleaning
 This is my process of documenting how I'm weeding through data and making sure all's good. Let's visualize first of all. 
 ```{r}
 # Reduce dataset to face AOIs only
@@ -191,7 +191,7 @@ difference <- originalrows - nrow(data)
 ```
 So `r difference` stories were dropped from the previous total of `r originalrows` stories for a new total of `r nrow(data)` stories. 
 
-# Percentage Data Prep and Visualization
+## Percentage Data and Viz
 We need to work with percentages, because of participants' idiosyntractic eye behavior. Some blink a lot, some don't, so automatically the maximum number of eye gaze data points each participant is able to contribute is different. For that reason we work with percent of total data points on a per-participant basis. That's also why we took out stories with <25% looking data. Now here's the boxplots for each AOI.
 ```{r}
 # data2 uses percentage data!
@@ -208,7 +208,7 @@ ggplot(data2, aes(x=aoi,y=percent)) +
 > You’ll have to decide how to put the AOIs in an ANOVA. All of them together is too many.  And you cannot put ALL the AOIs in. If they all sum to 100% (which they currently do), then the observations are not independent. Also, you can’t put AOIs that have near-zero values in with AOIs that have super high values, you’ll get whopping significance that is too obvious to reveal anything meaningful. 
 
 Based on the boxplot there are five AOIs that got hit the most: forehead, eyes, mouth, chin, and upperchest.
-**But this is really important...I think there is one or two outliers in forehead. And maybe it's bettet to get rid of forehead and upper chest for the big ANOVAs to keep things simple. Neither of them touch 50%. I am going ahead with all 5 though for now.** 
+**But this is really important...I think there is one or two outliers in forehead. And maybe it's better to get rid of forehead and upper chest for the big ANOVAs to keep things simple. Neither of them touch 50%...but then again they are not "non-significant." I am going ahead with all 5 for now.** 
 
 *Important reference levels*
 - AOI reference level is eyes
@@ -303,7 +303,7 @@ group.anova.posthoc <- TukeyHSD(group.anova,'aoi',conf.level = 0.95)
 group.anova.posthoc
 ```
 
-## Age of ASL Acquisition & Hearing Status ANOVA
+## Age of ASL & Hearing Status ANCOVA
 
 MainGroup is actually two different variables combined together: deaf and hearing, and native/early/late learners. What if we separated those out and regressed AoASL as a continuous variable, and added deaf/hearing as a factor. Again, first the viz, then the stats. 
 
@@ -338,7 +338,96 @@ continuous.anova.sy <- aov(data=data.big5, percent ~ aoi * direction * hearing *
 anova(continuous.anova.sy)
 ```
 
- 
+# 3 Face AOIs Only
+I'm giving this a shot. Because the boxplot way up there tells us there wasn't much looking to the forehead or the upper chest, compared with eyes, mouth, and chin. **So I'm going to take out forehead and upper chest AOIs and see what we get.** 
+
+```{r}
+# Make face3 df with reference levels
+data.face3 <- filter(data2, aoi == "eyes" | aoi == "mouth" | aoi == "chin") %>%
+  mutate(aoi = as.factor(aoi))
+data.face3$aoi <- factor(data.face3$aoi, levels=c("eyes","mouth","chin"))
+#data.face3$aoi <- relevel(data.face3$aoi, ref="eyes")
+data.face3$maingroup <- relevel(data.face3$maingroup, ref="NativeDeaf")
+
+data.face3.item <- data.face3 # save item-level data for later
+
+# Pull out and save subject info
+data.face3.subjectinfo <- data.face3 %>%
+  select(-acc,-aoi,-percent,-video,-story) %>%
+  distinct()
+
+# Now collapse data.big5 to subject-level 
+data.face3 <- data.face3 %>%
+  group_by(participant,direction,aoi) %>%
+  summarize(percent = mean(percent,na.rm=TRUE))
+data.face3[data.face3=="NaN"] <- NA
+
+# Join subject info with data.big5 that's now subject-level
+data.face3 <- left_join(data.face3,data.face3.subjectinfo, by=c("participant","direction"))
+```
+
+## Visualizations
+Let's start with the visualizations.
+```{r}
+ggplot(data.face3) + 
+  geom_boxplot(aes(x=maingroup,y=percent,fill=direction)) +
+  facet_grid(direction ~ aoi) + 
+  theme(axis.text.x=element_text(angle=45,hjust=1))
+```
+
+But we have less levels so maybe another way of looking at the boxplots:
+```{r}
+ggplot(data.face3) + 
+  geom_boxplot(aes(x=maingroup,y=percent,fill=aoi)) +
+  facet_grid(direction~.) + 
+  theme(axis.text.x=element_text(angle=45,hjust=1))
+```
+
+Or another way even
+```{r}
+ggplot(data.face3) + 
+  geom_boxplot(aes(x=aoi,y=percent,fill=direction)) +
+  facet_grid(direction~maingroup) +
+  theme(axis.text.x=element_text(angle=45,hjust=1))
+```
+
+## Group ANOVA
+Anyway. Onto the ANOVAs. It gives us virtually identical results as the `big5` ANOVAs.
+```{r}
+group.anova.face3 <- aov(data=data.face3,percent ~ aoi * direction * maingroup)
+anova(group.anova.face3)
+```
+The posthocs are easier to interpret, too. No difference between chin and eyes. It's the mouth vs. chin and the mouth vs. eyes contrasts that drive the differences.  
+```{r}
+group.anova.face3.posthoc <- TukeyHSD(group.anova.face3,'aoi',conf.level = 0.95) 
+group.anova.face3.posthoc
+```
+
+
+## Age of ASL & Hearing Status ANCOVA
+Now we're using AoASL as a covariate and putting in hearing as a factor. Let's visualize that...what we see here is that AoASL isn't having much of an effect, but being deaf or hearing does. 
+
+```{r}
+# Draw it
+ggplot(data.face3, aes(x=aoasl,y=percent)) +
+  geom_point(aes(color=direction,shape=hearing)) +
+  geom_smooth(aes(color=direction,linetype=hearing),method="lm",se=FALSE) +
+  facet_wrap("aoi")
+```
+and the ANCOVA itself...which gives us almost identical results as the `big5` stats. So maybe it's easier overall to just drop all AOIs except eye, mouth, chin when trying to look for AoA, group effects, etc? We can present summary stats overall for all AOIs, then when it gets down to the dirty stats work, we keep it simple and show ... that whatever we found. 
+
+```{r}
+continuous.anova.face3 <- aov(data=data.face3, percent ~ aoi * direction * hearing * aoasl)
+anova(continuous.anova.face3)
+```
+
+We have to figure out what the itneractions mean. That's where simple linear models can be helpful here. Let me try it here. Okay, so the results are slightly different. ANOVAs in R default to Type I sums of squares, while regressions use more of a Type III sum of squares approach, I believe. But we can interpret the results here a bit more easily. Almost all the interactions have to do with being hearing vs. deaf, and there seems to be no effect of Age of ASL acquisition. So that's interesting. 
+
+```{r}
+lm.face3 <- lm(data=data.face3, percent ~ aoi * direction * aoasl * hearing)
+summary(lm.face3)
+```
+
 
 # Left/Right Analysis
 > Then, how about a section on Percent Looking for AOI’s examines whether there are side biases by doing an ANOVA with the entire Left vs Right side as 2 AOI levels, with Subject Groups, and Forward and Reversed.   If there are side biases, hopefully it is for the later AoA groups, then this means they are being drawn to the hands more than native signers.  It’s possible that this is driven by where the signer puts her dominant hand or by a hemispheric bias.  
@@ -398,16 +487,12 @@ ggplot(data.lr, aes(x=aoasl,y=percent)) +
   facet_wrap("direction")
 ```
 
-# Face AOI only Analysis (no Forehead, no Upper Chest)
-Should we do this?
-
-# More Analysis
+# Assorted/older stuff pushed to the bottom
 > Then when you do a multiple regression analysis, which will be looking at whether gaze behavior can be used to predict accuracy on lexical recall, this will have hearing status, AoA, lexical recall accuracy …. For reversed and not forward?
 You can’t put both in.  And a few of the AOI measures, maybe just one.  Maybe a looking-ratio.  Maybe a measure of scatter?  I don't know.  That's where viewing space comes in, and that's saved for later.  If we end up saving this for later, that's fine.    
 
 This will go into a separate data notebook (04). 
 
-# Assorted/older stuff pushed to the bottom. Code probably won't work.
 Let's jump straight to a big linear mixed model for the Big 5. We'll try both groups and regressing on AoA. Here are the ANOVA tables in order:
 1. Linear model (no random terms) with MainGroups
 1. Linear mixed model with MainGroups

@@ -5,16 +5,18 @@ Adam Stone, PhD
 
 -   [Re-Initializing](#re-initializing)
 -   [AOIs](#aois)
--   [Data Diagnosing](#data-diagnosing)
--   [Percentage Data Prep and Visualization](#percentage-data-prep-and-visualization)
+-   [Data Cleaning](#data-cleaning)
+    -   [Percentage Data and Viz](#percentage-data-and-viz)
 -   [Big Five AOIs](#big-five-aois)
     -   [ANOVAS](#anovas)
     -   [Groups Only](#groups-only)
-    -   [Age of ASL Acquisition & Hearing Status ANOVA](#age-of-asl-acquisition-hearing-status-anova)
+    -   [Age of ASL & Hearing Status ANCOVA](#age-of-asl-hearing-status-ancova)
+-   [3 Face AOIs Only](#face-aois-only)
+    -   [Visualizations](#visualizations)
+    -   [Group ANOVA](#group-anova)
+    -   [Age of ASL & Hearing Status ANCOVA](#age-of-asl-hearing-status-ancova-1)
 -   [Left/Right Analysis](#leftright-analysis)
--   [Face AOI only Analysis (no Forehead, no Upper Chest)](#face-aoi-only-analysis-no-forehead-no-upper-chest)
--   [More Analysis](#more-analysis)
--   [Assorted/older stuff pushed to the bottom. Code probably won't work.](#assortedolder-stuff-pushed-to-the-bottom.-code-probably-wont-work.)
+-   [Assorted/older stuff pushed to the bottom](#assortedolder-stuff-pushed-to-the-bottom)
 
 Re-Initializing
 ===============
@@ -125,8 +127,8 @@ It's possible to do a secondary analysis combining some of these AOIs (in partic
 
 *Why 2 AOIs for left vs right?* People have talked how sign language impacts left vs right visual field asymmetries, as related to hemispheric laterality for language processing, so it is worth checking this. If we do find an asymmetry, we will then just touch upon this literature in the discussion, but also acknowledge that it could be the signer’s hand dominance that drives a lateral asymmetry too, not just a hemispheric asymmetry. Meaning, if the signer is right handed, her dominant hand might have some “gravity” in the viewer’s left visual field. (And we can check this with the future analysis of dynamic hand AOIs.)
 
-Data Diagnosing
-===============
+Data Cleaning
+=============
 
 This is my process of documenting how I'm weeding through data and making sure all's good. Let's visualize first of all.
 
@@ -266,8 +268,8 @@ difference <- originalrows - nrow(data)
 
 So 13 stories were dropped from the previous total of 184 stories for a new total of 171 stories.
 
-Percentage Data Prep and Visualization
-======================================
+Percentage Data and Viz
+-----------------------
 
 We need to work with percentages, because of participants' idiosyntractic eye behavior. Some blink a lot, some don't, so automatically the maximum number of eye gaze data points each participant is able to contribute is different. For that reason we work with percent of total data points on a per-participant basis. That's also why we took out stories with &lt;25% looking data. Now here's the boxplots for each AOI.
 
@@ -291,7 +293,7 @@ Big Five AOIs
 
 > You’ll have to decide how to put the AOIs in an ANOVA. All of them together is too many. And you cannot put ALL the AOIs in. If they all sum to 100% (which they currently do), then the observations are not independent. Also, you can’t put AOIs that have near-zero values in with AOIs that have super high values, you’ll get whopping significance that is too obvious to reveal anything meaningful.
 
-Based on the boxplot there are five AOIs that got hit the most: forehead, eyes, mouth, chin, and upperchest. **But this is really important...I think there is one or two outliers in forehead. And maybe it's bettet to get rid of forehead and upper chest for the big ANOVAs to keep things simple. Neither of them touch 50%. I am going ahead with all 5 though for now.**
+Based on the boxplot there are five AOIs that got hit the most: forehead, eyes, mouth, chin, and upperchest. **But this is really important...I think there is one or two outliers in forehead. And maybe it's better to get rid of forehead and upper chest for the big ANOVAs to keep things simple. Neither of them touch 50%...but then again they are not "non-significant." I am going ahead with all 5 for now.**
 
 *Important reference levels* - AOI reference level is eyes - MainGroup reference level is NativeDeaf
 
@@ -430,8 +432,8 @@ group.anova.posthoc
     ## forehead-chin       -0.11947470 -0.22992672 -0.009022678 0.0265760
     ## forehead-mouth      -0.51368332 -0.62413533 -0.403231296 0.0000000
 
-Age of ASL Acquisition & Hearing Status ANOVA
----------------------------------------------
+Age of ASL & Hearing Status ANCOVA
+----------------------------------
 
 MainGroup is actually two different variables combined together: deaf and hearing, and native/early/late learners. What if we separated those out and regressed AoASL as a continuous variable, and added deaf/hearing as a factor. Again, first the viz, then the stats.
 
@@ -526,6 +528,242 @@ anova(continuous.anova.sy)
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
+3 Face AOIs Only
+================
+
+I'm giving this a shot. Because the boxplot way up there tells us there wasn't much looking to the forehead or the upper chest, compared with eyes, mouth, and chin. **So I'm going to take out forehead and upper chest AOIs and see what we get.**
+
+``` r
+# Make face3 df with reference levels
+data.face3 <- filter(data2, aoi == "eyes" | aoi == "mouth" | aoi == "chin") %>%
+  mutate(aoi = as.factor(aoi))
+data.face3$aoi <- factor(data.face3$aoi, levels=c("eyes","mouth","chin"))
+#data.face3$aoi <- relevel(data.face3$aoi, ref="eyes")
+data.face3$maingroup <- relevel(data.face3$maingroup, ref="NativeDeaf")
+
+data.face3.item <- data.face3 # save item-level data for later
+
+# Pull out and save subject info
+data.face3.subjectinfo <- data.face3 %>%
+  select(-acc,-aoi,-percent,-video,-story) %>%
+  distinct()
+
+# Now collapse data.big5 to subject-level 
+data.face3 <- data.face3 %>%
+  group_by(participant,direction,aoi) %>%
+  summarize(percent = mean(percent,na.rm=TRUE))
+data.face3[data.face3=="NaN"] <- NA
+
+# Join subject info with data.big5 that's now subject-level
+data.face3 <- left_join(data.face3,data.face3.subjectinfo, by=c("participant","direction"))
+```
+
+Visualizations
+--------------
+
+Let's start with the visualizations.
+
+``` r
+ggplot(data.face3) + 
+  geom_boxplot(aes(x=maingroup,y=percent,fill=direction)) +
+  facet_grid(direction ~ aoi) + 
+  theme(axis.text.x=element_text(angle=45,hjust=1))
+```
+
+    ## Warning: Removed 5 rows containing non-finite values (stat_boxplot).
+
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-22-1.png)
+
+But we have less levels so maybe another way of looking at the boxplots:
+
+``` r
+ggplot(data.face3) + 
+  geom_boxplot(aes(x=maingroup,y=percent,fill=aoi)) +
+  facet_grid(direction~.) + 
+  theme(axis.text.x=element_text(angle=45,hjust=1))
+```
+
+    ## Warning: Removed 5 rows containing non-finite values (stat_boxplot).
+
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-23-1.png)
+
+Or another way even
+
+``` r
+ggplot(data.face3) + 
+  geom_boxplot(aes(x=aoi,y=percent,fill=direction)) +
+  facet_grid(direction~maingroup) +
+  theme(axis.text.x=element_text(angle=45,hjust=1))
+```
+
+    ## Warning: Removed 5 rows containing non-finite values (stat_boxplot).
+
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-24-1.png)
+
+Group ANOVA
+-----------
+
+Anyway. Onto the ANOVAs. It gives us virtually identical results as the `big5` ANOVAs.
+
+``` r
+group.anova.face3 <- aov(data=data.face3,percent ~ aoi * direction * maingroup)
+anova(group.anova.face3)
+```
+
+    ## Analysis of Variance Table
+    ## 
+    ## Response: percent
+    ##                          Df  Sum Sq Mean Sq F value  Pr(>F)    
+    ## aoi                       2  8.8187  4.4094 75.9048 < 2e-16 ***
+    ## direction                 1  0.0151  0.0151  0.2606 0.61015    
+    ## maingroup                 4  0.0461  0.0115  0.1984 0.93902    
+    ## aoi:direction             2  0.5114  0.2557  4.4017 0.01327 *  
+    ## aoi:maingroup             8  1.4350  0.1794  3.0878 0.00248 ** 
+    ## direction:maingroup       4  0.0104  0.0026  0.0447 0.99621    
+    ## aoi:direction:maingroup   8  0.1000  0.0125  0.2152 0.98803    
+    ## Residuals               238 13.8255  0.0581                    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+The posthocs are easier to interpret, too. No difference between chin and eyes. It's the mouth vs. chin and the mouth vs. eyes contrasts that drive the differences.
+
+``` r
+group.anova.face3.posthoc <- TukeyHSD(group.anova.face3,'aoi',conf.level = 0.95) 
+group.anova.face3.posthoc
+```
+
+    ##   Tukey multiple comparisons of means
+    ##     95% family-wise confidence level
+    ## 
+    ## Fit: aov(formula = percent ~ aoi * direction * maingroup, data = data.face3)
+    ## 
+    ## $aoi
+    ##                   diff        lwr         upr     p adj
+    ## mouth-eyes  0.37010631  0.2846193  0.45559329 0.0000000
+    ## chin-eyes  -0.02410231 -0.1095893  0.06138467 0.7840376
+    ## chin-mouth -0.39420862 -0.4784795 -0.30993773 0.0000000
+
+Age of ASL & Hearing Status ANCOVA
+----------------------------------
+
+Now we're using AoASL as a covariate and putting in hearing as a factor. Let's visualize that...what we see here is that AoASL isn't having much of an effect, but being deaf or hearing does.
+
+``` r
+# Draw it
+ggplot(data.face3, aes(x=aoasl,y=percent)) +
+  geom_point(aes(color=direction,shape=hearing)) +
+  geom_smooth(aes(color=direction,linetype=hearing),method="lm",se=FALSE) +
+  facet_wrap("aoi")
+```
+
+    ## Warning: Removed 5 rows containing non-finite values (stat_smooth).
+
+    ## Warning: Removed 5 rows containing missing values (geom_point).
+
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-27-1.png) and the ANCOVA itself...which gives us almost identical results as the `big5` stats. So maybe it's easier overall to just drop all AOIs except eye, mouth, chin when trying to look for AoA, group effects, etc? We can present summary stats overall for all AOIs, then when it gets down to the dirty stats work, we keep it simple and show ... that whatever we found.
+
+``` r
+continuous.anova.face3 <- aov(data=data.face3, percent ~ aoi * direction * hearing * aoasl)
+anova(continuous.anova.face3)
+```
+
+    ## Analysis of Variance Table
+    ## 
+    ## Response: percent
+    ##                              Df  Sum Sq Mean Sq F value    Pr(>F)    
+    ## aoi                           2  8.8187  4.4094 77.0664 < 2.2e-16 ***
+    ## direction                     1  0.0151  0.0151  0.2646  0.607418    
+    ## hearing                       1  0.0186  0.0186  0.3255  0.568834    
+    ## aoasl                         1  0.0034  0.0034  0.0603  0.806244    
+    ## aoi:direction                 2  0.5104  0.2552  4.4602  0.012518 *  
+    ## aoi:hearing                   2  0.6997  0.3498  6.1142  0.002565 ** 
+    ## direction:hearing             1  0.0005  0.0005  0.0089  0.924727    
+    ## aoi:aoasl                     2  0.1587  0.0794  1.3871  0.251765    
+    ## direction:aoasl               1  0.0035  0.0035  0.0605  0.805849    
+    ## hearing:aoasl                 1  0.0215  0.0215  0.3755  0.540617    
+    ## aoi:direction:hearing         2  0.0056  0.0028  0.0488  0.952347    
+    ## aoi:direction:aoasl           2  0.0018  0.0009  0.0156  0.984517    
+    ## aoi:hearing:aoasl             2  0.5283  0.2641  4.6167  0.010764 *  
+    ## direction:hearing:aoasl       1  0.0009  0.0009  0.0150  0.902481    
+    ## aoi:direction:hearing:aoasl   2  0.0152  0.0076  0.1324  0.876019    
+    ## Residuals                   244 13.9605  0.0572                      
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+We have to figure out what the itneractions mean. That's where simple linear models can be helpful here. Let me try it here. Okay, so the results are slightly different. ANOVAs in R default to Type I sums of squares, while regressions use more of a Type III sum of squares approach, I believe. But we can interpret the results here a bit more easily. Almost all the interactions have to do with being hearing vs. deaf, and there seems to be no effect of Age of ASL acquisition. So that's interesting.
+
+``` r
+lm.face3 <- lm(data=data.face3, percent ~ aoi * direction * aoasl * hearing)
+summary(lm.face3)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = percent ~ aoi * direction * aoasl * hearing, data = data.face3)
+    ## 
+    ## Residuals:
+    ##      Min       1Q   Median       3Q      Max 
+    ## -0.61587 -0.14844 -0.03784  0.15304  0.64269 
+    ## 
+    ## Coefficients:
+    ##                                                   Estimate Std. Error
+    ## (Intercept)                                      0.0931195  0.0696057
+    ## aoimouth                                         0.5794713  0.0964970
+    ## aoichin                                          0.1349878  0.0964970
+    ## directionreversed                                0.0424817  0.1008157
+    ## aoasl                                            0.0067500  0.0103190
+    ## hearingHearing                                   0.6571568  0.3409805
+    ## aoimouth:directionreversed                      -0.1771985  0.1382430
+    ## aoichin:directionreversed                        0.0300791  0.1382430
+    ## aoimouth:aoasl                                  -0.0021634  0.0144608
+    ## aoichin:aoasl                                   -0.0196756  0.0144608
+    ## directionreversed:aoasl                         -0.0049741  0.0149847
+    ## aoimouth:hearingHearing                         -1.0627784  0.4818269
+    ## aoichin:hearingHearing                          -1.1218006  0.4818269
+    ## directionreversed:hearingHearing                -0.1335229  0.4973469
+    ## aoasl:hearingHearing                            -0.0354791  0.0215605
+    ## aoimouth:directionreversed:aoasl                 0.0071584  0.0207936
+    ## aoichin:directionreversed:aoasl                  0.0001892  0.0207936
+    ## aoimouth:directionreversed:hearingHearing        0.2699738  0.6922043
+    ## aoichin:directionreversed:hearingHearing         0.1158865  0.6922043
+    ## aoimouth:aoasl:hearingHearing                    0.0487191  0.0304279
+    ## aoichin:aoasl:hearingHearing                     0.0683193  0.0304279
+    ## directionreversed:aoasl:hearingHearing           0.0110424  0.0315900
+    ## aoimouth:directionreversed:aoasl:hearingHearing -0.0212871  0.0438464
+    ## aoichin:directionreversed:aoasl:hearingHearing  -0.0046483  0.0438464
+    ##                                                 t value Pr(>|t|)    
+    ## (Intercept)                                       1.338   0.1822    
+    ## aoimouth                                          6.005 6.89e-09 ***
+    ## aoichin                                           1.399   0.1631    
+    ## directionreversed                                 0.421   0.6738    
+    ## aoasl                                             0.654   0.5136    
+    ## hearingHearing                                    1.927   0.0551 .  
+    ## aoimouth:directionreversed                       -1.282   0.2011    
+    ## aoichin:directionreversed                         0.218   0.8279    
+    ## aoimouth:aoasl                                   -0.150   0.8812    
+    ## aoichin:aoasl                                    -1.361   0.1749    
+    ## directionreversed:aoasl                          -0.332   0.7402    
+    ## aoimouth:hearingHearing                          -2.206   0.0283 *  
+    ## aoichin:hearingHearing                           -2.328   0.0207 *  
+    ## directionreversed:hearingHearing                 -0.268   0.7886    
+    ## aoasl:hearingHearing                             -1.646   0.1011    
+    ## aoimouth:directionreversed:aoasl                  0.344   0.7309    
+    ## aoichin:directionreversed:aoasl                   0.009   0.9927    
+    ## aoimouth:directionreversed:hearingHearing         0.390   0.6969    
+    ## aoichin:directionreversed:hearingHearing          0.167   0.8672    
+    ## aoimouth:aoasl:hearingHearing                     1.601   0.1106    
+    ## aoichin:aoasl:hearingHearing                      2.245   0.0256 *  
+    ## directionreversed:aoasl:hearingHearing            0.350   0.7270    
+    ## aoimouth:directionreversed:aoasl:hearingHearing  -0.485   0.6278    
+    ## aoichin:directionreversed:aoasl:hearingHearing   -0.106   0.9157    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 0.2392 on 244 degrees of freedom
+    ##   (5 observations deleted due to missingness)
+    ## Multiple R-squared:  0.4362, Adjusted R-squared:  0.3831 
+    ## F-statistic: 8.208 on 23 and 244 DF,  p-value: < 2.2e-16
+
 Left/Right Analysis
 ===================
 
@@ -571,7 +809,7 @@ ggplot(data.lr) +
 
     ## Warning: Removed 113 rows containing non-finite values (stat_boxplot).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-22-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-31-1.png)
 
 Let's try the group ANOVA and the AoASL ANCOVAs. Group ANOVA first...nothing significant here.
 
@@ -636,22 +874,14 @@ ggplot(data.lr, aes(x=aoasl,y=percent)) +
 
     ## Warning: Removed 113 rows containing missing values (geom_point).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-25-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-34-1.png)
 
-Face AOI only Analysis (no Forehead, no Upper Chest)
-====================================================
-
-Should we do this?
-
-More Analysis
-=============
+Assorted/older stuff pushed to the bottom
+=========================================
 
 > Then when you do a multiple regression analysis, which will be looking at whether gaze behavior can be used to predict accuracy on lexical recall, this will have hearing status, AoA, lexical recall accuracy …. For reversed and not forward? You can’t put both in. And a few of the AOI measures, maybe just one. Maybe a looking-ratio. Maybe a measure of scatter? I don't know. That's where viewing space comes in, and that's saved for later. If we end up saving this for later, that's fine.
 
 This will go into a separate data notebook (04).
-
-Assorted/older stuff pushed to the bottom. Code probably won't work.
-====================================================================
 
 Let's jump straight to a big linear mixed model for the Big 5. We'll try both groups and regressing on AoA. Here are the ANOVA tables in order: 1. Linear model (no random terms) with MainGroups 1. Linear mixed model with MainGroups 1. Linear model (no random terms) with AoASL and Hearing 1. Linear mixed model with AoASL and Hearing
 
