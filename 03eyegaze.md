@@ -1,15 +1,20 @@
 Eye Gaze Analysis (study1adults)
 ================
 Adam Stone, PhD
-09-13-2017
+09-14-2017
 
 -   [Re-Initializing](#re-initializing)
 -   [AOIs](#aois)
-    -   [Data Diagnosing](#data-diagnosing)
+-   [Data Diagnosing](#data-diagnosing)
 -   [Percentage Data Prep and Visualization](#percentage-data-prep-and-visualization)
 -   [Big Five AOIs](#big-five-aois)
-    -   [Stats](#stats)
-    -   [Visualizations](#visualizations)
+    -   [ANOVAS](#anovas)
+    -   [Groups Only](#groups-only)
+    -   [Age of ASL Acquisition & Hearing Status ANOVA](#age-of-asl-acquisition-hearing-status-anova)
+-   [Left/Right Analysis](#leftright-analysis)
+-   [Face AOI only Analysis (no Forehead, no Upper Chest)](#face-aoi-only-analysis-no-forehead-no-upper-chest)
+-   [More Analysis](#more-analysis)
+-   [Assorted/older stuff pushed to the bottom. Code probably won't work.](#assortedolder-stuff-pushed-to-the-bottom.-code-probably-wont-work.)
 
 Re-Initializing
 ===============
@@ -114,12 +119,14 @@ These are our current AOIs. 1. Forehead (above eyes) 2. Eyes 3. Mouth 4. Chin (b
 
 It's possible to do a secondary analysis combining some of these AOIs (in particular, maybe 5-6 and 7-8 can be combined into Torso Upper Half and Torso Lower Half). Anyway, the face AOIs are important, and the division of them into 4 areas is theoretically motivated and also previously seen in the literature.
 
-*Why 4 AOIs on Face?* Emmorey et al. (2008) did this same setup. We generally know people fixate on the face across all conditions and langauge experiences, but **where** on the face is important for us to know. So these 4 AOIs.
+*Why 4 AOIs on Face?* Emmorey et al. (2008) did this same setup. We generally know people fixate on the face across all conditions and langauge experiences, but **where** on the face is important for us to know. So these 4 AOIs. *Write one sentence here about predictions for language experience on face-looking.*
 
-*Why 4 AOIs for Torso?* At the same time, all papers, tend to just classify the body as "body" with no further breakdown, or two-part breakdown. We know there is a lot of different things happening in that area for signers, too, plus we're lookina at CHILDREN with different language experiences, so they may be interested in different things than adults. So just makes sense to break down body into different regions.
+*Why 4 AOIs for Torso?* Past papers tend to just classify the body as “body” with no further breakdown, or two-part breakdown. In our study, we have higher resolution to break this down into four AOI’s, defined as upper chest, middle chest, lower chest, and belly. We know that hands start and end at the belly and the hands spend the majority of the time in these four areas in front of the torso (and the hands spend very little time overlapping the face). If an observer (child or adult) glances at the hands (or if the hands have any “gravity” upon gaze behavior), then gaze samples will fall within these four torso areas. Although we expect that all observers do spend the most amount of time on the face, we also predict that the number of gazes towards the hands (by way of “torso”) might be impacted by language experience. *(make a footnote here: As a future project, we will analyze the data using dynamic “hand” AOIs, for each hand, in which we document, on each frame, where the left and right hands are in viewing space.)*
+
+*Why 2 AOIs for left vs right?* People have talked how sign language impacts left vs right visual field asymmetries, as related to hemispheric laterality for language processing, so it is worth checking this. If we do find an asymmetry, we will then just touch upon this literature in the discussion, but also acknowledge that it could be the signer’s hand dominance that drives a lateral asymmetry too, not just a hemispheric asymmetry. Meaning, if the signer is right handed, her dominant hand might have some “gravity” in the viewer’s left visual field. (And we can check this with the future analysis of dynamic hand AOIs.)
 
 Data Diagnosing
----------------
+===============
 
 This is my process of documenting how I'm weeding through data and making sure all's good. Let's visualize first of all.
 
@@ -284,210 +291,54 @@ Big Five AOIs
 
 > You’ll have to decide how to put the AOIs in an ANOVA. All of them together is too many. And you cannot put ALL the AOIs in. If they all sum to 100% (which they currently do), then the observations are not independent. Also, you can’t put AOIs that have near-zero values in with AOIs that have super high values, you’ll get whopping significance that is too obvious to reveal anything meaningful.
 
-Based on the boxplot there are five AOIs that got hit the most: forehead, eyes, mouth, chin, and upperchest.
+Based on the boxplot there are five AOIs that got hit the most: forehead, eyes, mouth, chin, and upperchest. **But this is really important...I think there is one or two outliers in forehead. And maybe it's bettet to get rid of forehead and upper chest for the big ANOVAs to keep things simple. Neither of them touch 50%. I am going ahead with all 5 though for now.**
 
 *Important reference levels* - AOI reference level is eyes - MainGroup reference level is NativeDeaf
 
-Stats
------
-
-> First, check the most important stats: Subject Groups, Video Condition, and some AOIs that are on the central body like: eyes, nose, mouth, neck, chest, below chest. You can combine some. If you see that no one ever looked at the forehead, you can dispense of that, and say that in the paper when you rationalize your AOIs used for stats. There might be a significant group main effect, OR a group main effect for reversed and not for forward, and furthermore, maybe only the late AoA groups show a reversal effect.
-
-Let's jump straight to a big linear mixed model for the Big 5. We'll try both groups and regressing on AoA. Here are the ANOVA tables in order: 1. Linear model (no random terms) with MainGroups 1. Linear mixed model with MainGroups 1. Linear model (no random terms) with AoASL and Hearing 1. Linear mixed model with AoASL and Hearing
+Creating the `data.big5` thing here.
 
 ``` r
+# Make Big5 df with reference levels
 data.big5 <- filter(data2,aoi == "forehead" | aoi == "eyes" 
                     | aoi == "mouth" | aoi == "chin" | aoi == "upperchest") %>%
   mutate(aoi = as.factor(aoi))
+data.big5$aoi <- factor(data.big5$aoi, levels=c("upperchest","chin","mouth","eyes","forehead"))
 data.big5$aoi <- relevel(data.big5$aoi, ref="eyes")
 data.big5$maingroup <- relevel(data.big5$maingroup, ref="NativeDeaf")
-model.group.lm <- lm(data = data.big5,percent ~ aoi * maingroup * direction)
-anova(model.group.lm)
 ```
 
-    ## Analysis of Variance Table
-    ## 
-    ## Response: percent
-    ##                          Df  Sum Sq Mean Sq  F value    Pr(>F)    
-    ## aoi                       4 27.4686  6.8672 142.3099 < 2.2e-16 ***
-    ## maingroup                 4  0.0366  0.0091   0.1895  0.943910    
-    ## direction                 1  0.0005  0.0005   0.0099  0.920829    
-    ## aoi:maingroup            16  3.3323  0.2083   4.3160 4.558e-08 ***
-    ## aoi:direction             4  0.8957  0.2239   4.6407  0.001068 ** 
-    ## maingroup:direction       4  0.0013  0.0003   0.0068  0.999908    
-    ## aoi:maingroup:direction  16  0.3648  0.0228   0.4725  0.959929    
-    ## Residuals               621 29.9663  0.0483                       
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+ANOVAS
+------
+
+Because we're doing ANOVAs, that means we need subject-level data, not trial-level data. Let's bump the `data.big5` up one level.
 
 ``` r
-model.group.lmm <- lmer(data = data.big5,percent ~ aoi * maingroup * direction + 
-                      (1|participant) + (1|story))
-anova(model.group.lmm)
+data.big5.item <- data.big5 # save item-level data for later
+
+# Pull out and save subject info
+data.big5.subjectinfo <- data.big5 %>%
+  select(-acc,-aoi,-percent,-video,-story) %>%
+  distinct()
+
+# Now collapse data.big5 to subject-level 
+data.big5 <- data.big5 %>%
+  group_by(participant,direction,aoi) %>%
+  summarize(percent = mean(percent,na.rm=TRUE))
+data.big5[data.big5=="NaN"] <- NA
+
+
+# Join subject info with data.big5 that's now subject-level
+data.big5 <- left_join(data.big5,data.big5.subjectinfo, by=c("participant","direction"))
 ```
 
-    ## Analysis of Variance Table of type III  with  Satterthwaite 
-    ## approximation for degrees of freedom
-    ##                          Sum Sq Mean Sq NumDF DenDF F.value    Pr(>F)    
-    ## aoi                     26.5674  6.6419     4   621 137.641 < 2.2e-16 ***
-    ## maingroup                0.0252  0.0063     4   621   0.131  0.971148    
-    ## direction                0.0155  0.0155     1   621   0.321  0.571316    
-    ## aoi:maingroup            3.2379  0.2024    16   621   4.194 9.244e-08 ***
-    ## aoi:direction            0.6881  0.1720     4   621   3.565  0.006916 ** 
-    ## maingroup:direction      0.0140  0.0035     4   621   0.073  0.990369    
-    ## aoi:maingroup:direction  0.3648  0.0228    16   621   0.472  0.959929    
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+Groups Only
+-----------
 
-``` r
-model.aoa.lm <- lm(data = data.big5,percent ~ aoi * aoasl * direction * hearing)
-anova(model.aoa.lm)
-```
+Now we can do the ANOVAs.
 
-    ## Analysis of Variance Table
-    ## 
-    ## Response: percent
-    ##                              Df  Sum Sq Mean Sq  F value    Pr(>F)    
-    ## aoi                           4 27.4686  6.8672 142.6085 < 2.2e-16 ***
-    ## aoasl                         1  0.0190  0.0190   0.3940 0.5304319    
-    ## direction                     1  0.0006  0.0006   0.0121 0.9125082    
-    ## hearing                       1  0.0051  0.0051   0.1050 0.7460503    
-    ## aoi:aoasl                     4  0.7781  0.1945   4.0398 0.0030451 ** 
-    ## aoi:direction                 4  0.9210  0.2302   4.7813 0.0008332 ***
-    ## aoasl:direction               1  0.0005  0.0005   0.0098 0.9211112    
-    ## aoi:hearing                   4  1.3845  0.3461   7.1880 1.157e-05 ***
-    ## aoasl:hearing                 1  0.0283  0.0283   0.5868 0.4439334    
-    ## direction:hearing             1  0.0004  0.0004   0.0084 0.9270446    
-    ## aoi:aoasl:direction           4  0.0343  0.0086   0.1779 0.9498117    
-    ## aoi:aoasl:hearing             4  0.9732  0.2433   5.0524 0.0005170 ***
-    ## aoi:direction:hearing         4  0.0516  0.0129   0.2681 0.8985014    
-    ## aoasl:direction:hearing       1  0.0006  0.0006   0.0119 0.9132244    
-    ## aoi:aoasl:direction:hearing   4  0.0154  0.0039   0.0801 0.9884386    
-    ## Residuals                   631 30.3851  0.0482                       
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+> First, check the most important stats: Subject Groups, Video Condition, and some AOIs that are on the central body like: eyes, nose, mouth, neck, chest, below chest. You can combine some. If you see that no one ever looked at the forehead, you can dispense of that, and say that in the paper when you rationalize your AOIs used for stats. There might be a significant group main effect, OR a group main effect for reversed and not for forward, and furthermore, maybe only the late AoA groups show a reversal effect.
 
-``` r
-model.aoa.lmm <- lmer(data = data.big5,percent ~ aoi * aoasl * direction * hearing + 
-                      (1|participant) + (1|story))
-anova(model.aoa.lmm)
-```
-
-    ## Analysis of Variance Table of type III  with  Satterthwaite 
-    ## approximation for degrees of freedom
-    ##                              Sum Sq  Mean Sq NumDF DenDF F.value    Pr(>F)
-    ## aoi                         1.20750 0.301874     4   631  6.2689 5.973e-05
-    ## aoasl                       0.00788 0.007876     1   631  0.1636 0.6860371
-    ## direction                   0.00118 0.001180     1   631  0.0245 0.8756445
-    ## hearing                     0.00795 0.007946     1   631  0.1650 0.6847234
-    ## aoi:aoasl                   0.53241 0.133104     4   631  2.7641 0.0268114
-    ## aoi:direction               0.02700 0.006750     4   631  0.1402 0.9672570
-    ## aoasl:direction             0.00005 0.000054     1   631  0.0011 0.9733496
-    ## aoi:hearing                 1.18608 0.296520     4   631  6.1578 7.281e-05
-    ## aoasl:hearing               0.00177 0.001769     1   631  0.0367 0.8480841
-    ## direction:hearing           0.00003 0.000028     1   631  0.0006 0.9809363
-    ## aoi:aoasl:direction         0.02155 0.005387     4   631  0.1119 0.9783557
-    ## aoi:aoasl:hearing           0.96653 0.241634     4   631  5.0179 0.0005493
-    ## aoi:direction:hearing       0.00818 0.002044     4   631  0.0424 0.9965848
-    ## aoasl:direction:hearing     0.00081 0.000810     1   631  0.0168 0.8968583
-    ## aoi:aoasl:direction:hearing 0.01542 0.003856     4   631  0.0801 0.9884386
-    ##                                
-    ## aoi                         ***
-    ## aoasl                          
-    ## direction                      
-    ## hearing                        
-    ## aoi:aoasl                   *  
-    ## aoi:direction                  
-    ## aoasl:direction                
-    ## aoi:hearing                 ***
-    ## aoasl:hearing                  
-    ## direction:hearing              
-    ## aoi:aoasl:direction            
-    ## aoi:aoasl:hearing           ***
-    ## aoi:direction:hearing          
-    ## aoasl:direction:hearing        
-    ## aoi:aoasl:direction:hearing    
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-But that can be complicated because of so many possible interactions (groups x aois x direction x hearing) in the posthoc analyses. We'll try separating for direction. Because we think there is no difference among groups for forward, but there should be for reverse.
-
-``` r
-data.big5.fw <- filter(data.big5,direction=="forward")
-data.big5.rv <- filter(data.big5,direction=="reversed")
-model.group.fw <- lmer(data = data.big5.fw,percent ~ aoi * maingroup  + 
-                      (1|participant) + (1|story))
-anova(model.group.fw)
-```
-
-    ## Analysis of Variance Table of type III  with  Satterthwaite 
-    ## approximation for degrees of freedom
-    ##                Sum Sq Mean Sq NumDF DenDF F.value  Pr(>F)    
-    ## aoi           17.8463  4.4616     4   317 107.788 < 2e-16 ***
-    ## maingroup      0.0012  0.0003     4   317   0.007 0.99990    
-    ## aoi:maingroup  1.3453  0.0841    16   317   2.031 0.01122 *  
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-``` r
-model.group.rv <- lmer(data = data.big5.rv,percent ~ aoi * maingroup  + 
-                      (1|participant) + (1|story))
-anova(model.group.rv)
-```
-
-    ## Analysis of Variance Table of type III  with  Satterthwaite 
-    ## approximation for degrees of freedom
-    ##               Sum Sq Mean Sq NumDF DenDF F.value    Pr(>F)    
-    ## aoi           9.5742 2.39355     4   304  43.196 < 2.2e-16 ***
-    ## maingroup     0.0383 0.00957     4   304   0.173 0.9522727    
-    ## aoi:maingroup 2.3013 0.14383    16   304   2.596 0.0008294 ***
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-What if we use AoA as linear and then deaf/hearing
-
-``` r
-model.group.fw <- lmer(data = data.big5.fw,percent ~ aoi * aoasl * hearing  + 
-                      (1|participant) + (1|story))
-anova(model.group.fw)
-```
-
-    ## Analysis of Variance Table of type III  with  Satterthwaite 
-    ## approximation for degrees of freedom
-    ##                    Sum Sq  Mean Sq NumDF DenDF F.value   Pr(>F)   
-    ## aoi               0.63550 0.158876     4   322  3.9206 0.004010 **
-    ## aoasl             0.00304 0.003038     1   322  0.0750 0.784403   
-    ## hearing           0.00417 0.004171     1   322  0.1029 0.748550   
-    ## aoi:aoasl         0.22712 0.056779     4   322  1.4012 0.233335   
-    ## aoi:hearing       0.57378 0.143445     4   322  3.5398 0.007622 **
-    ## aoasl:hearing     0.00228 0.002279     1   322  0.0562 0.812692   
-    ## aoi:aoasl:hearing 0.42962 0.107404     4   322  2.6504 0.033308 * 
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-``` r
-model.group.rv <- lmer(data = data.big5.rv,percent ~ aoi * aoasl * hearing  + 
-                      (1|participant) + (1|story))
-anova(model.group.rv)
-```
-
-    ## Analysis of Variance Table of type III  with  Satterthwaite 
-    ## approximation for degrees of freedom
-    ##                    Sum Sq  Mean Sq NumDF DenDF F.value  Pr(>F)  
-    ## aoi               0.59514 0.148785     4   309 2.65186 0.03331 *
-    ## aoasl             0.00508 0.005077     1   309 0.09049 0.76376  
-    ## hearing           0.00378 0.003775     1   309 0.06729 0.79549  
-    ## aoi:aoasl         0.32722 0.081806     4   309 1.45806 0.21487  
-    ## aoi:hearing       0.61723 0.154306     4   309 2.75028 0.02837 *
-    ## aoasl:hearing     0.00010 0.000102     1   309 0.00181 0.96607  
-    ## aoi:aoasl:hearing 0.55808 0.139520     4   309 2.48673 0.04354 *
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-Visualizations
---------------
-
-Getting a bit confused, yeah...let's plot these out (which I should have done before diving into stats tests).
+First let's do groups only (no continuous variables). First the viz, then the stats.
 
 ``` r
 ggplot(data.big5) + 
@@ -496,20 +347,24 @@ ggplot(data.big5) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 
-    ## Warning: Removed 184 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 69 rows containing non-finite values (stat_boxplot).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-13-1.png) Or a heat map! This can be pretty useful. This one is both forward/reverse
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-12-1.png)
 
 ``` r
-data.big5.reduce <- data.big5 %>%
-  group_by(maingroup,aoi) %>%
-  summarize(meanlooking = mean(percent, na.rm=TRUE))
-ggplot(data.big5.reduce, aes(x = maingroup, y = aoi)) +
-  geom_tile(aes(fill=meanlooking),na.rm=TRUE) + 
-  scale_fill_gradient(low = "lightblue",high = "steelblue") 
+data.big5.viz <- data.big5 %>%
+  group_by(maingroup,direction,aoi) %>%
+  summarize(mean = mean(percent,na.rm=TRUE), sd = sd(percent,na.rm=TRUE))
+ggplot(data.big5.viz, aes(x=maingroup,y=mean,color=direction)) +
+  geom_point(position=position_dodge(0.5)) +
+  geom_errorbar(aes(ymin=mean-sd,ymax=mean+sd),width=0.1,position=position_dodge(0.5)) +
+  facet_wrap("aoi") +
+  theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-14-1.png) Let's divide by direction...
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-13-1.png)
+
+Or a heat map!
 
 ``` r
 data.big5.reduce <- data.big5 %>%
@@ -524,23 +379,282 @@ ggplot(data.big5.reduce, aes(x = maingroup, y = aoi)) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-15-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-14-1.png)
 
-That's cool. We can work on this. But what I REALLY wanted to do next was to do line plots, with lines for direction AND deafness, and x-axis being AOA and y-axis being percent looking. And the facet would be AOI. That can work. Let me try this. Well, it's not exactly right. First thing in the morning.
+The ANOVA below tells us there's a significant effect of AOI, and significant interactions of AOI x Direction and AOI x MainGroup.
 
 ``` r
-ggplot(data.big5, aes(x=aoasl,y=percent)) +
-  geom_point(aes(color=direction)) +
-  geom_line(aes(color=direction)) + 
-  facet_grid(aoi ~ hearing)
+group.anova <- aov(data=data.big5,percent ~ aoi * direction * maingroup)
+anova(group.anova)
 ```
 
-    ## Warning: Removed 184 rows containing missing values (geom_point).
+    ## Analysis of Variance Table
+    ## 
+    ## Response: percent
+    ##                          Df  Sum Sq Mean Sq F value    Pr(>F)    
+    ## aoi                       4 15.1766  3.7942 87.2717 < 2.2e-16 ***
+    ## direction                 1  0.0000  0.0000  0.0009  0.976339    
+    ## maingroup                 4  0.0193  0.0048  0.1107  0.978720    
+    ## aoi:direction             4  0.5698  0.1424  3.2763  0.011805 *  
+    ## aoi:maingroup            16  1.5712  0.0982  2.2588  0.003935 ** 
+    ## direction:maingroup       4  0.0022  0.0005  0.0126  0.999685    
+    ## aoi:direction:maingroup  16  0.1647  0.0103  0.2368  0.999144    
+    ## Residuals               336 14.6077  0.0435                      
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-16-1.png) &gt; Then, how about a section on Percent Looking for AOI’s examines whether there are side biases by doing an ANOVA with the entire Left vs Right side as 2 AOI levels, with Subject Groups, and Forward and Reversed. If there are side biases, hopefully it is for the later AoA groups, then this means they are being drawn to the hands more than native signers. It’s possible that this is driven by where the signer puts her dominant hand or by a hemispheric bias.
+Here's the posthoc (Tukey's HSD) for AOI, which tells us most AOIs are different from each other, except: 1. chin vs. eyes 1. forehead vs. upper chest
+
+Forget doing posthocs for all the interactions, way too many.
+
+``` r
+group.anova.posthoc <- TukeyHSD(group.anova,'aoi',conf.level = 0.95) 
+group.anova.posthoc
+```
+
+    ##   Tukey multiple comparisons of means
+    ##     95% family-wise confidence level
+    ## 
+    ## Fit: aov(formula = percent ~ aoi * direction * maingroup, data = data.big5)
+    ## 
+    ## $aoi
+    ##                            diff         lwr          upr     p adj
+    ## upperchest-eyes     -0.16887467 -0.25770293 -0.080046421 0.0000032
+    ## chin-eyes           -0.02410231 -0.11010420  0.061899581 0.9394317
+    ## mouth-eyes           0.37010631  0.28410441  0.456108200 0.0000000
+    ## forehead-eyes       -0.14357701 -0.25497083 -0.032183183 0.0042182
+    ## chin-upperchest      0.14477236  0.05712807  0.232416660 0.0000799
+    ## mouth-upperchest     0.53898098  0.45133668  0.626625278 0.0000000
+    ## forehead-upperchest  0.02529767 -0.08736902  0.137964349 0.9725244
+    ## mouth-chin           0.39420862  0.30943014  0.478987093 0.0000000
+    ## forehead-chin       -0.11947470 -0.22992672 -0.009022678 0.0265760
+    ## forehead-mouth      -0.51368332 -0.62413533 -0.403231296 0.0000000
+
+Age of ASL Acquisition & Hearing Status ANOVA
+---------------------------------------------
+
+MainGroup is actually two different variables combined together: deaf and hearing, and native/early/late learners. What if we separated those out and regressed AoASL as a continuous variable, and added deaf/hearing as a factor. Again, first the viz, then the stats.
+
+``` r
+# Draw it
+ggplot(data.big5, aes(x=aoasl,y=percent)) +
+  geom_point(aes(color=direction,shape=hearing)) +
+  geom_smooth(aes(color=direction,linetype=hearing),method="lm",se=FALSE) +
+  facet_wrap("aoi")
+```
+
+    ## Warning: Removed 69 rows containing non-finite values (stat_smooth).
+
+    ## Warning: Removed 69 rows containing missing values (geom_point).
+
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-17-1.png)
+
+Let's move to ANOVAs. This is technically an ANCOVA, and AoASL is the covariate. The output tells us there is a significant main effect of AOI, and significant interactions of AOI x Direction and AOI x Hearing and AOI x Hearing X AoASL. So really it's very similar to what we got with the group ANOVA.
+
+``` r
+continuous.anova <- aov(data=data.big5, percent ~ aoi * direction * hearing * aoasl)
+anova(continuous.anova)
+```
+
+    ## Analysis of Variance Table
+    ## 
+    ## Response: percent
+    ##                              Df  Sum Sq Mean Sq F value    Pr(>F)    
+    ## aoi                           4 15.1766  3.7942 88.5884 < 2.2e-16 ***
+    ## direction                     1  0.0000  0.0000  0.0009  0.976161    
+    ## hearing                       1  0.0132  0.0132  0.3085  0.578973    
+    ## aoasl                         1  0.0004  0.0004  0.0087  0.925885    
+    ## aoi:direction                 4  0.5691  0.1423  3.3222  0.010903 *  
+    ## aoi:hearing                   4  0.7265  0.1816  4.2405  0.002304 ** 
+    ## direction:hearing             1  0.0003  0.0003  0.0075  0.931263    
+    ## aoi:aoasl                     4  0.1820  0.0455  1.0625  0.374988    
+    ## direction:aoasl               1  0.0004  0.0004  0.0083  0.927254    
+    ## hearing:aoasl                 1  0.0053  0.0053  0.1246  0.724300    
+    ## aoi:direction:hearing         4  0.0272  0.0068  0.1587  0.958980    
+    ## aoi:direction:aoasl           4  0.0159  0.0040  0.0925  0.984780    
+    ## aoi:hearing:aoasl             4  0.5592  0.1398  3.2640  0.012020 *  
+    ## direction:hearing:aoasl       1  0.0003  0.0003  0.0078  0.929538    
+    ## aoi:direction:hearing:aoasl   4  0.0162  0.0040  0.0945  0.984175    
+    ## Residuals                   346 14.8189  0.0428                      
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Maybe it's a problem that all the hearing people have late AoASL while most deaf have early AoASL. And I don't like the forehead outliers throwing off some of those lines from the graph above so that needs to be looked at. What if we tried sign-years instead of AoASL.
+
+``` r
+ggplot(data.big5, aes(x=signyrs,y=percent)) +
+  geom_point(aes(color=direction,shape=hearing)) +
+  geom_smooth(aes(color=direction,linetype=hearing),method="lm",se=FALSE) +
+  facet_wrap("aoi")
+```
+
+    ## Warning: Removed 69 rows containing non-finite values (stat_smooth).
+
+    ## Warning: Removed 69 rows containing missing values (geom_point).
+
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-19-1.png)
+
+Look interesting and you can sort of compare the deaf/hearing lines better, although we should get rid of that person who's been signing for 60 years if we do a years-of-signing analysis. Here's the ANCOVA.
+
+Let's move to ANOVAs. This is technically an ANCOVA, and AoASL is the covariate. The output tells us there is a significant main effect of AOI, and significant interactions of AOI x Direction and AOI x Hearing and AOI x SignYrs. Again a rather similar thing result.
+
+``` r
+continuous.anova.sy <- aov(data=data.big5, percent ~ aoi * direction * hearing * signyrs)
+anova(continuous.anova.sy)
+```
+
+    ## Analysis of Variance Table
+    ## 
+    ## Response: percent
+    ##                                Df  Sum Sq Mean Sq F value    Pr(>F)    
+    ## aoi                             4 15.1766  3.7942 88.5694 < 2.2e-16 ***
+    ## direction                       1  0.0000  0.0000  0.0009  0.976163    
+    ## hearing                         1  0.0132  0.0132  0.3084  0.579014    
+    ## signyrs                         1  0.0015  0.0015  0.0361  0.849424    
+    ## aoi:direction                   4  0.5685  0.1421  3.3179  0.010982 *  
+    ## aoi:hearing                     4  0.7262  0.1815  4.2380  0.002314 ** 
+    ## direction:hearing               1  0.0003  0.0003  0.0069  0.933720    
+    ## aoi:signyrs                     4  0.4723  0.1181  2.7562  0.027897 *  
+    ## direction:signyrs               1  0.0000  0.0000  0.0004  0.983219    
+    ## hearing:signyrs                 1  0.0023  0.0023  0.0531  0.817971    
+    ## aoi:direction:hearing           4  0.0213  0.0053  0.1245  0.973581    
+    ## aoi:direction:signyrs           4  0.0207  0.0052  0.1206  0.975103    
+    ## aoi:hearing:signyrs             4  0.2038  0.0510  1.1894  0.315163    
+    ## direction:hearing:signyrs       1  0.0002  0.0002  0.0051  0.943196    
+    ## aoi:direction:hearing:signyrs   4  0.0824  0.0206  0.4808  0.749822    
+    ## Residuals                     346 14.8220  0.0428                      
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Left/Right Analysis
+===================
+
+> Then, how about a section on Percent Looking for AOI’s examines whether there are side biases by doing an ANOVA with the entire Left vs Right side as 2 AOI levels, with Subject Groups, and Forward and Reversed. If there are side biases, hopefully it is for the later AoA groups, then this means they are being drawn to the hands more than native signers. It’s possible that this is driven by where the signer puts her dominant hand or by a hemispheric bias.
 
 > Maybe even the native signers have a little side bias too for other reasons, but I doubt it. This is kind of the hand-gravity idea, because there is nothing ever in the sides but arms and hands.
 
 > If nothing is significant with side biases, you still write all this up in a section in the paper and in the Discussion revisit that saying there were no side biases found.
 
+Let's go for it. Creating the `data.lr` thing here. And again because we're still doing ANOVAs and not hierarchical linear models we need to bump `data.lr` up one level.
+
+``` r
+# Make LR df with reference levels
+data.lr <- filter(data2,aoi == "left" | aoi == "right") %>%
+  mutate(aoi = as.factor(aoi))
+data.lr$maingroup <- relevel(data.lr$maingroup, ref="NativeDeaf")
+
+data.lr.item <- data.lr # save item-level data for later
+
+# Pull out and save subject info
+data.lr.subjectinfo <- data.lr %>%
+  select(-acc,-aoi,-percent,-video,-story) %>%
+  distinct()
+
+# Now collapse data.big5 to subject-level 
+data.lr <- data.lr %>%
+  group_by(participant,direction,aoi) %>%
+  summarize(percent = mean(percent,na.rm=TRUE))
+data.lr[data.lr=="NaN"] <- NA
+
+# Join subject info with data.big5 that's now subject-level
+data.lr <- left_join(data.lr,data.lr.subjectinfo, by=c("participant","direction"))
+```
+
+Problem is, I can already tell this dataset is rather sparse. There are 113 empty cells out of 182. Soooo. Let's give this a shot anyway but probably not a good idea? The graph below, I changed the colors so they map on left/right AOI, and each facet is direction. So we can directly compare L/R biases.
+
+``` r
+ggplot(data.lr) + 
+  geom_boxplot(aes(x=maingroup,y=percent,fill=aoi)) +
+  facet_wrap("direction") + 
+  theme(axis.text.x=element_text(angle=45,hjust=1))
+```
+
+    ## Warning: Removed 113 rows containing non-finite values (stat_boxplot).
+
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-22-1.png)
+
+Let's try the group ANOVA and the AoASL ANCOVAs. Group ANOVA first...nothing significant here.
+
+``` r
+group.lranova <- aov(data=data.lr,percent ~ aoi * direction * maingroup)
+anova(group.lranova)
+```
+
+    ## Analysis of Variance Table
+    ## 
+    ## Response: percent
+    ##                         Df   Sum Sq    Mean Sq F value Pr(>F)
+    ## aoi                      1 0.000106 0.00010557  0.0520 0.8206
+    ## direction                1 0.000046 0.00004597  0.0226 0.8810
+    ## maingroup                4 0.009611 0.00240277  1.1827 0.3298
+    ## aoi:direction            1 0.000023 0.00002272  0.0112 0.9162
+    ## aoi:maingroup            4 0.006628 0.00165694  0.8156 0.5213
+    ## direction:maingroup      4 0.002123 0.00053078  0.2613 0.9014
+    ## aoi:direction:maingroup  3 0.002643 0.00088095  0.4336 0.7299
+    ## Residuals               50 0.101581 0.00203161
+
+But the ANCOVA here shows some almost significant effects of hearing, and significant AOI:Hearing and AOASL:Hearing interactions.
+
+``` r
+continuous.lranova <- aov(data=data.lr,percent ~ aoi * direction * aoasl * hearing)
+anova(continuous.lranova)
+```
+
+    ## Analysis of Variance Table
+    ## 
+    ## Response: percent
+    ##                             Df   Sum Sq   Mean Sq F value  Pr(>F)  
+    ## aoi                          1 0.000106 0.0001056  0.0655 0.79902  
+    ## direction                    1 0.000046 0.0000460  0.0285 0.86654  
+    ## aoasl                        1 0.001119 0.0011187  0.6939 0.40857  
+    ## hearing                      1 0.006440 0.0064397  3.9945 0.05079 .
+    ## aoi:direction                1 0.000008 0.0000082  0.0051 0.94331  
+    ## aoi:aoasl                    1 0.000094 0.0000944  0.0586 0.80969  
+    ## direction:aoasl              1 0.000015 0.0000151  0.0094 0.92321  
+    ## aoi:hearing                  1 0.008208 0.0082082  5.0916 0.02819 *
+    ## direction:hearing            1 0.000193 0.0001931  0.1198 0.73062  
+    ## aoasl:hearing                1 0.010984 0.0109836  6.8132 0.01174 *
+    ## aoi:direction:aoasl          1 0.000434 0.0004341  0.2693 0.60597  
+    ## aoi:direction:hearing        1 0.001466 0.0014663  0.9095 0.34457  
+    ## aoi:aoasl:hearing            1 0.002789 0.0027894  1.7303 0.19404  
+    ## direction:aoasl:hearing      1 0.002022 0.0020220  1.2543 0.26779  
+    ## aoi:direction:aoasl:hearing  1 0.003393 0.0033927  2.1045 0.15276  
+    ## Residuals                   53 0.085442 0.0016121                  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+So that's interesting. Let's plot those out. Again, pay attention to the legend. And ahh, there's one huge outlier point with 0.30% (forward, right AOI, hearing person who learned ASL around age 12) which could be throwing off the entire stats too. Still, it's also interesting the deaf group has an increasing bias to the left the later they learn ASL. And I'm suspecting there is no general bias for hearing signers (once we fix that outlier).
+
+``` r
+ggplot(data.lr, aes(x=aoasl,y=percent)) +
+  geom_point(aes(color=aoi,shape=hearing)) +
+  geom_smooth(aes(color=aoi,linetype=hearing),method="lm",se=FALSE) +
+  facet_wrap("direction")
+```
+
+    ## Warning: Removed 113 rows containing non-finite values (stat_smooth).
+
+    ## Warning: Removed 113 rows containing missing values (geom_point).
+
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-25-1.png)
+
+Face AOI only Analysis (no Forehead, no Upper Chest)
+====================================================
+
+Should we do this?
+
+More Analysis
+=============
+
 > Then when you do a multiple regression analysis, which will be looking at whether gaze behavior can be used to predict accuracy on lexical recall, this will have hearing status, AoA, lexical recall accuracy …. For reversed and not forward? You can’t put both in. And a few of the AOI measures, maybe just one. Maybe a looking-ratio. Maybe a measure of scatter? I don't know. That's where viewing space comes in, and that's saved for later. If we end up saving this for later, that's fine.
+
+This will go into a separate data notebook (04).
+
+Assorted/older stuff pushed to the bottom. Code probably won't work.
+====================================================================
+
+Let's jump straight to a big linear mixed model for the Big 5. We'll try both groups and regressing on AoA. Here are the ANOVA tables in order: 1. Linear model (no random terms) with MainGroups 1. Linear mixed model with MainGroups 1. Linear model (no random terms) with AoASL and Hearing 1. Linear mixed model with AoASL and Hearing
+
+But that can be complicated because of so many possible interactions (groups x aois x direction x hearing) in the posthoc analyses. We'll try separating for direction. Because we think there is no difference among groups for forward, but there should be for reverse.
+
+What if we use AoA as linear and then deaf/hearing
