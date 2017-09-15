@@ -246,7 +246,7 @@ data.big5$maingroup <- relevel(data.big5$maingroup, ref="NativeDeaf")
 ```
 
  
-## ANOVAS
+## Group ANOVA
 
 Because we're doing ANOVAs, that means we need subject-level data, not trial-level data. Let's bump the `data.big5` up one level. 
 
@@ -269,7 +269,6 @@ data.big5[data.big5=="NaN"] <- NA
 data.big5 <- left_join(data.big5,data.big5.subjectinfo, by=c("participant","direction"))
 ```
 
-## Groups Only
 Now we can do the ANOVAs. 
 
 > First, check the most important stats: Subject Groups, Video Condition, and some AOIs that are on the central body like: eyes, nose, mouth, neck, chest, below chest. You can combine some. If you see that no one ever looked at the forehead, you can dispense of that, and say that in the paper when you rationalize your AOIs used for stats. There might be a significant group main effect, OR a group main effect for reversed and not for forward, and furthermore, maybe only the late AoA groups show a reversal effect. 
@@ -309,6 +308,19 @@ ggplot(data.big5.reduce, aes(x = maingroup, y = aoi)) +
   facet_wrap("direction") +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
+
+What if we faceted this heat map by group instead of direction:
+
+```{r}
+ggplot(data.big5.reduce, aes(x = direction, y = aoi)) +
+  geom_tile(aes(fill=meanlooking),color="lightgray",na.rm=TRUE) + 
+#  scale_fill_gradient(low = "lightblue",high = "steelblue") +
+#  scale_fill_distiller(type="div", palette = "RdYlBu") +
+  scale_fill_viridis(option = "inferno") +
+  facet_wrap("maingroup") +
+  theme(axis.text.x=element_text(angle=45,hjust=1))
+```
+
 
 The ANOVA below tells us there's a significant effect of AOI, and significant interactions of AOI x Direction and AOI x MainGroup. 
 ```{r}

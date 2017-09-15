@@ -8,12 +8,11 @@ Adam Stone, PhD
 -   [Data Cleaning](#data-cleaning)
     -   [Percentage Data and Viz](#percentage-data-and-viz)
 -   [Big Five AOIs](#big-five-aois)
-    -   [ANOVAS](#anovas)
-    -   [Groups Only](#groups-only)
+    -   [Group ANOVA](#group-anova)
     -   [Age of ASL & Hearing Status ANCOVA](#age-of-asl-hearing-status-ancova)
 -   [3 Face AOIs Only](#face-aois-only)
     -   [Visualizations](#visualizations)
-    -   [Group ANOVA](#group-anova)
+    -   [Group ANOVA](#group-anova-1)
     -   [Age of ASL & Hearing Status ANCOVA](#age-of-asl-hearing-status-ancova-1)
 -   [Left/Right Analysis](#leftright-analysis)
 -   [Assorted/older stuff pushed to the bottom](#assortedolder-stuff-pushed-to-the-bottom)
@@ -342,8 +341,8 @@ data.big5$aoi <- relevel(data.big5$aoi, ref="eyes")
 data.big5$maingroup <- relevel(data.big5$maingroup, ref="NativeDeaf")
 ```
 
-ANOVAS
-------
+Group ANOVA
+-----------
 
 Because we're doing ANOVAs, that means we need subject-level data, not trial-level data. Let's bump the `data.big5` up one level.
 
@@ -365,9 +364,6 @@ data.big5[data.big5=="NaN"] <- NA
 # Join subject info with data.big5 that's now subject-level
 data.big5 <- left_join(data.big5,data.big5.subjectinfo, by=c("participant","direction"))
 ```
-
-Groups Only
------------
 
 Now we can do the ANOVAs.
 
@@ -419,6 +415,20 @@ ggplot(data.big5.reduce, aes(x = maingroup, y = aoi)) +
 ```
 
 ![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-16-1.png)
+
+What if we faceted this heat map by group instead of direction:
+
+``` r
+ggplot(data.big5.reduce, aes(x = direction, y = aoi)) +
+  geom_tile(aes(fill=meanlooking),color="lightgray",na.rm=TRUE) + 
+#  scale_fill_gradient(low = "lightblue",high = "steelblue") +
+#  scale_fill_distiller(type="div", palette = "RdYlBu") +
+  scale_fill_viridis(option = "inferno") +
+  facet_wrap("maingroup") +
+  theme(axis.text.x=element_text(angle=45,hjust=1))
+```
+
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-17-1.png)
 
 The ANOVA below tells us there's a significant effect of AOI, and significant interactions of AOI x Direction and AOI x MainGroup.
 
@@ -486,7 +496,7 @@ ggplot(data.big5, aes(x=aoasl,y=percent)) +
 
     ## Warning: Removed 68 rows containing missing values (geom_point).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-19-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-20-1.png)
 
 Let's move to ANOVAs. This is technically an ANCOVA, and AoASL is the covariate. The output tells us there is a significant main effect of AOI, and significant interactions of AOI x Direction and AOI x Hearing. A marginally significant interaction of AOI x Hearing X AoASL. So really it's very similar to what we got with the group ANOVA.
 
@@ -531,7 +541,7 @@ ggplot(data.big5, aes(x=signyrs,y=percent)) +
 
     ## Warning: Removed 68 rows containing missing values (geom_point).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-21-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-22-1.png)
 
 Look interesting and you can sort of compare the deaf/hearing lines better, although we should get rid of that person who's been signing for 60 years if we do a years-of-signing analysis. Here's the ANCOVA.
 
@@ -609,7 +619,7 @@ ggplot(data.face3) +
 
     ## Warning: Removed 6 rows containing non-finite values (stat_boxplot).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-24-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-25-1.png)
 
 But we have less levels so maybe another way of looking at the boxplots:
 
@@ -622,7 +632,7 @@ ggplot(data.face3) +
 
     ## Warning: Removed 6 rows containing non-finite values (stat_boxplot).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-25-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-26-1.png)
 
 Or another way even
 
@@ -635,7 +645,7 @@ ggplot(data.face3) +
 
     ## Warning: Removed 6 rows containing non-finite values (stat_boxplot).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-26-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-27-1.png)
 
 Group ANOVA
 -----------
@@ -697,7 +707,7 @@ ggplot(data.face3, aes(x=aoasl,y=percent)) +
 
     ## Warning: Removed 6 rows containing missing values (geom_point).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-29-1.png) and the ANCOVA itself...which gives us almost identical results as the `big5` stats. So maybe it's easier overall to just drop all AOIs except eye, mouth, chin when trying to look for AoA, group effects, etc? We can present summary stats overall for all AOIs, then when it gets down to the dirty stats work, we keep it simple and show ... that whatever we found.
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-30-1.png) and the ANCOVA itself...which gives us almost identical results as the `big5` stats. So maybe it's easier overall to just drop all AOIs except eye, mouth, chin when trying to look for AoA, group effects, etc? We can present summary stats overall for all AOIs, then when it gets down to the dirty stats work, we keep it simple and show ... that whatever we found.
 
 ``` r
 continuous.anova.face3 <- aov(data=data.face3, percent ~ aoi * direction * hearing * aoasl)
@@ -848,7 +858,7 @@ ggplot(data.lr) +
 
     ## Warning: Removed 110 rows containing non-finite values (stat_boxplot).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-33-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-34-1.png)
 
 Let's try the group ANOVA and the AoASL ANCOVAs. Group ANOVA first...nothing significant here.
 
@@ -913,7 +923,7 @@ ggplot(data.lr, aes(x=aoasl,y=percent)) +
 
     ## Warning: Removed 110 rows containing missing values (geom_point).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-36-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-37-1.png)
 
 Assorted/older stuff pushed to the bottom
 =========================================
