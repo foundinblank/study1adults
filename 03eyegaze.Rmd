@@ -193,10 +193,9 @@ difference <- originalrows - nrow(data)
 ```
 So `r difference` stories were dropped from the previous total of `r originalrows` stories for a new total of `r nrow(data)` stories. 
 
-**I'm also dropping Sara and ChrissyG's data too until we fix them.**
+**I'm also dropping Sara's data too until we fix it**
 ```{r}
 data <- filter(data,participant!="Sara")
-data <- filter(data,participant!="ChrissyG")
 ```
 
 
@@ -222,6 +221,11 @@ ggplot(data2,aes(x=percent)) +
   xlab("secs") +
   ggtitle("Looking times of each AOI for each participant for each story")
 ```
+
+### Problem people are Allison, SaraG, and ChrissyK for the reasons below:
+* **Sara G. What is happening...her story sums are still over the limit (one story has 41 s, and no story is more than 37 s). There isn't another Sara G recording hiding somewhere or maybe her scenes are wrong? I'm attaching what I have for her, and from the histograms it's her forehead in Cinderella and eyes in King Midas that seem way out of the ordinary (I highlighted both cells in yellow). **
+* **ChrissyK (yes, K) doesn't show any eye or forehead AOI data for any of her 4 stories. (no other participant fails to provide eye AOI data, although several have very low, <1 s eye AOI data). Is it possible her calibration is shifted a little?**
+* **Allison's data for King Midas (2nd FW story) is strange, she has 33% looking for the right-side AOI. Nobody else even gets to 10%. Double-check?**
 
 
 # Big Five AOIs

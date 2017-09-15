@@ -149,7 +149,7 @@ ggplot(data.face,aes(x=maingroup,y=looking,fill=direction)) +
   facet_wrap("aoi")
 ```
 
-    ## Warning: Removed 156 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 154 rows containing non-finite values (stat_boxplot).
 
 ![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-2-1.png) Okay, right away I see some issues - I want to check for outliers but I'm not sure what could count as an outlier. All 4 stories are different lengths - a data point at 30 seconds would be fine for King Midas (0:37) but impossible for Red Riding Hood (0:18) so outliers need to be *relative* to the story length itself. Let's back up and do histograms for each story.
 
@@ -161,7 +161,7 @@ ggplot(data.face,aes(x=looking)) +
   ggtitle("Face AOI sums for each story for each participant")
 ```
 
-    ## Warning: Removed 156 rows containing non-finite values (stat_bin).
+    ## Warning: Removed 154 rows containing non-finite values (stat_bin).
 
 ![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-3-1.png) Loooks good but I see weird outliers for Red Riding Hood (before Cinderalla too, which I fixed) - those single data points are past the video length (and that's just the face AOIs!). Let's sum up *all* AOIs across each story for each participant...back to the big dataset, and we'll do histograms again.
 
@@ -192,7 +192,7 @@ ggplot(data.reshape,aes(x=looking)) +
   ggtitle("Looking times of each AOI for each participant for each story")
 ```
 
-    ## Warning: Removed 813 rows containing non-finite values (stat_bin).
+    ## Warning: Removed 795 rows containing non-finite values (stat_bin).
 
 ![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-5-1.png)
 
@@ -232,10 +232,10 @@ lowlooking
     ## # A tibble: 4 x 4
     ##           story lessthan25 lessthan50 total
     ##          <fctr>      <int>      <int> <int>
-    ## 1    Cinderella          4          7    46
-    ## 2    Goldilocks          3          4    46
-    ## 3     KingMidas          3          5    46
-    ## 4 RedRidingHood          3          4    46
+    ## 1    Cinderella          3          6    45
+    ## 2    Goldilocks          3          4    45
+    ## 3     KingMidas          2          4    45
+    ## 4 RedRidingHood          3          4    45
 
 ``` r
 lowlookingid <- filter(data,quarter==FALSE) %>% 
@@ -246,22 +246,20 @@ write.csv(lowlookingid, file="lessthan25.csv")
 select(lowlookingid,-participant)
 ```
 
-    ## # A tibble: 13 x 6
+    ## # A tibble: 11 x 6
     ##       id hearing videogroup         story direction total
     ##    <int>  <fctr>     <fctr>        <fctr>    <fctr> <dbl>
-    ##  1    10    Deaf    Group 1    Cinderella  reversed  4.60
-    ##  2    10    Deaf    Group 1     KingMidas   forward  2.66
-    ##  3    32 Hearing    Group 2    Goldilocks  reversed  4.08
-    ##  4    31 Hearing    Group 2    Cinderella   forward  4.73
-    ##  5     6    Deaf    Group 1    Cinderella  reversed  4.43
-    ##  6     6    Deaf    Group 1 RedRidingHood  reversed  3.80
-    ##  7     5    Deaf    Group 1     KingMidas   forward  2.91
-    ##  8     5    Deaf    Group 1 RedRidingHood  reversed  1.96
-    ##  9    25    Deaf    Group 2    Goldilocks  reversed  4.62
-    ## 10     7    Deaf    Group 1    Cinderella  reversed  0.81
-    ## 11     7    Deaf    Group 1     KingMidas   forward  6.84
-    ## 12    30 Hearing    Group 1    Goldilocks   forward  2.56
-    ## 13    17    Deaf    Group 1 RedRidingHood  reversed  0.52
+    ##  1    32 Hearing    Group 2    Goldilocks  reversed  4.08
+    ##  2    31 Hearing    Group 2    Cinderella   forward  4.73
+    ##  3     6    Deaf    Group 1    Cinderella  reversed  4.43
+    ##  4     6    Deaf    Group 1 RedRidingHood  reversed  3.80
+    ##  5     5    Deaf    Group 1     KingMidas   forward  2.91
+    ##  6     5    Deaf    Group 1 RedRidingHood  reversed  1.96
+    ##  7    25    Deaf    Group 2    Goldilocks  reversed  4.62
+    ##  8     7    Deaf    Group 1    Cinderella  reversed  0.81
+    ##  9     7    Deaf    Group 1     KingMidas   forward  6.84
+    ## 10    30 Hearing    Group 1    Goldilocks   forward  2.56
+    ## 11    17    Deaf    Group 1 RedRidingHood  reversed  0.52
 
 ``` r
 #lowlookingid
@@ -275,13 +273,12 @@ data <- filter(data,quarter==TRUE)
 difference <- originalrows - nrow(data)
 ```
 
-So 13 stories were dropped from the previous total of 184 stories for a new total of 171 stories.
+So 11 stories were dropped from the previous total of 180 stories for a new total of 169 stories.
 
-**I'm also dropping Sara and ChrissyG's data too until we fix them.**
+**I'm also dropping Sara's data too until we fix it**
 
 ``` r
 data <- filter(data,participant!="Sara")
-data <- filter(data,participant!="ChrissyG")
 ```
 
 Percentage Data and Viz
@@ -319,6 +316,12 @@ ggplot(data2,aes(x=percent)) +
     ## Warning: Removed 737 rows containing non-finite values (stat_bin).
 
 ![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-11-1.png)
+
+### Problem people are Allison, SaraG, and ChrissyK for the reasons below:
+
+-   **Sara G. What is happening...her story sums are still over the limit (one story has 41 s, and no story is more than 37 s). There isn't another Sara G recording hiding somewhere or maybe her scenes are wrong? I'm attaching what I have for her, and from the histograms it's her forehead in Cinderella and eyes in King Midas that seem way out of the ordinary (I highlighted both cells in yellow). **
+-   **ChrissyK (yes, K) doesn't show any eye or forehead AOI data for any of her 4 stories. (no other participant fails to provide eye AOI data, although several have very low, &lt;1 s eye AOI data). Is it possible her calibration is shifted a little?**
+-   **Allison's data for King Midas (2nd FW story) is strange, she has 33% looking for the right-side AOI. Nobody else even gets to 10%. Double-check?**
 
 Big Five AOIs
 =============

@@ -97,13 +97,13 @@ data <- read_csv('finaladultdata.csv', col_types=
 select(data,-participant)
 ```
 
-Remove dropped participants (they have no main group name, or no data). These are who we dropped. 
+Remove dropped participants (they have no main group name, or no data, or are bad). These are who we dropped. 
 
 ```{r, message=FALSE, warning=FALSE}
 # Removes those with no maingroup name
 nodata <- filter(data, is.na(maingroup)==TRUE) 
 # Removes those with no data
-manual <- filter(data,participant=="Lucinda" | participant=="Joe" | participant=="Cathy") 
+manual <- filter(data,participant=="Lucinda" | participant=="Joe" | participant=="Cathy" | participant=="ChrissyG") 
 # Make table of all dropped participants
 dropped <- rbind(nodata,manual) %>% arrange(id)
 data <- data %>%
