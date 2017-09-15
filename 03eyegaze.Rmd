@@ -343,7 +343,7 @@ group.anova.posthoc
 
 ## Age of ASL & Hearing Status ANCOVA
 
-MainGroup is actually two different variables combined together: deaf and hearing, and native/early/late learners. What if we separated those out and regressed AoASL as a continuous variable, and added deaf/hearing as a factor. Again, first the viz, then the stats. 
+MainGroup is actually two different variables combined together: deaf and hearing, and native/early/late learners. What if we separated those out and regressed AoASL as a continuous variable, and added deaf/hearing as a factor. Again, first the viz, then the stats.
 
 ```{r fig.height=12, fig.width=12}
 # Draw it
@@ -441,6 +441,17 @@ group.anova.face3.posthoc <- TukeyHSD(group.anova.face3,'aoi',conf.level = 0.95)
 group.anova.face3.posthoc
 ```
 
+And posthoc for aoi:direction.
+```{r}
+group.anova.face3.posthoc2 <- TukeyHSD(group.anova.face3,'aoi:direction',conf.level = 0.95) 
+group.anova.face3.posthoc2
+```
+
+And posthoc for aoi:maingroup.
+```{r}
+group.anova.face3.posthoc3 <- TukeyHSD(group.anova.face3,'aoi:maingroup',conf.level = 0.95) 
+group.anova.face3.posthoc3
+```
 
 ## Age of ASL & Hearing Status ANCOVA
 Now we're using AoASL as a covariate and putting in hearing as a factor. Let's visualize that...what we see here is that AoASL isn't having much of an effect, but being deaf or hearing does. 
