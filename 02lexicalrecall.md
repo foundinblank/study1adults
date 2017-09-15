@@ -1,11 +1,14 @@
 Lexical Recall Analysis (study1adults)
 ================
 Adam Stone, PhD
-09-13-2017
+09-15-2017
 
 -   [Re-Initializing](#re-initializing)
--   [Analysis by Groups](#analysis-by-groups)
--   [AOA Modeling](#aoa-modeling)
+-   [ANOVAS](#anovas)
+-   [Group ANOVA](#group-anova)
+-   [AoASL & Hearing ANCOVA](#aoasl-hearing-ancova)
+-   [Item-Level Modeling](#item-level-modeling)
+-   [Group1/Group2 Differences?](#group1group2-differences)
 
 Re-Initializing
 ===============
@@ -102,8 +105,8 @@ data <- data %>%
   mutate(direction = as.factor(direction))
 ```
 
-Analysis by Groups
-==================
+ANOVAS
+======
 
 Lexical recall accuracy violins and error bar charts for forward vs. backward stories.
 
@@ -137,6 +140,9 @@ ggplot(accdata,aes(maingroup,acc.mean,color=direction)) +
 
 ![](02lexicalrecall_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-3-1.png)
 
+Group ANOVA
+===========
+
 Let's test for statistical significance. A simple ANOVA tell us there is a main effect of group and direction, but no interactions.
 
 ``` r
@@ -144,349 +150,65 @@ Let's test for statistical significance. A simple ANOVA tell us there is a main 
 data$maingroup <- relevel(data$maingroup, ref="NativeDeaf")
 # Run the ANOVA
 acc.anova <- aov(data=data,acc ~ maingroup*direction)
-kable(tidy(acc.anova), digits=3) %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+anova(acc.anova)
 ```
 
-<table class="table table-striped table-hover table-condensed" style="margin-left: auto; margin-right: auto;">
-<thead>
-<tr>
-<th style="text-align:left;">
-term
-</th>
-<th style="text-align:right;">
-df
-</th>
-<th style="text-align:right;">
-sumsq
-</th>
-<th style="text-align:right;">
-meansq
-</th>
-<th style="text-align:right;">
-statistic
-</th>
-<th style="text-align:right;">
-p.value
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left;">
-maingroup
-</td>
-<td style="text-align:right;">
-4
-</td>
-<td style="text-align:right;">
-0.216
-</td>
-<td style="text-align:right;">
-0.054
-</td>
-<td style="text-align:right;">
-4.211
-</td>
-<td style="text-align:right;">
-0.003
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-direction
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-0.905
-</td>
-<td style="text-align:right;">
-0.905
-</td>
-<td style="text-align:right;">
-70.464
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-maingroup:direction
-</td>
-<td style="text-align:right;">
-4
-</td>
-<td style="text-align:right;">
-0.058
-</td>
-<td style="text-align:right;">
-0.014
-</td>
-<td style="text-align:right;">
-1.122
-</td>
-<td style="text-align:right;">
-0.348
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Residuals
-</td>
-<td style="text-align:right;">
-170
-</td>
-<td style="text-align:right;">
-2.183
-</td>
-<td style="text-align:right;">
-0.013
-</td>
-<td style="text-align:right;">
-NA
-</td>
-<td style="text-align:right;">
-NA
-</td>
-</tr>
-</tbody>
-</table>
+    ## Analysis of Variance Table
+    ## 
+    ## Response: acc
+    ##                      Df  Sum Sq Mean Sq F value   Pr(>F)    
+    ## maingroup             4 0.21635 0.05409  4.2113 0.002818 ** 
+    ## direction             1 0.90501 0.90501 70.4643 1.76e-14 ***
+    ## maingroup:direction   4 0.05764 0.01441  1.1220 0.347831    
+    ## Residuals           170 2.18340 0.01284                     
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+``` r
+# kable(tidy(acc.anova), digits=3) %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+
 Tukey's HSD posthoc tells us that Hearing Novice ASL is significantly different from Deaf Native.
 
 ``` r
 # Run the posthoc on main group
 acc.posthoc <- TukeyHSD(acc.anova,'maingroup',conf.level = 0.95) 
-kable(tidy(acc.posthoc), digits=3) %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+acc.posthoc
 ```
 
-<table class="table table-striped table-hover table-condensed" style="margin-left: auto; margin-right: auto;">
-<thead>
-<tr>
-<th style="text-align:left;">
-term
-</th>
-<th style="text-align:left;">
-comparison
-</th>
-<th style="text-align:right;">
-estimate
-</th>
-<th style="text-align:right;">
-conf.low
-</th>
-<th style="text-align:right;">
-conf.high
-</th>
-<th style="text-align:right;">
-adj.p.value
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left;">
-maingroup
-</td>
-<td style="text-align:left;">
-DeafEarlyASL-NativeDeaf
-</td>
-<td style="text-align:right;">
--0.049
-</td>
-<td style="text-align:right;">
--0.126
-</td>
-<td style="text-align:right;">
-0.027
-</td>
-<td style="text-align:right;">
-0.387
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-maingroup
-</td>
-<td style="text-align:left;">
-DeafLateASL-NativeDeaf
-</td>
-<td style="text-align:right;">
--0.017
-</td>
-<td style="text-align:right;">
--0.105
-</td>
-<td style="text-align:right;">
-0.071
-</td>
-<td style="text-align:right;">
-0.985
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-maingroup
-</td>
-<td style="text-align:left;">
-HearingLateASL-NativeDeaf
-</td>
-<td style="text-align:right;">
--0.030
-</td>
-<td style="text-align:right;">
--0.096
-</td>
-<td style="text-align:right;">
-0.036
-</td>
-<td style="text-align:right;">
-0.716
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-maingroup
-</td>
-<td style="text-align:left;">
-HearingNoviceASL-NativeDeaf
-</td>
-<td style="text-align:right;">
--0.095
-</td>
-<td style="text-align:right;">
--0.162
-</td>
-<td style="text-align:right;">
--0.027
-</td>
-<td style="text-align:right;">
-0.001
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-maingroup
-</td>
-<td style="text-align:left;">
-DeafLateASL-DeafEarlyASL
-</td>
-<td style="text-align:right;">
-0.033
-</td>
-<td style="text-align:right;">
--0.062
-</td>
-<td style="text-align:right;">
-0.127
-</td>
-<td style="text-align:right;">
-0.875
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-maingroup
-</td>
-<td style="text-align:left;">
-HearingLateASL-DeafEarlyASL
-</td>
-<td style="text-align:right;">
-0.019
-</td>
-<td style="text-align:right;">
--0.055
-</td>
-<td style="text-align:right;">
-0.093
-</td>
-<td style="text-align:right;">
-0.954
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-maingroup
-</td>
-<td style="text-align:left;">
-HearingNoviceASL-DeafEarlyASL
-</td>
-<td style="text-align:right;">
--0.046
-</td>
-<td style="text-align:right;">
--0.121
-</td>
-<td style="text-align:right;">
-0.030
-</td>
-<td style="text-align:right;">
-0.460
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-maingroup
-</td>
-<td style="text-align:left;">
-HearingLateASL-DeafLateASL
-</td>
-<td style="text-align:right;">
--0.014
-</td>
-<td style="text-align:right;">
--0.100
-</td>
-<td style="text-align:right;">
-0.073
-</td>
-<td style="text-align:right;">
-0.993
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-maingroup
-</td>
-<td style="text-align:left;">
-HearingNoviceASL-DeafLateASL
-</td>
-<td style="text-align:right;">
--0.078
-</td>
-<td style="text-align:right;">
--0.166
-</td>
-<td style="text-align:right;">
-0.009
-</td>
-<td style="text-align:right;">
-0.103
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-maingroup
-</td>
-<td style="text-align:left;">
-HearingNoviceASL-HearingLateASL
-</td>
-<td style="text-align:right;">
--0.065
-</td>
-<td style="text-align:right;">
--0.130
-</td>
-<td style="text-align:right;">
-0.001
-</td>
-<td style="text-align:right;">
-0.053
-</td>
-</tr>
-</tbody>
-</table>
+    ##   Tukey multiple comparisons of means
+    ##     95% family-wise confidence level
+    ## 
+    ## Fit: aov(formula = acc ~ maingroup * direction, data = data)
+    ## 
+    ## $maingroup
+    ##                                        diff         lwr           upr
+    ## DeafEarlyASL-NativeDeaf         -0.04928571 -0.12552308  0.0269516554
+    ## DeafLateASL-NativeDeaf          -0.01661190 -0.10464324  0.0714194271
+    ## HearingLateASL-NativeDeaf       -0.03017857 -0.09620207  0.0358449274
+    ## HearingNoviceASL-NativeDeaf     -0.09483766 -0.16224711 -0.0274282118
+    ## DeafLateASL-DeafEarlyASL         0.03267381 -0.06172928  0.1270768958
+    ## HearingLateASL-DeafEarlyASL      0.01910714 -0.05519985  0.0934141392
+    ## HearingNoviceASL-DeafEarlyASL   -0.04555195 -0.12109307  0.0299891754
+    ## HearingLateASL-DeafLateASL      -0.01356667 -0.09993164  0.0727983063
+    ## HearingNoviceASL-DeafLateASL    -0.07822576 -0.16565482  0.0092033004
+    ## HearingNoviceASL-HearingLateASL -0.06465909 -0.12987740  0.0005592132
+    ##                                     p adj
+    ## DeafEarlyASL-NativeDeaf         0.3871481
+    ## DeafLateASL-NativeDeaf          0.9852166
+    ## HearingLateASL-NativeDeaf       0.7157936
+    ## HearingNoviceASL-NativeDeaf     0.0013936
+    ## DeafLateASL-DeafEarlyASL        0.8749572
+    ## HearingLateASL-DeafEarlyASL     0.9542177
+    ## HearingNoviceASL-DeafEarlyASL   0.4598488
+    ## HearingLateASL-DeafLateASL      0.9926191
+    ## HearingNoviceASL-DeafLateASL    0.1031310
+    ## HearingNoviceASL-HearingLateASL 0.0532173
+
+``` r
+#kable(tidy(acc.posthoc), digits=3) %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+
 Group coefficients are here. Remember our reference level ("control") is Native Deaf. Their forward accuracy is 85% with a reversal effect of -9%. ASL, Forward. Mean accuracy for that is 84%, and its reversal effect is -14%. All the other values are to be added to these coefficients. Hearing Novice ASL's forward accuracy was 78%, with a reversal effect of -6%!
 
 ``` r
@@ -588,7 +310,49 @@ maingroupHearingNoviceASL:directionreversed
 </tr>
 </tbody>
 </table>
-In summary, ANOVA tells us there are main effects of group and direction, no interactions. All of which is a good thing. But I'm curious if there's any item-level effects we should be watching out for. Because there are 4 different stories. Let's plot those out.
+AoASL & Hearing ANCOVA
+======================
+
+Let's try ANCOVAs where we include AoASL and hearing status as predictors too - so now we're not using MainGroups anymore. But we do have the AoASL-hearing collinearity problem. So. Let's try it anyway. Plot first.
+
+``` r
+ggplot(data, aes(x=aoasl,y=acc)) +
+  geom_point(aes(color=direction,shape=hearing)) +
+  geom_smooth(aes(color=direction,linetype=hearing),method="lm",se=FALSE)
+```
+
+    ## Warning: Removed 4 rows containing non-finite values (stat_smooth).
+
+    ## Warning: Removed 4 rows containing missing values (geom_point).
+
+![](02lexicalrecall_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-1.png) And now the ANCOVA. I'm a bit surprised we're not getting a direction:AoASL:hearing interaction because definitely we can see within the deaf group, there is a reversal effect correlated with AoASL. Maybe it's because of the collinearity.
+
+``` r
+acc.ancova <- aov(data=data,acc ~ direction * aoasl * hearing)
+anova(acc.ancova)
+```
+
+    ## Analysis of Variance Table
+    ## 
+    ## Response: acc
+    ##                          Df  Sum Sq Mean Sq F value    Pr(>F)    
+    ## direction                 1 0.90501 0.90501 67.0357 5.769e-14 ***
+    ## aoasl                     1 0.08319 0.08319  6.1619   0.01401 *  
+    ## hearing                   1 0.00428 0.00428  0.3173   0.57399    
+    ## direction:aoasl           1 0.03546 0.03546  2.6262   0.10694    
+    ## direction:hearing         1 0.00228 0.00228  0.1689   0.68161    
+    ## aoasl:hearing             1 0.00515 0.00515  0.3816   0.53756    
+    ## direction:aoasl:hearing   1 0.00496 0.00496  0.3674   0.54521    
+    ## Residuals               172 2.32207 0.01350                      
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+In summary, ANOVA tells us there are main effects of group and direction, no interactions. The ANCOVA tells us we have a main effect of direction and AoASL, but not of hearing. All interesting.
+
+Item-Level Modeling
+===================
+
+I'm curious if there's any item-level effects we should be watching out for. Because there are 4 different stories. Let's plot those out.
 
 ``` r
 # Run summary stats grouped by story, too
@@ -613,9 +377,11 @@ ggplot(accdata2,aes(maingroup,acc.mean,color=direction)) +
 
     ## Warning: Removed 3 rows containing missing values (geom_errorbar).
 
-![](02lexicalrecall_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-1.png)
+![](02lexicalrecall_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-9-1.png)
 
-Boy! Seems King Midas had a strong reversal effect, while Red Riding Hood had a weak reversal effect. Maybe we should put those in as random effects variables in a mixed model, along with participants too. With mixed models, you define predictor variables (what we're interested in; aka, fixed effects) and grouping (what we're not interested in, aka, random effects). This is overkill for simple accuracy data but this will help set us up for eye tracking analysis and **importantly reviewers may ask us about item-level effects given we have just 4 stories.**
+Boy! Seems King Midas had a stronger reversal effect, while Red Riding Hood had a weaker reversal effect.
+
+Maybe we should put those in as random effects variables in a mixed model, along with participants too. With mixed models, you define predictor variables (what we're interested in; aka, fixed effects) and grouping (what we're not interested in, aka, random effects). This is overkill for simple accuracy data but this will help set us up for eye tracking analysis and **importantly reviewers may ask us about item-level effects given we have just 4 stories.**
 
 So here, we have fixed effects of group and direction, and random effects of story and id, with varying slopes for direction.
 
@@ -924,6 +690,9 @@ maingroupHearingNoviceASL:directionreversed
 </tr>
 </tbody>
 </table>
+Group1/Group2 Differences?
+==========================
+
 One more thing I just remembered. What if a reviewer asks if Group 1 differed from Group 2 (in other words, was there an effect of stimulus order)? Easy to do now that our data is nicely organized (or "tidy").
 
 ``` r
@@ -1001,51 +770,20 @@ ggplot(data, aes(x=videogroup, y=acc, fill=videogroup)) +
 
     ## Warning: Removed 4 rows containing missing values (geom_point).
 
-![](02lexicalrecall_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-11-1.png)
+![](02lexicalrecall_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-13-1.png)
 
 So Group 1 has a lot more bad test results compared to Group 2. But maybe that's a good reason to be using mixed models, and we can account for that by allowing subjects and items (and item order, by definition...I think) to vary randomly.
 
-AOA Modeling
-============
-
-Below are models for AOA...I need to look at forward/reversed together and reversed only.
-
 ``` r
-ggplot(filter(data,direction=="reversed"),aes(x=aoasl,y=acc)) +
-  geom_point() +
-  geom_smooth(method="lm")
+# ggplot(filter(data,direction=="reversed"),aes(x=aoasl,y=acc)) +
+#   geom_point() +
+#   geom_smooth(method="lm")
 ```
 
-    ## Warning: Removed 2 rows containing non-finite values (stat_smooth).
-
-    ## Warning: Removed 2 rows containing missing values (geom_point).
-
-![](02lexicalrecall_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-12-1.png)
-
 ``` r
-aoa.model <- lm(acc ~ aoasl, data=filter(data,direction=="reversed"))
-summary(aoa.model)
+# aoa.model <- lm(acc ~ aoasl, data=filter(data,direction=="reversed"))
+# summary(aoa.model)
 ```
-
-    ## 
-    ## Call:
-    ## lm(formula = acc ~ aoasl, data = filter(data, direction == "reversed"))
-    ## 
-    ## Residuals:
-    ##      Min       1Q   Median       3Q      Max 
-    ## -0.31237 -0.09632  0.01198  0.10368  0.22831 
-    ## 
-    ## Coefficients:
-    ##              Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)  0.746323   0.023800  31.358   <2e-16 ***
-    ## aoasl       -0.004664   0.001778  -2.624   0.0102 *  
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 
-    ## Residual standard error: 0.1285 on 88 degrees of freedom
-    ##   (2 observations deleted due to missingness)
-    ## Multiple R-squared:  0.07257,    Adjusted R-squared:  0.06203 
-    ## F-statistic: 6.886 on 1 and 88 DF,  p-value: 0.01024
 
 <!-- acc.lm <- lmer(data=data, acc ~ maingroup*direction + (direction|id) + (1|story)) -->
 <!-- summary(acc.lm) -->
