@@ -1,7 +1,7 @@
 Eye Gaze Analysis (study1adults)
 ================
 Adam Stone, PhD
-09-14-2017
+09-15-2017
 
 -   [Re-Initializing](#re-initializing)
 -   [AOIs](#aois)
@@ -75,6 +75,12 @@ library(broom)
 library(knitr)
 library(xtable)
 library(kableExtra)
+library(viridis)
+```
+
+    ## Loading required package: viridisLite
+
+``` r
 options(knitr.table.format = "html") 
 data <- read_csv('cleandata.csv',col_types = 
                    cols(.default = col_double(),
@@ -144,7 +150,7 @@ ggplot(data.face,aes(x=maingroup,y=looking,fill=direction)) +
   facet_wrap("aoi")
 ```
 
-    ## Warning: Removed 157 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 156 rows containing non-finite values (stat_boxplot).
 
 ![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-2-1.png) Okay, right away I see some issues - I want to check for outliers but I'm not sure what could count as an outlier. All 4 stories are different lengths - a data point at 30 seconds would be fine for King Midas (0:37) but impossible for Red Riding Hood (0:18) so outliers need to be *relative* to the story length itself. Let's back up and do histograms for each story.
 
@@ -156,7 +162,7 @@ ggplot(data.face,aes(x=looking)) +
   ggtitle("Face AOI sums for each story for each participant")
 ```
 
-    ## Warning: Removed 157 rows containing non-finite values (stat_bin).
+    ## Warning: Removed 156 rows containing non-finite values (stat_bin).
 
 ![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-3-1.png) Loooks good but I see weird outliers for Red Riding Hood (before Cinderalla too, which I fixed) - those single data points are past the video length (and that's just the face AOIs!). Let's sum up *all* AOIs across each story for each participant...back to the big dataset, and we'll do histograms again.
 
@@ -187,7 +193,7 @@ ggplot(data.reshape,aes(x=looking)) +
   ggtitle("Looking times of each AOI for each participant for each story")
 ```
 
-    ## Warning: Removed 812 rows containing non-finite values (stat_bin).
+    ## Warning: Removed 813 rows containing non-finite values (stat_bin).
 
 ![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-5-1.png)
 
@@ -227,7 +233,7 @@ lowlooking
     ## # A tibble: 4 x 4
     ##           story lessthan25 lessthan50 total
     ##          <fctr>      <int>      <int> <int>
-    ## 1    Cinderella          4          8    46
+    ## 1    Cinderella          4          7    46
     ## 2    Goldilocks          3          4    46
     ## 3     KingMidas          3          5    46
     ## 4 RedRidingHood          3          4    46
@@ -244,7 +250,7 @@ select(lowlookingid,-participant)
     ## # A tibble: 13 x 6
     ##       id hearing videogroup         story direction total
     ##    <int>  <fctr>     <fctr>        <fctr>    <fctr> <dbl>
-    ##  1    10    Deaf    Group 1    Cinderella  reversed  4.62
+    ##  1    10    Deaf    Group 1    Cinderella  reversed  4.60
     ##  2    10    Deaf    Group 1     KingMidas   forward  2.66
     ##  3    32 Hearing    Group 2    Goldilocks  reversed  4.08
     ##  4    31 Hearing    Group 2    Cinderella   forward  4.73
@@ -258,6 +264,10 @@ select(lowlookingid,-participant)
     ## 12    30 Hearing    Group 1    Goldilocks   forward  2.56
     ## 13    17    Deaf    Group 1 RedRidingHood  reversed  0.52
 
+``` r
+#lowlookingid
+```
+
 So I will filter out the data with &lt;25% looking time. Maybe the threshold should be higher, but we'll revisit that later.
 
 ``` r
@@ -267,6 +277,13 @@ difference <- originalrows - nrow(data)
 ```
 
 So 13 stories were dropped from the previous total of 184 stories for a new total of 171 stories.
+
+**I'm also dropping Sara and ChrissyG's data too until we fix them.**
+
+``` r
+data <- filter(data,participant!="Sara")
+data <- filter(data,participant!="ChrissyG")
+```
 
 Percentage Data and Viz
 -----------------------
@@ -284,9 +301,25 @@ ggplot(data2, aes(x=aoi,y=percent)) +
   geom_boxplot() 
 ```
 
-    ## Warning: Removed 748 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 737 rows containing non-finite values (stat_boxplot).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-9-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-10-1.png)
+
+But we should also look at histograms of percentage data. Those should have more normal-like distributions for the high-hitting AOIs, unlike the actual looking data in seconds which has a upper limit.
+
+``` r
+ggplot(data2,aes(x=percent)) +
+  geom_histogram() +
+  facet_grid(aoi ~ story) +
+  xlab("secs") +
+  ggtitle("Looking times of each AOI for each participant for each story")
+```
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+    ## Warning: Removed 737 rows containing non-finite values (stat_bin).
+
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-11-1.png)
 
 Big Five AOIs
 =============
@@ -349,9 +382,9 @@ ggplot(data.big5) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 
-    ## Warning: Removed 69 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 68 rows containing non-finite values (stat_boxplot).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-12-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-14-1.png)
 
 ``` r
 data.big5.viz <- data.big5 %>%
@@ -364,7 +397,9 @@ ggplot(data.big5.viz, aes(x=maingroup,y=mean,color=direction)) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-13-1.png)
+    ## Warning: Removed 1 rows containing missing values (geom_errorbar).
+
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-15-1.png)
 
 Or a heat map!
 
@@ -375,13 +410,15 @@ data.big5.reduce <- data.big5 %>%
   ungroup() %>%
   mutate(aoi = factor(aoi,levels=c("upperchest","chin","mouth","eyes","forehead")))
 ggplot(data.big5.reduce, aes(x = maingroup, y = aoi)) +
-  geom_tile(aes(fill=meanlooking),na.rm=TRUE) + 
-  scale_fill_gradient(low = "lightblue",high = "steelblue") +
+  geom_tile(aes(fill=meanlooking),color="lightgray",na.rm=TRUE) + 
+#  scale_fill_gradient(low = "lightblue",high = "steelblue") +
+#  scale_fill_distiller(type="div", palette = "RdYlBu") +
+  scale_fill_viridis(option = "inferno") +
   facet_wrap("direction") +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-14-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-16-1.png)
 
 The ANOVA below tells us there's a significant effect of AOI, and significant interactions of AOI x Direction and AOI x MainGroup.
 
@@ -393,15 +430,15 @@ anova(group.anova)
     ## Analysis of Variance Table
     ## 
     ## Response: percent
-    ##                          Df  Sum Sq Mean Sq F value    Pr(>F)    
-    ## aoi                       4 15.1766  3.7942 87.2717 < 2.2e-16 ***
-    ## direction                 1  0.0000  0.0000  0.0009  0.976339    
-    ## maingroup                 4  0.0193  0.0048  0.1107  0.978720    
-    ## aoi:direction             4  0.5698  0.1424  3.2763  0.011805 *  
-    ## aoi:maingroup            16  1.5712  0.0982  2.2588  0.003935 ** 
-    ## direction:maingroup       4  0.0022  0.0005  0.0126  0.999685    
-    ## aoi:direction:maingroup  16  0.1647  0.0103  0.2368  0.999144    
-    ## Residuals               336 14.6077  0.0435                      
+    ##                          Df  Sum Sq Mean Sq F value  Pr(>F)    
+    ## aoi                       4 15.3862  3.8465 89.6975 < 2e-16 ***
+    ## direction                 1  0.0002  0.0002  0.0040 0.94940    
+    ## maingroup                 4  0.0172  0.0043  0.1001 0.98235    
+    ## aoi:direction             4  0.5361  0.1340  3.1252 0.01526 *  
+    ## aoi:maingroup            16  1.2087  0.0755  1.7616 0.03536 *  
+    ## direction:maingroup       4  0.0027  0.0007  0.0160 0.99950    
+    ## aoi:direction:maingroup  16  0.2120  0.0133  0.3090 0.99568    
+    ## Residuals               317 13.5941  0.0429                    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -420,17 +457,17 @@ group.anova.posthoc
     ## Fit: aov(formula = percent ~ aoi * direction * maingroup, data = data.big5)
     ## 
     ## $aoi
-    ##                            diff         lwr          upr     p adj
-    ## upperchest-eyes     -0.16887467 -0.25770293 -0.080046421 0.0000032
-    ## chin-eyes           -0.02410231 -0.11010420  0.061899581 0.9394317
-    ## mouth-eyes           0.37010631  0.28410441  0.456108200 0.0000000
-    ## forehead-eyes       -0.14357701 -0.25497083 -0.032183183 0.0042182
-    ## chin-upperchest      0.14477236  0.05712807  0.232416660 0.0000799
-    ## mouth-upperchest     0.53898098  0.45133668  0.626625278 0.0000000
-    ## forehead-upperchest  0.02529767 -0.08736902  0.137964349 0.9725244
-    ## mouth-chin           0.39420862  0.30943014  0.478987093 0.0000000
-    ## forehead-chin       -0.11947470 -0.22992672 -0.009022678 0.0265760
-    ## forehead-mouth      -0.51368332 -0.62413533 -0.403231296 0.0000000
+    ##                             diff        lwr         upr     p adj
+    ## upperchest-eyes     -0.163117532 -0.2535807 -0.07265439 0.0000121
+    ## chin-eyes           -0.015583269 -0.1032743  0.07210779 0.9884749
+    ## mouth-eyes           0.386468735  0.2990240  0.47391346 0.0000000
+    ## forehead-eyes       -0.157965393 -0.2715553 -0.04437551 0.0015271
+    ## chin-upperchest      0.147534264  0.0580888  0.23697973 0.0000832
+    ## mouth-upperchest     0.549586267  0.4603823  0.63879024 0.0000000
+    ## forehead-upperchest  0.005152139 -0.1097976  0.12010183 0.9999482
+    ## mouth-chin           0.402052003  0.3156605  0.48844351 0.0000000
+    ## forehead-chin       -0.142382125 -0.2551632 -0.02960104 0.0054472
+    ## forehead-mouth      -0.544434128 -0.6570238 -0.43184446 0.0000000
 
 Age of ASL & Hearing Status ANCOVA
 ----------------------------------
@@ -445,13 +482,13 @@ ggplot(data.big5, aes(x=aoasl,y=percent)) +
   facet_wrap("aoi")
 ```
 
-    ## Warning: Removed 69 rows containing non-finite values (stat_smooth).
+    ## Warning: Removed 68 rows containing non-finite values (stat_smooth).
 
-    ## Warning: Removed 69 rows containing missing values (geom_point).
+    ## Warning: Removed 68 rows containing missing values (geom_point).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-17-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-19-1.png)
 
-Let's move to ANOVAs. This is technically an ANCOVA, and AoASL is the covariate. The output tells us there is a significant main effect of AOI, and significant interactions of AOI x Direction and AOI x Hearing and AOI x Hearing X AoASL. So really it's very similar to what we got with the group ANOVA.
+Let's move to ANOVAs. This is technically an ANCOVA, and AoASL is the covariate. The output tells us there is a significant main effect of AOI, and significant interactions of AOI x Direction and AOI x Hearing. A marginally significant interaction of AOI x Hearing X AoASL. So really it's very similar to what we got with the group ANOVA.
 
 ``` r
 continuous.anova <- aov(data=data.big5, percent ~ aoi * direction * hearing * aoasl)
@@ -461,23 +498,23 @@ anova(continuous.anova)
     ## Analysis of Variance Table
     ## 
     ## Response: percent
-    ##                              Df  Sum Sq Mean Sq F value    Pr(>F)    
-    ## aoi                           4 15.1766  3.7942 88.5884 < 2.2e-16 ***
-    ## direction                     1  0.0000  0.0000  0.0009  0.976161    
-    ## hearing                       1  0.0132  0.0132  0.3085  0.578973    
-    ## aoasl                         1  0.0004  0.0004  0.0087  0.925885    
-    ## aoi:direction                 4  0.5691  0.1423  3.3222  0.010903 *  
-    ## aoi:hearing                   4  0.7265  0.1816  4.2405  0.002304 ** 
-    ## direction:hearing             1  0.0003  0.0003  0.0075  0.931263    
-    ## aoi:aoasl                     4  0.1820  0.0455  1.0625  0.374988    
-    ## direction:aoasl               1  0.0004  0.0004  0.0083  0.927254    
-    ## hearing:aoasl                 1  0.0053  0.0053  0.1246  0.724300    
-    ## aoi:direction:hearing         4  0.0272  0.0068  0.1587  0.958980    
-    ## aoi:direction:aoasl           4  0.0159  0.0040  0.0925  0.984780    
-    ## aoi:hearing:aoasl             4  0.5592  0.1398  3.2640  0.012020 *  
-    ## direction:hearing:aoasl       1  0.0003  0.0003  0.0078  0.929538    
-    ## aoi:direction:hearing:aoasl   4  0.0162  0.0040  0.0945  0.984175    
-    ## Residuals                   346 14.8189  0.0428                      
+    ##                              Df  Sum Sq Mean Sq F value  Pr(>F)    
+    ## aoi                           4 15.3862  3.8465 90.6448 < 2e-16 ***
+    ## direction                     1  0.0002  0.0002  0.0041 0.94914    
+    ## hearing                       1  0.0126  0.0126  0.2968 0.58626    
+    ## aoasl                         1  0.0001  0.0001  0.0032 0.95465    
+    ## aoi:direction                 4  0.5356  0.1339  3.1555 0.01447 *  
+    ## aoi:hearing                   4  0.5026  0.1257  2.9611 0.01998 *  
+    ## direction:hearing             1  0.0013  0.0013  0.0313 0.85977    
+    ## aoi:aoasl                     4  0.2383  0.0596  1.4038 0.23240    
+    ## direction:aoasl               1  0.0001  0.0001  0.0014 0.96970    
+    ## hearing:aoasl                 1  0.0070  0.0070  0.1644 0.68540    
+    ## aoi:direction:hearing         4  0.0251  0.0063  0.1479 0.96386    
+    ## aoi:direction:aoasl           4  0.0104  0.0026  0.0613 0.99303    
+    ## aoi:hearing:aoasl             4  0.3434  0.0858  2.0229 0.09094 .  
+    ## direction:hearing:aoasl       1  0.0001  0.0001  0.0028 0.95789    
+    ## aoi:direction:hearing:aoasl   4  0.0178  0.0044  0.1048 0.98081    
+    ## Residuals                   327 13.8763  0.0424                    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -490,11 +527,11 @@ ggplot(data.big5, aes(x=signyrs,y=percent)) +
   facet_wrap("aoi")
 ```
 
-    ## Warning: Removed 69 rows containing non-finite values (stat_smooth).
+    ## Warning: Removed 68 rows containing non-finite values (stat_smooth).
 
-    ## Warning: Removed 69 rows containing missing values (geom_point).
+    ## Warning: Removed 68 rows containing missing values (geom_point).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-19-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-21-1.png)
 
 Look interesting and you can sort of compare the deaf/hearing lines better, although we should get rid of that person who's been signing for 60 years if we do a years-of-signing analysis. Here's the ANCOVA.
 
@@ -508,23 +545,23 @@ anova(continuous.anova.sy)
     ## Analysis of Variance Table
     ## 
     ## Response: percent
-    ##                                Df  Sum Sq Mean Sq F value    Pr(>F)    
-    ## aoi                             4 15.1766  3.7942 88.5694 < 2.2e-16 ***
-    ## direction                       1  0.0000  0.0000  0.0009  0.976163    
-    ## hearing                         1  0.0132  0.0132  0.3084  0.579014    
-    ## signyrs                         1  0.0015  0.0015  0.0361  0.849424    
-    ## aoi:direction                   4  0.5685  0.1421  3.3179  0.010982 *  
-    ## aoi:hearing                     4  0.7262  0.1815  4.2380  0.002314 ** 
-    ## direction:hearing               1  0.0003  0.0003  0.0069  0.933720    
-    ## aoi:signyrs                     4  0.4723  0.1181  2.7562  0.027897 *  
-    ## direction:signyrs               1  0.0000  0.0000  0.0004  0.983219    
-    ## hearing:signyrs                 1  0.0023  0.0023  0.0531  0.817971    
-    ## aoi:direction:hearing           4  0.0213  0.0053  0.1245  0.973581    
-    ## aoi:direction:signyrs           4  0.0207  0.0052  0.1206  0.975103    
-    ## aoi:hearing:signyrs             4  0.2038  0.0510  1.1894  0.315163    
-    ## direction:hearing:signyrs       1  0.0002  0.0002  0.0051  0.943196    
-    ## aoi:direction:hearing:signyrs   4  0.0824  0.0206  0.4808  0.749822    
-    ## Residuals                     346 14.8220  0.0428                      
+    ##                                Df  Sum Sq Mean Sq F value  Pr(>F)    
+    ## aoi                             4 15.3862  3.8465 90.6853 < 2e-16 ***
+    ## direction                       1  0.0002  0.0002  0.0041 0.94913    
+    ## hearing                         1  0.0126  0.0126  0.2970 0.58617    
+    ## signyrs                         1  0.0004  0.0004  0.0085 0.92640    
+    ## aoi:direction                   4  0.5354  0.1339  3.1558 0.01447 *  
+    ## aoi:hearing                     4  0.5026  0.1256  2.9621 0.01995 *  
+    ## direction:hearing               1  0.0013  0.0013  0.0313 0.85962    
+    ## aoi:signyrs                     4  0.4606  0.1151  2.7146 0.02997 *  
+    ## direction:signyrs               1  0.0001  0.0001  0.0019 0.96493    
+    ## hearing:signyrs                 1  0.0024  0.0024  0.0570 0.81143    
+    ## aoi:direction:hearing           4  0.0233  0.0058  0.1372 0.96843    
+    ## aoi:direction:signyrs           4  0.0261  0.0065  0.1539 0.96117    
+    ## aoi:hearing:signyrs             4  0.0511  0.0128  0.3012 0.87707    
+    ## direction:hearing:signyrs       1  0.0003  0.0003  0.0075 0.93098    
+    ## aoi:direction:hearing:signyrs   4  0.0844  0.0211  0.4977 0.73744    
+    ## Residuals                     327 13.8701  0.0424                    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -570,9 +607,9 @@ ggplot(data.face3) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 
-    ## Warning: Removed 5 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 6 rows containing non-finite values (stat_boxplot).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-22-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-24-1.png)
 
 But we have less levels so maybe another way of looking at the boxplots:
 
@@ -583,9 +620,9 @@ ggplot(data.face3) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 
-    ## Warning: Removed 5 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 6 rows containing non-finite values (stat_boxplot).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-23-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-25-1.png)
 
 Or another way even
 
@@ -596,9 +633,9 @@ ggplot(data.face3) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 
-    ## Warning: Removed 5 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 6 rows containing non-finite values (stat_boxplot).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-24-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-26-1.png)
 
 Group ANOVA
 -----------
@@ -614,14 +651,14 @@ anova(group.anova.face3)
     ## 
     ## Response: percent
     ##                          Df  Sum Sq Mean Sq F value  Pr(>F)    
-    ## aoi                       2  8.8187  4.4094 75.9048 < 2e-16 ***
-    ## direction                 1  0.0151  0.0151  0.2606 0.61015    
-    ## maingroup                 4  0.0461  0.0115  0.1984 0.93902    
-    ## aoi:direction             2  0.5114  0.2557  4.4017 0.01327 *  
-    ## aoi:maingroup             8  1.4350  0.1794  3.0878 0.00248 ** 
-    ## direction:maingroup       4  0.0104  0.0026  0.0447 0.99621    
-    ## aoi:direction:maingroup   8  0.1000  0.0125  0.2152 0.98803    
-    ## Residuals               238 13.8255  0.0581                    
+    ## aoi                       2  8.9281  4.4641 76.1553 < 2e-16 ***
+    ## direction                 1  0.0047  0.0047  0.0805 0.77685    
+    ## maingroup                 4  0.0405  0.0101  0.1727 0.95219    
+    ## aoi:direction             2  0.5153  0.2577  4.3958 0.01341 *  
+    ## aoi:maingroup             8  1.1403  0.1425  2.4317 0.01538 *  
+    ## direction:maingroup       4  0.0036  0.0009  0.0154 0.99953    
+    ## aoi:direction:maingroup   8  0.1891  0.0236  0.4033 0.91797    
+    ## Residuals               225 13.1890  0.0586                    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -639,9 +676,9 @@ group.anova.face3.posthoc
     ## 
     ## $aoi
     ##                   diff        lwr         upr     p adj
-    ## mouth-eyes  0.37010631  0.2846193  0.45559329 0.0000000
-    ## chin-eyes  -0.02410231 -0.1095893  0.06138467 0.7840376
-    ## chin-mouth -0.39420862 -0.4784795 -0.30993773 0.0000000
+    ## mouth-eyes  0.38646873  0.2985503  0.47438721 0.0000000
+    ## chin-eyes  -0.01558327 -0.1037494  0.07258287 0.9086476
+    ## chin-mouth -0.40205200 -0.4889115 -0.31519246 0.0000000
 
 Age of ASL & Hearing Status ANCOVA
 ----------------------------------
@@ -656,11 +693,11 @@ ggplot(data.face3, aes(x=aoasl,y=percent)) +
   facet_wrap("aoi")
 ```
 
-    ## Warning: Removed 5 rows containing non-finite values (stat_smooth).
+    ## Warning: Removed 6 rows containing non-finite values (stat_smooth).
 
-    ## Warning: Removed 5 rows containing missing values (geom_point).
+    ## Warning: Removed 6 rows containing missing values (geom_point).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-27-1.png) and the ANCOVA itself...which gives us almost identical results as the `big5` stats. So maybe it's easier overall to just drop all AOIs except eye, mouth, chin when trying to look for AoA, group effects, etc? We can present summary stats overall for all AOIs, then when it gets down to the dirty stats work, we keep it simple and show ... that whatever we found.
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-29-1.png) and the ANCOVA itself...which gives us almost identical results as the `big5` stats. So maybe it's easier overall to just drop all AOIs except eye, mouth, chin when trying to look for AoA, group effects, etc? We can present summary stats overall for all AOIs, then when it gets down to the dirty stats work, we keep it simple and show ... that whatever we found.
 
 ``` r
 continuous.anova.face3 <- aov(data=data.face3, percent ~ aoi * direction * hearing * aoasl)
@@ -670,27 +707,29 @@ anova(continuous.anova.face3)
     ## Analysis of Variance Table
     ## 
     ## Response: percent
-    ##                              Df  Sum Sq Mean Sq F value    Pr(>F)    
-    ## aoi                           2  8.8187  4.4094 77.0664 < 2.2e-16 ***
-    ## direction                     1  0.0151  0.0151  0.2646  0.607418    
-    ## hearing                       1  0.0186  0.0186  0.3255  0.568834    
-    ## aoasl                         1  0.0034  0.0034  0.0603  0.806244    
-    ## aoi:direction                 2  0.5104  0.2552  4.4602  0.012518 *  
-    ## aoi:hearing                   2  0.6997  0.3498  6.1142  0.002565 ** 
-    ## direction:hearing             1  0.0005  0.0005  0.0089  0.924727    
-    ## aoi:aoasl                     2  0.1587  0.0794  1.3871  0.251765    
-    ## direction:aoasl               1  0.0035  0.0035  0.0605  0.805849    
-    ## hearing:aoasl                 1  0.0215  0.0215  0.3755  0.540617    
-    ## aoi:direction:hearing         2  0.0056  0.0028  0.0488  0.952347    
-    ## aoi:direction:aoasl           2  0.0018  0.0009  0.0156  0.984517    
-    ## aoi:hearing:aoasl             2  0.5283  0.2641  4.6167  0.010764 *  
-    ## direction:hearing:aoasl       1  0.0009  0.0009  0.0150  0.902481    
-    ## aoi:direction:hearing:aoasl   2  0.0152  0.0076  0.1324  0.876019    
-    ## Residuals                   244 13.9605  0.0572                      
+    ##                              Df  Sum Sq Mean Sq F value  Pr(>F)    
+    ## aoi                           2  8.9281  4.4641 76.7486 < 2e-16 ***
+    ## direction                     1  0.0047  0.0047  0.0812 0.77600    
+    ## hearing                       1  0.0335  0.0335  0.5761 0.44861    
+    ## aoasl                         1  0.0014  0.0014  0.0241 0.87676    
+    ## aoi:direction                 2  0.5146  0.2573  4.4233 0.01303 *  
+    ## aoi:hearing                   2  0.4743  0.2372  4.0773 0.01819 *  
+    ## direction:hearing             1  0.0011  0.0011  0.0188 0.89107    
+    ## aoi:aoasl                     2  0.2237  0.1118  1.9229 0.14851    
+    ## direction:aoasl               1  0.0004  0.0004  0.0072 0.93235    
+    ## hearing:aoasl                 1  0.0076  0.0076  0.1312 0.71750    
+    ## aoi:direction:hearing         2  0.0225  0.0112  0.1931 0.82454    
+    ## aoi:direction:aoasl           2  0.0094  0.0047  0.0812 0.92201    
+    ## aoi:hearing:aoasl             2  0.3407  0.1704  2.9289 0.05544 .  
+    ## direction:hearing:aoasl       1  0.0003  0.0003  0.0056 0.94028    
+    ## aoi:direction:hearing:aoasl   2  0.0123  0.0062  0.1060 0.89948    
+    ## Residuals                   231 13.4360  0.0582                    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-We have to figure out what the itneractions mean. That's where simple linear models can be helpful here. Let me try it here. Okay, so the results are slightly different. ANOVAs in R default to Type I sums of squares, while regressions use more of a Type III sum of squares approach, I believe. But we can interpret the results here a bit more easily. Almost all the interactions have to do with being hearing vs. deaf, and there seems to be no effect of Age of ASL acquisition. So that's interesting.
+We have to figure out what the interactions mean. That's where simple linear models can be helpful here. Let me try it here. Okay so the NEW cleaned data tells us there were noe ffects except AOI where mouth is looked at more than anything. I think the linear model is punishing us for the high collinearity between AoA and age, whereas ANCOVA doesn't (but why the difference, I don't know).
+
+*Old text from before data was further cleaned: Okay, so the results are slightly different. ANOVAs in R default to Type I sums of squares, while regressions use more of a Type III sum of squares approach, I believe. But we can interpret the results here a bit more easily. Almost all the interactions have to do with being hearing vs. deaf, and there seems to be no effect of Age of ASL acquisition. So that's interesting.*
 
 ``` r
 lm.face3 <- lm(data=data.face3, percent ~ aoi * direction * aoasl * hearing)
@@ -702,67 +741,67 @@ summary(lm.face3)
     ## lm(formula = percent ~ aoi * direction * aoasl * hearing, data = data.face3)
     ## 
     ## Residuals:
-    ##      Min       1Q   Median       3Q      Max 
-    ## -0.61587 -0.14844 -0.03784  0.15304  0.64269 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -0.5546 -0.1502 -0.0427  0.1484  0.6468 
     ## 
     ## Coefficients:
     ##                                                   Estimate Std. Error
-    ## (Intercept)                                      0.0931195  0.0696057
-    ## aoimouth                                         0.5794713  0.0964970
-    ## aoichin                                          0.1349878  0.0964970
-    ## directionreversed                                0.0424817  0.1008157
-    ## aoasl                                            0.0067500  0.0103190
-    ## hearingHearing                                   0.6571568  0.3409805
-    ## aoimouth:directionreversed                      -0.1771985  0.1382430
-    ## aoichin:directionreversed                        0.0300791  0.1382430
-    ## aoimouth:aoasl                                  -0.0021634  0.0144608
-    ## aoichin:aoasl                                   -0.0196756  0.0144608
-    ## directionreversed:aoasl                         -0.0049741  0.0149847
-    ## aoimouth:hearingHearing                         -1.0627784  0.4818269
-    ## aoichin:hearingHearing                          -1.1218006  0.4818269
-    ## directionreversed:hearingHearing                -0.1335229  0.4973469
-    ## aoasl:hearingHearing                            -0.0354791  0.0215605
-    ## aoimouth:directionreversed:aoasl                 0.0071584  0.0207936
-    ## aoichin:directionreversed:aoasl                  0.0001892  0.0207936
-    ## aoimouth:directionreversed:hearingHearing        0.2699738  0.6922043
-    ## aoichin:directionreversed:hearingHearing         0.1158865  0.6922043
-    ## aoimouth:aoasl:hearingHearing                    0.0487191  0.0304279
-    ## aoichin:aoasl:hearingHearing                     0.0683193  0.0304279
-    ## directionreversed:aoasl:hearingHearing           0.0110424  0.0315900
-    ## aoimouth:directionreversed:aoasl:hearingHearing -0.0212871  0.0438464
-    ## aoichin:directionreversed:aoasl:hearingHearing  -0.0046483  0.0438464
+    ## (Intercept)                                      0.1054104  0.0703357
+    ## aoimouth                                         0.5542274  0.0975009
+    ## aoichin                                          0.1225277  0.0975009
+    ## directionreversed                                0.0669363  0.1018497
+    ## aoasl                                            0.0015688  0.0110102
+    ## hearingHearing                                   0.4649091  0.3602292
+    ## aoimouth:directionreversed                      -0.2120001  0.1396535
+    ## aoichin:directionreversed                       -0.0075729  0.1399773
+    ## aoimouth:aoasl                                   0.0077295  0.0154359
+    ## aoichin:aoasl                                   -0.0133529  0.0154359
+    ## directionreversed:aoasl                          0.0005422  0.0160750
+    ## aoimouth:hearingHearing                         -0.7034286  0.5090603
+    ## aoichin:hearingHearing                          -0.9148085  0.5090603
+    ## directionreversed:hearingHearing                -0.1158637  0.5257094
+    ## aoasl:hearingHearing                            -0.0210483  0.0227167
+    ## aoimouth:directionreversed:aoasl                 0.0065929  0.0222818
+    ## aoichin:directionreversed:aoasl                 -0.0057121  0.0222896
+    ## aoimouth:directionreversed:hearingHearing        0.2256911  0.7315299
+    ## aoichin:directionreversed:hearingHearing         0.1269789  0.7315918
+    ## aoimouth:aoasl:hearingHearing                    0.0216536  0.0320611
+    ## aoichin:aoasl:hearingHearing                     0.0519979  0.0320611
+    ## directionreversed:aoasl:hearingHearing           0.0034674  0.0333375
+    ## aoimouth:directionreversed:aoasl:hearingHearing -0.0167627  0.0462505
+    ## aoichin:directionreversed:aoasl:hearingHearing   0.0025121  0.0462543
     ##                                                 t value Pr(>|t|)    
-    ## (Intercept)                                       1.338   0.1822    
-    ## aoimouth                                          6.005 6.89e-09 ***
-    ## aoichin                                           1.399   0.1631    
-    ## directionreversed                                 0.421   0.6738    
-    ## aoasl                                             0.654   0.5136    
-    ## hearingHearing                                    1.927   0.0551 .  
-    ## aoimouth:directionreversed                       -1.282   0.2011    
-    ## aoichin:directionreversed                         0.218   0.8279    
-    ## aoimouth:aoasl                                   -0.150   0.8812    
-    ## aoichin:aoasl                                    -1.361   0.1749    
-    ## directionreversed:aoasl                          -0.332   0.7402    
-    ## aoimouth:hearingHearing                          -2.206   0.0283 *  
-    ## aoichin:hearingHearing                           -2.328   0.0207 *  
-    ## directionreversed:hearingHearing                 -0.268   0.7886    
-    ## aoasl:hearingHearing                             -1.646   0.1011    
-    ## aoimouth:directionreversed:aoasl                  0.344   0.7309    
-    ## aoichin:directionreversed:aoasl                   0.009   0.9927    
-    ## aoimouth:directionreversed:hearingHearing         0.390   0.6969    
-    ## aoichin:directionreversed:hearingHearing          0.167   0.8672    
-    ## aoimouth:aoasl:hearingHearing                     1.601   0.1106    
-    ## aoichin:aoasl:hearingHearing                      2.245   0.0256 *  
-    ## directionreversed:aoasl:hearingHearing            0.350   0.7270    
-    ## aoimouth:directionreversed:aoasl:hearingHearing  -0.485   0.6278    
-    ## aoichin:directionreversed:aoasl:hearingHearing   -0.106   0.9157    
+    ## (Intercept)                                       1.499   0.1353    
+    ## aoimouth                                          5.684 3.94e-08 ***
+    ## aoichin                                           1.257   0.2101    
+    ## directionreversed                                 0.657   0.5117    
+    ## aoasl                                             0.142   0.8868    
+    ## hearingHearing                                    1.291   0.1981    
+    ## aoimouth:directionreversed                       -1.518   0.1304    
+    ## aoichin:directionreversed                        -0.054   0.9569    
+    ## aoimouth:aoasl                                    0.501   0.6170    
+    ## aoichin:aoasl                                    -0.865   0.3879    
+    ## directionreversed:aoasl                           0.034   0.9731    
+    ## aoimouth:hearingHearing                          -1.382   0.1684    
+    ## aoichin:hearingHearing                           -1.797   0.0736 .  
+    ## directionreversed:hearingHearing                 -0.220   0.8258    
+    ## aoasl:hearingHearing                             -0.927   0.3551    
+    ## aoimouth:directionreversed:aoasl                  0.296   0.7676    
+    ## aoichin:directionreversed:aoasl                  -0.256   0.7980    
+    ## aoimouth:directionreversed:hearingHearing         0.309   0.7580    
+    ## aoichin:directionreversed:hearingHearing          0.174   0.8624    
+    ## aoimouth:aoasl:hearingHearing                     0.675   0.5001    
+    ## aoichin:aoasl:hearingHearing                      1.622   0.1062    
+    ## directionreversed:aoasl:hearingHearing            0.104   0.9173    
+    ## aoimouth:directionreversed:aoasl:hearingHearing  -0.362   0.7174    
+    ## aoichin:directionreversed:aoasl:hearingHearing    0.054   0.9567    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 0.2392 on 244 degrees of freedom
-    ##   (5 observations deleted due to missingness)
-    ## Multiple R-squared:  0.4362, Adjusted R-squared:  0.3831 
-    ## F-statistic: 8.208 on 23 and 244 DF,  p-value: < 2.2e-16
+    ## Residual standard error: 0.2412 on 231 degrees of freedom
+    ##   (6 observations deleted due to missingness)
+    ## Multiple R-squared:  0.4404, Adjusted R-squared:  0.3847 
+    ## F-statistic: 7.905 on 23 and 231 DF,  p-value: < 2.2e-16
 
 Left/Right Analysis
 ===================
@@ -798,7 +837,7 @@ data.lr[data.lr=="NaN"] <- NA
 data.lr <- left_join(data.lr,data.lr.subjectinfo, by=c("participant","direction"))
 ```
 
-Problem is, I can already tell this dataset is rather sparse. There are 113 empty cells out of 182. Soooo. Let's give this a shot anyway but probably not a good idea? The graph below, I changed the colors so they map on left/right AOI, and each facet is direction. So we can directly compare L/R biases.
+Problem is, I can already tell this dataset is rather sparse. There are 110 empty cells out of 174. Soooo. Let's give this a shot anyway but probably not a good idea? The graph below, I changed the colors so they map on left/right AOI, and each facet is direction. So we can directly compare L/R biases.
 
 ``` r
 ggplot(data.lr) + 
@@ -807,9 +846,9 @@ ggplot(data.lr) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 
-    ## Warning: Removed 113 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 110 rows containing non-finite values (stat_boxplot).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-31-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-33-1.png)
 
 Let's try the group ANOVA and the AoASL ANCOVAs. Group ANOVA first...nothing significant here.
 
@@ -822,14 +861,14 @@ anova(group.lranova)
     ## 
     ## Response: percent
     ##                         Df   Sum Sq    Mean Sq F value Pr(>F)
-    ## aoi                      1 0.000106 0.00010557  0.0520 0.8206
-    ## direction                1 0.000046 0.00004597  0.0226 0.8810
-    ## maingroup                4 0.009611 0.00240277  1.1827 0.3298
-    ## aoi:direction            1 0.000023 0.00002272  0.0112 0.9162
-    ## aoi:maingroup            4 0.006628 0.00165694  0.8156 0.5213
-    ## direction:maingroup      4 0.002123 0.00053078  0.2613 0.9014
-    ## aoi:direction:maingroup  3 0.002643 0.00088095  0.4336 0.7299
-    ## Residuals               50 0.101581 0.00203161
+    ## aoi                      1 0.000028 0.00002808  0.0138 0.9070
+    ## direction                1 0.000515 0.00051538  0.2533 0.6172
+    ## maingroup                4 0.009258 0.00231447  1.1375 0.3511
+    ## aoi:direction            1 0.000070 0.00006976  0.0343 0.8539
+    ## aoi:maingroup            4 0.006482 0.00162044  0.7964 0.5338
+    ## direction:maingroup      4 0.004085 0.00102124  0.5019 0.7344
+    ## aoi:direction:maingroup  3 0.004902 0.00163408  0.8031 0.4987
+    ## Residuals               45 0.091564 0.00203476
 
 But the ANCOVA here shows some almost significant effects of hearing, and significant AOI:Hearing and AOASL:Hearing interactions.
 
@@ -842,22 +881,22 @@ anova(continuous.lranova)
     ## 
     ## Response: percent
     ##                             Df   Sum Sq   Mean Sq F value  Pr(>F)  
-    ## aoi                          1 0.000106 0.0001056  0.0655 0.79902  
-    ## direction                    1 0.000046 0.0000460  0.0285 0.86654  
-    ## aoasl                        1 0.001119 0.0011187  0.6939 0.40857  
-    ## hearing                      1 0.006440 0.0064397  3.9945 0.05079 .
-    ## aoi:direction                1 0.000008 0.0000082  0.0051 0.94331  
-    ## aoi:aoasl                    1 0.000094 0.0000944  0.0586 0.80969  
-    ## direction:aoasl              1 0.000015 0.0000151  0.0094 0.92321  
-    ## aoi:hearing                  1 0.008208 0.0082082  5.0916 0.02819 *
-    ## direction:hearing            1 0.000193 0.0001931  0.1198 0.73062  
-    ## aoasl:hearing                1 0.010984 0.0109836  6.8132 0.01174 *
-    ## aoi:direction:aoasl          1 0.000434 0.0004341  0.2693 0.60597  
-    ## aoi:direction:hearing        1 0.001466 0.0014663  0.9095 0.34457  
-    ## aoi:aoasl:hearing            1 0.002789 0.0027894  1.7303 0.19404  
-    ## direction:aoasl:hearing      1 0.002022 0.0020220  1.2543 0.26779  
-    ## aoi:direction:aoasl:hearing  1 0.003393 0.0033927  2.1045 0.15276  
-    ## Residuals                   53 0.085442 0.0016121                  
+    ## aoi                          1 0.000028 0.0000281  0.0183 0.89297  
+    ## direction                    1 0.000515 0.0005154  0.3358 0.56498  
+    ## aoasl                        1 0.001121 0.0011211  0.7304 0.39699  
+    ## hearing                      1 0.005802 0.0058019  3.7801 0.05774 .
+    ## aoi:direction                1 0.000067 0.0000667  0.0435 0.83576  
+    ## aoi:aoasl                    1 0.000077 0.0000765  0.0499 0.82423  
+    ## direction:aoasl              1 0.000023 0.0000229  0.0149 0.90339  
+    ## aoi:hearing                  1 0.008868 0.0088681  5.7778 0.02014 *
+    ## direction:hearing            1 0.000849 0.0008490  0.5532 0.46065  
+    ## aoasl:hearing                1 0.010935 0.0109350  7.1245 0.01034 *
+    ## aoi:direction:aoasl          1 0.000422 0.0004216  0.2747 0.60263  
+    ## aoi:direction:hearing        1 0.002502 0.0025021  1.6302 0.20782  
+    ## aoi:aoasl:hearing            1 0.002966 0.0029658  1.9323 0.17092  
+    ## direction:aoasl:hearing      1 0.003656 0.0036563  2.3822 0.12929  
+    ## aoi:direction:aoasl:hearing  1 0.005401 0.0054009  3.5189 0.06676 .
+    ## Residuals                   48 0.073673 0.0015348                  
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -870,11 +909,11 @@ ggplot(data.lr, aes(x=aoasl,y=percent)) +
   facet_wrap("direction")
 ```
 
-    ## Warning: Removed 113 rows containing non-finite values (stat_smooth).
+    ## Warning: Removed 110 rows containing non-finite values (stat_smooth).
 
-    ## Warning: Removed 113 rows containing missing values (geom_point).
+    ## Warning: Removed 110 rows containing missing values (geom_point).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-34-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-36-1.png)
 
 Assorted/older stuff pushed to the bottom
 =========================================

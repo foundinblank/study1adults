@@ -30,6 +30,7 @@ library(broom)
 library(knitr)
 library(xtable)
 library(kableExtra)
+library(viridis)
 options(knitr.table.format = "html") 
 data <- read_csv('cleandata.csv',col_types = 
                    cols(.default = col_double(),
@@ -181,6 +182,7 @@ lowlookingid <- filter(data,quarter==FALSE) %>%
   arrange(participant)
 write.csv(lowlookingid, file="lessthan25.csv")
 select(lowlookingid,-participant)
+#lowlookingid
 ```
 
 So I will filter out the data with <25% looking time. Maybe the threshold should be higher, but we'll revisit that later. 
@@ -190,6 +192,13 @@ data <- filter(data,quarter==TRUE)
 difference <- originalrows - nrow(data)
 ```
 So `r difference` stories were dropped from the previous total of `r originalrows` stories for a new total of `r nrow(data)` stories. 
+
+**I'm also dropping Sara and ChrissyG's data too until we fix them.**
+```{r}
+data <- filter(data,participant!="Sara")
+data <- filter(data,participant!="ChrissyG")
+```
+
 
 ## Percentage Data and Viz
 We need to work with percentages, because of participants' idiosyntractic eye behavior. Some blink a lot, some don't, so automatically the maximum number of eye gaze data points each participant is able to contribute is different. For that reason we work with percent of total data points on a per-participant basis. That's also why we took out stories with <25% looking data. Now here's the boxplots for each AOI.
@@ -203,6 +212,17 @@ data2 <- data %>%
 ggplot(data2, aes(x=aoi,y=percent)) +
   geom_boxplot() 
 ```
+
+But we should also look at histograms of percentage data. Those should have more normal-like distributions for the high-hitting AOIs, unlike the actual looking data in seconds which has a upper limit.  
+
+```{r fig.width = 12, fig.height = 12}
+ggplot(data2,aes(x=percent)) +
+  geom_histogram() +
+  facet_grid(aoi ~ story) +
+  xlab("secs") +
+  ggtitle("Looking times of each AOI for each participant for each story")
+```
+
 
 # Big Five AOIs
 > You’ll have to decide how to put the AOIs in an ANOVA. All of them together is too many.  And you cannot put ALL the AOIs in. If they all sum to 100% (which they currently do), then the observations are not independent. Also, you can’t put AOIs that have near-zero values in with AOIs that have super high values, you’ll get whopping significance that is too obvious to reveal anything meaningful. 
@@ -282,8 +302,10 @@ data.big5.reduce <- data.big5 %>%
   ungroup() %>%
   mutate(aoi = factor(aoi,levels=c("upperchest","chin","mouth","eyes","forehead")))
 ggplot(data.big5.reduce, aes(x = maingroup, y = aoi)) +
-  geom_tile(aes(fill=meanlooking),na.rm=TRUE) + 
-  scale_fill_gradient(low = "lightblue",high = "steelblue") +
+  geom_tile(aes(fill=meanlooking),color="lightgray",na.rm=TRUE) + 
+#  scale_fill_gradient(low = "lightblue",high = "steelblue") +
+#  scale_fill_distiller(type="div", palette = "RdYlBu") +
+  scale_fill_viridis(option = "inferno") +
   facet_wrap("direction") +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
@@ -315,7 +337,7 @@ ggplot(data.big5, aes(x=aoasl,y=percent)) +
   facet_wrap("aoi")
 ```
 
-Let's move to ANOVAs. This is technically an ANCOVA, and AoASL is the covariate. The output tells us there is a significant main effect of AOI, and significant interactions of AOI x Direction and AOI x Hearing and AOI x Hearing X AoASL. So really it's very similar to what we got with the group ANOVA. 
+Let's move to ANOVAs. This is technically an ANCOVA, and AoASL is the covariate. The output tells us there is a significant main effect of AOI, and significant interactions of AOI x Direction and AOI x Hearing. A marginally significant interaction of AOI x Hearing X AoASL. So really it's very similar to what we got with the group ANOVA. 
 
 ```{r}
 continuous.anova <- aov(data=data.big5, percent ~ aoi * direction * hearing * aoasl)
@@ -421,7 +443,9 @@ continuous.anova.face3 <- aov(data=data.face3, percent ~ aoi * direction * heari
 anova(continuous.anova.face3)
 ```
 
-We have to figure out what the itneractions mean. That's where simple linear models can be helpful here. Let me try it here. Okay, so the results are slightly different. ANOVAs in R default to Type I sums of squares, while regressions use more of a Type III sum of squares approach, I believe. But we can interpret the results here a bit more easily. Almost all the interactions have to do with being hearing vs. deaf, and there seems to be no effect of Age of ASL acquisition. So that's interesting. 
+We have to figure out what the interactions mean. That's where simple linear models can be helpful here. Let me try it here. Okay so the NEW cleaned data tells us there were noe ffects except AOI where mouth is looked at more than anything. I think the linear model is punishing us for the high collinearity between AoA and age, whereas ANCOVA doesn't (but why the difference, I don't know). 
+
+*Old text from before data was further cleaned: Okay, so the results are slightly different. ANOVAs in R default to Type I sums of squares, while regressions use more of a Type III sum of squares approach, I believe. But we can interpret the results here a bit more easily. Almost all the interactions have to do with being hearing vs. deaf, and there seems to be no effect of Age of ASL acquisition. So that's interesting.* 
 
 ```{r}
 lm.face3 <- lm(data=data.face3, percent ~ aoi * direction * aoasl * hearing)
