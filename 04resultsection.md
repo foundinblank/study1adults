@@ -14,6 +14,7 @@ Adam Stone, PhD
     -   [All-ANOVA](#all-anova)
     -   [Forward ANOVA](#forward-anova)
     -   [Reversed ANOVA](#reversed-anova)
+-   [Other Notes from Rain](#other-notes-from-rain)
 
 Refreshing Ourselves
 ====================
@@ -352,8 +353,13 @@ data.acc2 <- data.acc %>%
   spread(direction,mean) %>%
   rename(forward.mean = forward,
          reversed.mean = reversed)
+groupcount <- select(groupmeans,maingroup,n)
 data.acc <- left_join(data.acc2,data.acc1, by="maingroup") %>%
-  select(maingroup,forward.mean,forward.sd,reversed.mean,reversed.sd)
+  left_join(groupcount, by="maingroup") %>%
+  # mutate(forward.se = forward.sd/sqrt(n),
+  #        reversed.se = reversed.sd/sqrt(n)) %>%
+  #select(maingroup,n,forward.mean,forward.sd,forward.se,reversed.mean,reversed.sd,reversed.se)
+  select(maingroup,n,forward.mean,forward.sd,reversed.mean,reversed.sd)
 #data.acc
 kable(data.acc, digits=2) %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
 ```
@@ -363,6 +369,9 @@ kable(data.acc, digits=2) %>% kable_styling(bootstrap_options = c("striped", "ho
 <tr>
 <th style="text-align:left;">
 maingroup
+</th>
+<th style="text-align:right;">
+n
 </th>
 <th style="text-align:right;">
 forward.mean
@@ -384,6 +393,9 @@ reversed.sd
 DeafNative
 </td>
 <td style="text-align:right;">
+11
+</td>
+<td style="text-align:right;">
 0.85
 </td>
 <td style="text-align:right;">
@@ -399,6 +411,9 @@ DeafNative
 <tr>
 <td style="text-align:left;">
 DeafEarlyASL
+</td>
+<td style="text-align:right;">
+7
 </td>
 <td style="text-align:right;">
 0.86
@@ -418,6 +433,9 @@ DeafEarlyASL
 DeafLateASL
 </td>
 <td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
 0.85
 </td>
 <td style="text-align:right;">
@@ -435,6 +453,9 @@ DeafLateASL
 HearingLateASL
 </td>
 <td style="text-align:right;">
+11
+</td>
+<td style="text-align:right;">
 0.85
 </td>
 <td style="text-align:right;">
@@ -450,6 +471,9 @@ HearingLateASL
 <tr>
 <td style="text-align:left;">
 HearingNoviceASL
+</td>
+<td style="text-align:right;">
+11
 </td>
 <td style="text-align:right;">
 0.78
@@ -475,7 +499,28 @@ ggplot(data,aes(maingroup,acc,fill=direction)) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 
-![](04resultsection_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-4-1.png)
+![](04resultsection_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-4-1.png) And Rain wanted the error plot so here it is. Lines represent SEM. Good to have this too!
+
+``` r
+data.acc1 <- data.acc1 %>% 
+  ungroup() %>% 
+  gather(direction,sd,forward.sd:reversed.sd) %>%
+  mutate(direction = str_sub(direction,1,-4))
+data.acc2 <- data.acc2 %>% 
+  ungroup() %>% 
+  gather(direction,mean,forward.mean:reversed.mean) %>%
+  mutate(direction = str_sub(direction,1,-6))
+data.acc.se <- left_join(data.acc1,data.acc2, by=c("maingroup","direction")) %>%
+  left_join(groupcount, by="maingroup") %>%
+  mutate(se = sd/sqrt(n))
+ggplot(data.acc.se,aes(maingroup,mean,color=direction)) +
+  geom_point(position=position_dodge(0.5)) +
+  geom_errorbar(aes(ymin=mean-se,ymax=mean+se),width=0.1,position=position_dodge(0.5)) +
+  scale_y_continuous(limits=c(0,1)) +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) + xlab("") + ylab("mean accuracy")
+```
+
+![](04resultsection_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-5-1.png)
 
 Eye Gaze Data, Summarized.
 ==========================
@@ -491,7 +536,7 @@ ggplot(data,aes(aoi,percent,fill=direction)) +
 
     ## Warning: Removed 303 rows containing non-finite values (stat_boxplot).
 
-![](04resultsection_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-5-1.png)
+![](04resultsection_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-6-1.png)
 
 THEN we can show heat maps too. For this I would include forehead and upperchest just to give it some dimension.
 
@@ -513,7 +558,7 @@ ggplot(data.five, aes(x = maingroup, y = aoi)) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 
-![](04resultsection_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-6-1.png)
+![](04resultsection_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-1.png)
 
 Bivariate Correlations
 ======================
@@ -651,3 +696,16 @@ Forward ANOVA
 
 Reversed ANOVA
 --------------
+
+Other Notes from Rain
+=====================
+
+1.  If you do LLM or ANCOVA, do so with AoA, and without subject group or hearing status. I would set aside any stats you did with both Hearing Status and AoA, I don't think you can do that.
+
+How come lexical recall isn’t a predictor in a model with gaze data? Yes, that is an important goal of the paper.
+
+Here is an example of what I had noted to myself previously, which is not current any more, and I would put correlation values in here:
+
+-Bivariate correlations were calculated for all subjects, irrespective of hearing status (which we address in a later section). Surprisingly, for no AOI was looking behavior was correlated with accuracy, for either forward or reversed stories. -Remarkably, percent-looking at mid chest and lower chest, for both forward and reversed (and left side for reversed) are highly negatively correlated with years signing and positively correlated with AoA. That means that greater looking in those areas are associated with older ages of acquisition and fewer years of experience. What is equally interesting is that looking at the eyes was not related to subject characteristics at all (contrast with Emmorey’s finding). -Also, looking at the mouth for reversed stimuli was significantly correlated with years signing (r = 0.38), this means the longer one signed, the more (in terms of % looking) one looked at the mouth.
+
+Then, maybe we can have a section called “Hearing Status” and in this paragraph say what happens when we compare hearing and deaf, using the same range of AoA, excluding hearing Novice. Or maybe separate regressions for hearing and deaf groups, looking at AoA, AOI’s, and lexical recall, to examine the relationship between the three. I don't know.
