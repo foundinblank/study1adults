@@ -1,0 +1,260 @@
+---
+title: "Results Section (study1adults)"
+author: "Adam Stone, PhD" 
+date: '`r format(Sys.Date(), "%m-%d-%Y")`'
+output:
+  github_document:
+    toc: yes
+    toc_depth: 2
+  html_notebook:
+    code_folding: hide
+    theme: paper
+    highlight: tango
+    toc: yes
+    toc_depth: 2
+    toc_float: yes
+    df_print: paged
+---
+
+# Refreshing Ourselves
+> The main goal of the study is to see if comprehension is related to gaze behavior and if AoA impacts gaze behavior. 
+
+**Key Questions:** Can gaze behavior reflect whether or not a person can understand the story? When a person has a harder time understanding a difficult story, maybe because they lack the skills, can this be observed in gaze behavior?
+
+> It is more important to show that our behavioral measure IS sensitive to effects of AoA. Period. *The cause is secondary.*
+
+Now let's load in the dataset called `cleanpercentdata.csv`. It contains item-level data showing the percent of looking for each AOI (10 AOIs total) for each story and each participant *still in the study*. All data defined as "bad" (entire participants with poor calibration, or individual stories with too little looking data) have been dropped. We will then move this to subject-level by averaging each participant's two forward stories together and two reversed stories together. 
+
+```{r, message=FALSE, warning=FALSE}
+#library(corrplot)
+library(Hmisc)
+library(tidyverse)
+library(stringr)
+library(lme4)
+library(lmerTest)
+library(prettydoc)
+library(broom)
+library(knitr)
+library(xtable)
+library(kableExtra)
+library(viridis)
+options(knitr.table.format = "html") 
+
+# Import!
+data <- read_csv('cleanpercentdata.csv',col_types = 
+                   cols(
+                     id = col_integer(),
+                     participant = col_character(),
+                     hearing = col_character(),
+                     videogroup = col_character(),
+                     aoagroup = col_character(),
+                     languagegroup = col_character(),
+                     maingroup = col_character(),
+                     video = col_character(),
+                     story = col_character(),
+                     direction = col_character(),
+                     age = col_double(),
+                     selfrate = col_double(),
+                     signyrs = col_double(),
+                     aoasl = col_integer(),
+                     acc = col_double(),
+                     aoi = col_character(),
+                     percent = col_double()
+                   ))
+
+# And factorize
+data <- data %>%
+  mutate(participant = as.factor(participant)) %>%
+  mutate(id = as.factor(id)) %>%
+  mutate(hearing = as.factor(hearing)) %>%
+  mutate(videogroup = as.factor(videogroup)) %>%
+  mutate(aoagroup = as.factor(aoagroup)) %>%
+  mutate(languagegroup = as.factor(languagegroup)) %>%
+  mutate(maingroup = as.factor(maingroup)) %>%
+  mutate(video = as.factor(video)) %>%
+  mutate(story = as.factor(story)) %>%
+  mutate(direction = as.factor(direction)) %>%
+  mutate(aoi = as.factor(aoi))
+
+dataoriginal <- data # Save item-level data just in case
+
+# Pull out subject info, and averge the accuracy scores
+data.subjectinfo <- data %>%
+  select(-aoi,-percent,-video,-story) %>%
+  distinct() %>%
+  group_by(participant,direction) %>%
+  mutate(acc = mean(acc,na.rm=TRUE)) %>%
+  distinct()
+
+# Now collapse eye gaze data to subject-level 
+data <- data %>%
+  group_by(participant,direction,aoi) %>%
+  summarize(percent = mean(percent,na.rm=TRUE))
+data[data=="NaN"] <- NA
+
+# Join subject info with data that's now subject-level
+data <- left_join(data,data.subjectinfo, by=c("participant","direction"))
+
+# Set reference levels
+data$maingroup <- relevel(data$maingroup, ref="DeafNative")
+# data.face3 <- filter(data2, aoi == "eyes" | aoi == "mouth" | aoi == "chin") %>%
+#   mutate(aoi = as.factor(aoi))
+# data.face3$aoi <- factor(data.face3$aoi, levels=c("eyes","mouth","chin"))
+# data.face3$aoi <- relevel(data.face3$aoi, ref="eyes")
+```
+
+# Participant Characteristics
+Let's do the basic participant table here. 
+
+```{r}
+groupmeans <- data %>%
+  ungroup() %>%
+  select(id,participant,maingroup,age,selfrate,signyrs,aoasl) %>%
+  distinct() %>%
+  group_by(maingroup) %>%
+  summarize(n = n(),
+            age.m = mean(age),
+            age.sd = sd(age),
+            selfrate.m = mean(selfrate),
+            selfrate.sd = sd(selfrate),
+            signyrs.m = mean(signyrs),
+            signyrs.sd = sd(signyrs),
+            aoasl.m = mean(aoasl),
+            aoasl.sd = sd(aoasl))
+kable(groupmeans, digits=1) %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+#groupmeans
+```
+
+# Lexical Recall Data, Summarized.
+Quick summary of lexical recall data here. We have to collapse here as well from subject-level to group-level.
+```{r}
+data.acc <- data %>%
+  ungroup() %>%
+  select(-aoi,-percent) %>%
+  distinct() %>%
+  group_by(maingroup,direction) %>%
+  summarize(mean = mean(acc, na.rm=TRUE),
+            sd = sd(acc, na.rm=TRUE))
+data.acc1 <- data.acc %>%
+  select(-mean) %>%
+  spread(direction,sd) %>%
+  rename(forward.sd = forward,
+         reversed.sd = reversed)
+data.acc2 <- data.acc %>%
+  select(-sd) %>%
+  spread(direction,mean) %>%
+  rename(forward.mean = forward,
+         reversed.mean = reversed)
+data.acc <- left_join(data.acc2,data.acc1, by="maingroup") %>%
+  select(maingroup,forward.mean,forward.sd,reversed.mean,reversed.sd)
+#data.acc
+kable(data.acc, digits=2) %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+And a boxplot that can go with it. 
+```{r}
+ggplot(data,aes(maingroup,acc,fill=direction)) + 
+  geom_boxplot() +
+  scale_y_continuous(limits=c(0,1)) +
+  theme(axis.text.x=element_text(angle=45,hjust=1))
+```
+
+# Eye Gaze Data, Summarized. 
+I guess we should have a big table of means and SDs for all AOIs for each group for forward and backward. I'll write the code for this later. For now, here's the boxplot. This is the part where we will say, from all the data we have concluded that we can work with **three AOIs** from here on due to sufficient data: chin, eyes, and mouth. 
+```{r}
+ggplot(data,aes(aoi,percent,fill=direction)) + 
+  geom_boxplot() +
+  scale_y_continuous(limits=c(0,1)) +
+  theme(axis.text.x=element_text(angle=45,hjust=1))
+```
+
+THEN we can show heat maps too. For this I would include forehead and upperchest just to give it some dimension.
+```{r}
+data.five <- data %>%
+  ungroup() %>%
+  filter(aoi == "upperchest" | aoi == "chin" | aoi == "mouth" | aoi == "eyes" | aoi == "forehead") %>%
+  group_by(maingroup,aoi,direction) %>%
+  summarize(mean = mean(percent, na.rm=TRUE)) %>%
+  ungroup() %>% 
+  mutate(aoi = factor(aoi,levels=c("upperchest","chin","mouth","eyes","forehead")))
+
+ggplot(data.five, aes(x = maingroup, y = aoi)) +
+  geom_tile(aes(fill=mean),color="lightgray",na.rm=TRUE) + 
+#  scale_fill_gradient(low = "lightblue",high = "steelblue") +
+#  scale_fill_distiller(type="div", palette = "RdYlBu") +
+  scale_fill_viridis(option = "inferno") +
+  facet_wrap("direction") +
+  theme(axis.text.x=element_text(angle=45,hjust=1))
+```
+
+
+# Bivariate Correlations
+We temporarily drop groups here. We just want to ask: *"What is correlated in terms of subject characteristics and their behavioral measures?"* We'll do this separately for forward and reversed, and using only important AOIs. 
+- Looking at signing years, AoA, lexical recall, gaze data
+- Which is stronger – signing years or AoA?
+- Is lexical recall correlated with looking at any AOI?
+
+```{r}
+# Drop all other AOIs
+data.allaoi <- data # save current dataset
+data <- data %>%
+  filter(aoi == "eyes" | aoi == "mouth" | aoi == "chin")
+
+# Need to put AOIs in their own columns
+data.spread <- data %>%
+  spread(aoi,percent) %>%
+  ungroup()
+
+# Fwd and Rev data
+data.fw <- data.spread %>%
+  filter(direction == "forward") %>%
+  select(age,selfrate,signyrs,aoasl,acc,eyes,mouth,chin)
+
+data.rv <- data.spread %>%
+  filter(direction == "reversed") %>%
+  select(age,selfrate,signyrs,aoasl,acc,eyes,mouth,chin)
+
+# Correlations
+# data.fw.corr <- cor(data.fw, use="pairwise.complete.obs")
+# data.rv.corr <- cor(data.rv, use="pairwise.complete.obs")
+# corrplot.mixed(data.rv.corr, lower ="number", upper = "circle")
+```
+
+## Forward Correlations
+Here's the Pearson's correlation matrix for forward stories. 
+-AoASL & Accuracy: -0.14 (weak) *p = 0.349*
+-SignYrs & Accuracy: 0.30 (medium) *p = 0.045*
+-SelfRating & Accuracy: 0.44 (medium) *p = 0.003*
+-Age & Accuracy: 0.33 (medium) *p = 0.027*
+
+The best relationship between any AOI and accuracy is for eyes: r = -0.24 (weak), p = 0.119. Less looking at eyes equals more accurate. Interesting cluster among all 3 AOIs - all strongly negatively correlated with each other. Meaning people just pick one and not "float" among all three. 
+
+```{r}
+#corrplot(data.fw.corr, method="number")
+rcorr(as.matrix(data.fw))
+```
+## Reversed Correlations
+Here's the Pearson's correlation matrix for reversed stories. 
+-AoASL & Accuracy: -0.31 (medium) *p = 0.042*
+-SignYrs & Accuracy: 0.3 (medium) *p = 0.511*
+-SelfRating & Accuracy: 0.39 (medium) *p = 0.009*
+-Age & Accuracy: 0.2 (weak) *p = 0.189* 
+
+But what's interesting is now eye gaze/AOIs has much weaker relationships with accuracy. We had a small negative relationship between eyes and accuracy in forward, but in reverse there's even less...more scattered, more all over the place. Gaze behavior is impacted by reversal. *Caveat: not even forward had any significant correlations w AOIs*
+```{r}
+#corrplot(data.rv.corr, method="number")
+rcorr(as.matrix(data.rv))
+```
+
+
+# ANOVAs
+Now we're going to do ANOVAs. WE'll do an all-factors ANOVA including Directoin, then also do separate Forward and Reversed ANOVAs. 
+
+> We do this separately for lexical recall and gaze data.  But be prepared to compare the two sets of results side by side, in a summary like say “subject groups differed significantly for lexical recall (stat values) but not gaze data (stat values)” or whatever the result is.  At least this can be done in the discussion, if not in the results section.
+ 
+I like the idea of treating Native Deaf as baseline or the gold standard in comparisons. 
+
+## All-ANOVA
+
+## Forward ANOVA
+
+## Reversed ANOVA

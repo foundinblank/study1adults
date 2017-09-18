@@ -92,14 +92,13 @@ ggplot(accdata,aes(maingroup,acc.mean,color=direction)) +
   geom_errorbar(aes(ymin=acc.mean-acc.sd,ymax=acc.mean+acc.sd),width=0.1,position=position_dodge(0.5)) +
   scale_y_continuous(limits=c(0,1)) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
-
 ```
 
 # Group ANOVA
 Let's test for statistical significance. A simple ANOVA tell us there is a main effect of group and direction, but no interactions. 
 ```{r}
-# Let's set Native Deaf as the reference level to compare all other
-data$maingroup <- relevel(data$maingroup, ref="NativeDeaf")
+# Let's set Deaf Native as the reference level to compare all other
+data$maingroup <- relevel(data$maingroup, ref="DeafNative")
 # Run the ANOVA
 acc.anova <- aov(data=data,acc ~ maingroup*direction)
 anova(acc.anova)

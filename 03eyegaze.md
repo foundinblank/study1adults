@@ -1,7 +1,7 @@
 Eye Gaze Analysis (study1adults)
 ================
 Adam Stone, PhD
-09-15-2017
+09-18-2017
 
 -   [Re-Initializing](#re-initializing)
 -   [AOIs](#aois)
@@ -135,35 +135,9 @@ It's possible to do a secondary analysis combining some of these AOIs (in partic
 Data Cleaning
 =============
 
-This is my process of documenting how I'm weeding through data and making sure all's good. Let's visualize first of all.
+This is my process of documenting how I'm weeding through data and making sure all's good. \[Change 18 Sep 2017\] I deleted half of these...just cutting out the fat.
 
-``` r
-# Reduce dataset to face AOIs only
-data.face <- select(data,-upperchest,-midchest,-lowerchest,-belly,-left,-right)
-# Reshape data so we can easily facet our charts based on face AOIs
-data.face <- data.face %>% gather(aoi,looking,forehead:chin)
-# Graph!
-ggplot(data.face,aes(x=maingroup,y=looking,fill=direction)) +
-  geom_boxplot() +
-  theme(axis.text.x=element_text(angle=45,hjust=1)) +
-  facet_wrap("aoi")
-```
-
-    ## Warning: Removed 154 rows containing non-finite values (stat_boxplot).
-
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-2-1.png) Okay, right away I see some issues - I want to check for outliers but I'm not sure what could count as an outlier. All 4 stories are different lengths - a data point at 30 seconds would be fine for King Midas (0:37) but impossible for Red Riding Hood (0:18) so outliers need to be *relative* to the story length itself. Let's back up and do histograms for each story.
-
-``` r
-ggplot(data.face,aes(x=looking)) +
-  geom_histogram(binwidth=1) +
-  facet_wrap("story") +
-  xlab("secs") +
-  ggtitle("Face AOI sums for each story for each participant")
-```
-
-    ## Warning: Removed 154 rows containing non-finite values (stat_bin).
-
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-3-1.png) Loooks good but I see weird outliers for Red Riding Hood (before Cinderalla too, which I fixed) - those single data points are past the video length (and that's just the face AOIs!). Let's sum up *all* AOIs across each story for each participant...back to the big dataset, and we'll do histograms again.
+Let's sum up *all* AOIs across each story for each participant...back to the big dataset, and we'll do histograms
 
 ``` r
 # data2 <- data %>%
@@ -177,7 +151,7 @@ ggplot(data,aes(x=total)) +
   ggtitle("Sum of ALL AOIs for each participant for each story")
 ```
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-4-1.png) The tall bars are near the end of the story, right? So we see two issues: 1. Some barely watched the story at all. (Those are the ones with bars at or near zero). We should remove those. We need a rule for it. 1. A few people's AOI data has total seconds higher than the video itself! (Those are the ones with very short bars to the right of the very tall bars.) Those should be investigated, something went wrong in the data.
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-2-1.png) The tall bars are near the end of the story, right? So we see two issues: 1. Some barely watched the story at all. (Those are the ones with bars at or near zero). We should remove those. We need a rule for it. 1. A few people's AOI data has total seconds higher than the video itself! (Those are the ones with very short bars to the right of the very tall bars.) Those should be investigated, something went wrong in the data.
 
 I'll highlight those rows that's for \#2 and send to Rain to look at.
 
@@ -192,9 +166,9 @@ ggplot(data.reshape,aes(x=looking)) +
   ggtitle("Looking times of each AOI for each participant for each story")
 ```
 
-    ## Warning: Removed 795 rows containing non-finite values (stat_bin).
+    ## Warning: Removed 785 rows containing non-finite values (stat_bin).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-5-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-3-1.png)
 
 Need to mark this up.
 
@@ -232,10 +206,10 @@ lowlooking
     ## # A tibble: 4 x 4
     ##           story lessthan25 lessthan50 total
     ##          <fctr>      <int>      <int> <int>
-    ## 1    Cinderella          3          6    45
-    ## 2    Goldilocks          3          4    45
-    ## 3     KingMidas          2          4    45
-    ## 4 RedRidingHood          3          4    45
+    ## 1    Cinderella          3          6    44
+    ## 2    Goldilocks          2          3    44
+    ## 3     KingMidas          2          4    44
+    ## 4 RedRidingHood          3          4    44
 
 ``` r
 lowlookingid <- filter(data,quarter==FALSE) %>% 
@@ -246,7 +220,7 @@ write.csv(lowlookingid, file="lessthan25.csv")
 select(lowlookingid,-participant)
 ```
 
-    ## # A tibble: 11 x 6
+    ## # A tibble: 10 x 6
     ##       id hearing videogroup         story direction total
     ##    <int>  <fctr>     <fctr>        <fctr>    <fctr> <dbl>
     ##  1    32 Hearing    Group 2    Goldilocks  reversed  4.08
@@ -258,8 +232,7 @@ select(lowlookingid,-participant)
     ##  7    25    Deaf    Group 2    Goldilocks  reversed  4.62
     ##  8     7    Deaf    Group 1    Cinderella  reversed  0.81
     ##  9     7    Deaf    Group 1     KingMidas   forward  6.84
-    ## 10    30 Hearing    Group 1    Goldilocks   forward  2.56
-    ## 11    17    Deaf    Group 1 RedRidingHood  reversed  0.52
+    ## 10    17    Deaf    Group 1 RedRidingHood  reversed  0.52
 
 ``` r
 #lowlookingid
@@ -273,18 +246,12 @@ data <- filter(data,quarter==TRUE)
 difference <- originalrows - nrow(data)
 ```
 
-So 11 stories were dropped from the previous total of 180 stories for a new total of 169 stories.
-
-**I'm also dropping Sara's data too until we fix it**
-
-``` r
-data <- filter(data,participant!="Sara")
-```
+So 10 stories were dropped from the previous total of 176 stories for a new total of 166 stories.
 
 Percentage Data and Viz
 -----------------------
 
-We need to work with percentages, because of participants' idiosyntractic eye behavior. Some blink a lot, some don't, so automatically the maximum number of eye gaze data points each participant is able to contribute is different. For that reason we work with percent of total data points on a per-participant basis. That's also why we took out stories with &lt;25% looking data. Now here's the boxplots for each AOI.
+We need to work with percentages, because of participants' idiosyntractic eye behavior. Some blink a lot, some don't, so automatically the maximum number of eye gaze data points each participant is able to contribute is different. For that reason we work with percent of total data points on a per-participant basis. That's also why we took out stories with &lt;25% looking data. And I will save this as `cleanpercentdata.csv.` Now here's the boxplots for each AOI.
 
 ``` r
 # data2 uses percentage data!
@@ -299,7 +266,11 @@ ggplot(data2, aes(x=aoi,y=percent)) +
 
     ## Warning: Removed 737 rows containing non-finite values (stat_boxplot).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-10-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-1.png)
+
+``` r
+write.csv(data2,"cleanpercentdata.csv",row.names=FALSE)
+```
 
 But we should also look at histograms of percentage data. Those should have more normal-like distributions for the high-hitting AOIs, unlike the actual looking data in seconds which has a upper limit.
 
@@ -315,7 +286,7 @@ ggplot(data2,aes(x=percent)) +
 
     ## Warning: Removed 737 rows containing non-finite values (stat_bin).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-11-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-8-1.png)
 
 ### Problem people are Allison, SaraG, and ChrissyK for the reasons below:
 
@@ -330,7 +301,7 @@ Big Five AOIs
 
 Based on the boxplot there are five AOIs that got hit the most: forehead, eyes, mouth, chin, and upperchest. **But this is really important...I think there is one or two outliers in forehead. And maybe it's better to get rid of forehead and upper chest for the big ANOVAs to keep things simple. Neither of them touch 50%...but then again they are not "non-significant." I am going ahead with all 5 for now.**
 
-*Important reference levels* - AOI reference level is eyes - MainGroup reference level is NativeDeaf
+*Important reference levels* - AOI reference level is eyes - MainGroup reference level is DeafNative
 
 Creating the `data.big5` thing here.
 
@@ -341,7 +312,7 @@ data.big5 <- filter(data2,aoi == "forehead" | aoi == "eyes"
   mutate(aoi = as.factor(aoi))
 data.big5$aoi <- factor(data.big5$aoi, levels=c("upperchest","chin","mouth","eyes","forehead"))
 data.big5$aoi <- relevel(data.big5$aoi, ref="eyes")
-data.big5$maingroup <- relevel(data.big5$maingroup, ref="NativeDeaf")
+data.big5$maingroup <- relevel(data.big5$maingroup, ref="DeafNative")
 ```
 
 Group ANOVA
@@ -383,7 +354,7 @@ ggplot(data.big5) +
 
     ## Warning: Removed 68 rows containing non-finite values (stat_boxplot).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-14-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-11-1.png)
 
 ``` r
 data.big5.viz <- data.big5 %>%
@@ -398,7 +369,7 @@ ggplot(data.big5.viz, aes(x=maingroup,y=mean,color=direction)) +
 
     ## Warning: Removed 1 rows containing missing values (geom_errorbar).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-15-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-12-1.png)
 
 Or a heat map!
 
@@ -417,7 +388,7 @@ ggplot(data.big5.reduce, aes(x = maingroup, y = aoi)) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-16-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-13-1.png)
 
 What if we faceted this heat map by group instead of direction:
 
@@ -431,7 +402,7 @@ ggplot(data.big5.reduce, aes(x = direction, y = aoi)) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-17-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-14-1.png)
 
 The ANOVA below tells us there's a significant effect of AOI, and significant interactions of AOI x Direction and AOI x MainGroup.
 
@@ -499,7 +470,7 @@ ggplot(data.big5, aes(x=aoasl,y=percent)) +
 
     ## Warning: Removed 68 rows containing missing values (geom_point).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-20-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-17-1.png)
 
 Let's move to ANOVAs. This is technically an ANCOVA, and AoASL is the covariate. The output tells us there is a significant main effect of AOI, and significant interactions of AOI x Direction and AOI x Hearing. A marginally significant interaction of AOI x Hearing X AoASL. So really it's very similar to what we got with the group ANOVA.
 
@@ -544,7 +515,7 @@ ggplot(data.big5, aes(x=signyrs,y=percent)) +
 
     ## Warning: Removed 68 rows containing missing values (geom_point).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-22-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-19-1.png)
 
 Look interesting and you can sort of compare the deaf/hearing lines better, although we should get rid of that person who's been signing for 60 years if we do a years-of-signing analysis. Here's the ANCOVA.
 
@@ -589,7 +560,7 @@ data.face3 <- filter(data2, aoi == "eyes" | aoi == "mouth" | aoi == "chin") %>%
   mutate(aoi = as.factor(aoi))
 data.face3$aoi <- factor(data.face3$aoi, levels=c("eyes","mouth","chin"))
 #data.face3$aoi <- relevel(data.face3$aoi, ref="eyes")
-data.face3$maingroup <- relevel(data.face3$maingroup, ref="NativeDeaf")
+data.face3$maingroup <- relevel(data.face3$maingroup, ref="DeafNative")
 
 data.face3.item <- data.face3 # save item-level data for later
 
@@ -622,7 +593,7 @@ ggplot(data.face3) +
 
     ## Warning: Removed 6 rows containing non-finite values (stat_boxplot).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-25-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-22-1.png)
 
 But we have less levels so maybe another way of looking at the boxplots:
 
@@ -635,7 +606,7 @@ ggplot(data.face3) +
 
     ## Warning: Removed 6 rows containing non-finite values (stat_boxplot).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-26-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-23-1.png)
 
 Or another way even
 
@@ -648,7 +619,7 @@ ggplot(data.face3) +
 
     ## Warning: Removed 6 rows containing non-finite values (stat_boxplot).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-27-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-24-1.png)
 
 Group ANOVA
 -----------
@@ -753,45 +724,45 @@ group.anova.face3.posthoc3
     ## 
     ## $`aoi:maingroup`
     ##                                                      diff          lwr
-    ## mouth:NativeDeaf-eyes:NativeDeaf              0.473602100  0.213550951
-    ## chin:NativeDeaf-eyes:NativeDeaf               0.151781257 -0.108269892
-    ## eyes:DeafEarlyASL-eyes:NativeDeaf             0.061170121 -0.245003953
-    ## mouth:DeafEarlyASL-eyes:NativeDeaf            0.516841989  0.217972554
-    ## chin:DeafEarlyASL-eyes:NativeDeaf             0.073328642 -0.232845432
-    ## eyes:DeafLateASL-eyes:NativeDeaf              0.044697777 -0.305259540
-    ## mouth:DeafLateASL-eyes:NativeDeaf             0.662124470  0.312167154
-    ## chin:DeafLateASL-eyes:NativeDeaf             -0.081801394 -0.431758710
-    ## eyes:HearingLateASL-eyes:NativeDeaf           0.171589968 -0.091314845
-    ## mouth:HearingLateASL-eyes:NativeDeaf          0.400874619  0.140823470
-    ## chin:HearingLateASL-eyes:NativeDeaf           0.022889401 -0.237161748
-    ## eyes:HearingNoviceASL-eyes:NativeDeaf         0.077177207 -0.182873942
-    ## mouth:HearingNoviceASL-eyes:NativeDeaf        0.415957897  0.155906748
-    ## chin:HearingNoviceASL-eyes:NativeDeaf         0.058923308 -0.201127841
-    ## chin:NativeDeaf-mouth:NativeDeaf             -0.321820843 -0.572177213
-    ## eyes:DeafEarlyASL-mouth:NativeDeaf           -0.412431979 -0.710415662
-    ## mouth:DeafEarlyASL-mouth:NativeDeaf           0.043239889 -0.247233261
-    ## chin:DeafEarlyASL-mouth:NativeDeaf           -0.400273458 -0.698257142
-    ## eyes:DeafLateASL-mouth:NativeDeaf            -0.428904323 -0.771718902
-    ## mouth:DeafLateASL-mouth:NativeDeaf            0.188522370 -0.154292208
-    ## chin:DeafLateASL-mouth:NativeDeaf            -0.555403494 -0.898218073
-    ## eyes:HearingLateASL-mouth:NativeDeaf         -0.302012132 -0.555331403
-    ## mouth:HearingLateASL-mouth:NativeDeaf        -0.072727481 -0.323083851
-    ## chin:HearingLateASL-mouth:NativeDeaf         -0.450712699 -0.701069070
-    ## eyes:HearingNoviceASL-mouth:NativeDeaf       -0.396424893 -0.646781263
-    ## mouth:HearingNoviceASL-mouth:NativeDeaf      -0.057644203 -0.308000574
-    ## chin:HearingNoviceASL-mouth:NativeDeaf       -0.414678792 -0.665035163
-    ## eyes:DeafEarlyASL-chin:NativeDeaf            -0.090611136 -0.388594820
-    ## mouth:DeafEarlyASL-chin:NativeDeaf            0.365060732  0.074587581
-    ## chin:DeafEarlyASL-chin:NativeDeaf            -0.078452615 -0.376436299
-    ## eyes:DeafLateASL-chin:NativeDeaf             -0.107083481 -0.449898060
-    ## mouth:DeafLateASL-chin:NativeDeaf             0.510343213  0.167528634
-    ## chin:DeafLateASL-chin:NativeDeaf             -0.233582651 -0.576397230
-    ## eyes:HearingLateASL-chin:NativeDeaf           0.019808711 -0.233510560
-    ## mouth:HearingLateASL-chin:NativeDeaf          0.249093362 -0.001263009
-    ## chin:HearingLateASL-chin:NativeDeaf          -0.128891857 -0.379248227
-    ## eyes:HearingNoviceASL-chin:NativeDeaf        -0.074604050 -0.324960421
-    ## mouth:HearingNoviceASL-chin:NativeDeaf        0.264176640  0.013820269
-    ## chin:HearingNoviceASL-chin:NativeDeaf        -0.092857950 -0.343214320
+    ## mouth:DeafNative-eyes:DeafNative              0.473602100  0.213550951
+    ## chin:DeafNative-eyes:DeafNative               0.151781257 -0.108269892
+    ## eyes:DeafEarlyASL-eyes:DeafNative             0.061170121 -0.245003953
+    ## mouth:DeafEarlyASL-eyes:DeafNative            0.516841989  0.217972554
+    ## chin:DeafEarlyASL-eyes:DeafNative             0.073328642 -0.232845432
+    ## eyes:DeafLateASL-eyes:DeafNative              0.044697777 -0.305259540
+    ## mouth:DeafLateASL-eyes:DeafNative             0.662124470  0.312167154
+    ## chin:DeafLateASL-eyes:DeafNative             -0.081801394 -0.431758710
+    ## eyes:HearingLateASL-eyes:DeafNative           0.171589968 -0.091314845
+    ## mouth:HearingLateASL-eyes:DeafNative          0.400874619  0.140823470
+    ## chin:HearingLateASL-eyes:DeafNative           0.022889401 -0.237161748
+    ## eyes:HearingNoviceASL-eyes:DeafNative         0.077177207 -0.182873942
+    ## mouth:HearingNoviceASL-eyes:DeafNative        0.415957897  0.155906748
+    ## chin:HearingNoviceASL-eyes:DeafNative         0.058923308 -0.201127841
+    ## chin:DeafNative-mouth:DeafNative             -0.321820843 -0.572177213
+    ## eyes:DeafEarlyASL-mouth:DeafNative           -0.412431979 -0.710415662
+    ## mouth:DeafEarlyASL-mouth:DeafNative           0.043239889 -0.247233261
+    ## chin:DeafEarlyASL-mouth:DeafNative           -0.400273458 -0.698257142
+    ## eyes:DeafLateASL-mouth:DeafNative            -0.428904323 -0.771718902
+    ## mouth:DeafLateASL-mouth:DeafNative            0.188522370 -0.154292208
+    ## chin:DeafLateASL-mouth:DeafNative            -0.555403494 -0.898218073
+    ## eyes:HearingLateASL-mouth:DeafNative         -0.302012132 -0.555331403
+    ## mouth:HearingLateASL-mouth:DeafNative        -0.072727481 -0.323083851
+    ## chin:HearingLateASL-mouth:DeafNative         -0.450712699 -0.701069070
+    ## eyes:HearingNoviceASL-mouth:DeafNative       -0.396424893 -0.646781263
+    ## mouth:HearingNoviceASL-mouth:DeafNative      -0.057644203 -0.308000574
+    ## chin:HearingNoviceASL-mouth:DeafNative       -0.414678792 -0.665035163
+    ## eyes:DeafEarlyASL-chin:DeafNative            -0.090611136 -0.388594820
+    ## mouth:DeafEarlyASL-chin:DeafNative            0.365060732  0.074587581
+    ## chin:DeafEarlyASL-chin:DeafNative            -0.078452615 -0.376436299
+    ## eyes:DeafLateASL-chin:DeafNative             -0.107083481 -0.449898060
+    ## mouth:DeafLateASL-chin:DeafNative             0.510343213  0.167528634
+    ## chin:DeafLateASL-chin:DeafNative             -0.233582651 -0.576397230
+    ## eyes:HearingLateASL-chin:DeafNative           0.019808711 -0.233510560
+    ## mouth:HearingLateASL-chin:DeafNative          0.249093362 -0.001263009
+    ## chin:HearingLateASL-chin:DeafNative          -0.128891857 -0.379248227
+    ## eyes:HearingNoviceASL-chin:DeafNative        -0.074604050 -0.324960421
+    ## mouth:HearingNoviceASL-chin:DeafNative        0.264176640  0.013820269
+    ## chin:HearingNoviceASL-chin:DeafNative        -0.092857950 -0.343214320
     ## mouth:DeafEarlyASL-eyes:DeafEarlyASL          0.455671868  0.123270582
     ## chin:DeafEarlyASL-eyes:DeafEarlyASL           0.012158521 -0.326825607
     ## eyes:DeafLateASL-eyes:DeafEarlyASL           -0.016472345 -0.395468122
@@ -859,45 +830,45 @@ group.anova.face3.posthoc3
     ## chin:HearingNoviceASL-eyes:HearingNoviceASL  -0.018253899 -0.268610270
     ## chin:HearingNoviceASL-mouth:HearingNoviceASL -0.357034589 -0.607390960
     ##                                                      upr     p adj
-    ## mouth:NativeDeaf-eyes:NativeDeaf              0.73365325 0.0000002
-    ## chin:NativeDeaf-eyes:NativeDeaf               0.41183241 0.7953409
-    ## eyes:DeafEarlyASL-eyes:NativeDeaf             0.36734420 0.9999959
-    ## mouth:DeafEarlyASL-eyes:NativeDeaf            0.81571142 0.0000012
-    ## chin:DeafEarlyASL-eyes:NativeDeaf             0.37950272 0.9999610
-    ## eyes:DeafLateASL-eyes:NativeDeaf              0.39465509 1.0000000
-    ## mouth:DeafLateASL-eyes:NativeDeaf             1.01208179 0.0000001
-    ## chin:DeafLateASL-eyes:NativeDeaf              0.26815592 0.9999711
-    ## eyes:HearingLateASL-eyes:NativeDeaf           0.43449478 0.6368659
-    ## mouth:HearingLateASL-eyes:NativeDeaf          0.66092577 0.0000297
-    ## chin:HearingLateASL-eyes:NativeDeaf           0.28294055 1.0000000
-    ## eyes:HearingNoviceASL-eyes:NativeDeaf         0.33722836 0.9995121
-    ## mouth:HearingNoviceASL-eyes:NativeDeaf        0.67600905 0.0000113
-    ## chin:HearingNoviceASL-eyes:NativeDeaf         0.31897446 0.9999803
-    ## chin:NativeDeaf-mouth:NativeDeaf             -0.07146447 0.0014941
-    ## eyes:DeafEarlyASL-mouth:NativeDeaf           -0.11444829 0.0003563
-    ## mouth:DeafEarlyASL-mouth:NativeDeaf           0.33371304 0.9999999
-    ## chin:DeafEarlyASL-mouth:NativeDeaf           -0.10228977 0.0006526
-    ## eyes:DeafLateASL-mouth:NativeDeaf            -0.08608974 0.0024019
-    ## mouth:DeafLateASL-mouth:NativeDeaf            0.53133695 0.8577403
-    ## chin:DeafLateASL-mouth:NativeDeaf            -0.21258891 0.0000079
-    ## eyes:HearingLateASL-mouth:NativeDeaf         -0.04869286 0.0052585
-    ## mouth:HearingLateASL-mouth:NativeDeaf         0.17762889 0.9996174
-    ## chin:HearingLateASL-mouth:NativeDeaf         -0.20035633 0.0000003
-    ## eyes:HearingNoviceASL-mouth:NativeDeaf       -0.14606852 0.0000148
-    ## mouth:HearingNoviceASL-mouth:NativeDeaf       0.19271217 0.9999760
-    ## chin:HearingNoviceASL-mouth:NativeDeaf       -0.16432242 0.0000042
-    ## eyes:DeafEarlyASL-chin:NativeDeaf             0.20737255 0.9993584
-    ## mouth:DeafEarlyASL-chin:NativeDeaf            0.65553388 0.0022232
-    ## chin:DeafEarlyASL-chin:NativeDeaf             0.21953107 0.9998783
-    ## eyes:DeafLateASL-chin:NativeDeaf              0.23573110 0.9991347
-    ## mouth:DeafLateASL-chin:NativeDeaf             0.85315779 0.0000702
-    ## chin:DeafLateASL-chin:NativeDeaf              0.10923193 0.5643536
-    ## eyes:HearingLateASL-chin:NativeDeaf           0.27312798 1.0000000
-    ## mouth:HearingLateASL-chin:NativeDeaf          0.49944973 0.0526764
-    ## chin:HearingLateASL-chin:NativeDeaf           0.12146451 0.9091122
-    ## eyes:HearingNoviceASL-chin:NativeDeaf         0.17575232 0.9994890
-    ## mouth:HearingNoviceASL-chin:NativeDeaf        0.51453301 0.0275726
-    ## chin:HearingNoviceASL-chin:NativeDeaf         0.15749842 0.9946996
+    ## mouth:DeafNative-eyes:DeafNative              0.73365325 0.0000002
+    ## chin:DeafNative-eyes:DeafNative               0.41183241 0.7953409
+    ## eyes:DeafEarlyASL-eyes:DeafNative             0.36734420 0.9999959
+    ## mouth:DeafEarlyASL-eyes:DeafNative            0.81571142 0.0000012
+    ## chin:DeafEarlyASL-eyes:DeafNative             0.37950272 0.9999610
+    ## eyes:DeafLateASL-eyes:DeafNative              0.39465509 1.0000000
+    ## mouth:DeafLateASL-eyes:DeafNative             1.01208179 0.0000001
+    ## chin:DeafLateASL-eyes:DeafNative              0.26815592 0.9999711
+    ## eyes:HearingLateASL-eyes:DeafNative           0.43449478 0.6368659
+    ## mouth:HearingLateASL-eyes:DeafNative          0.66092577 0.0000297
+    ## chin:HearingLateASL-eyes:DeafNative           0.28294055 1.0000000
+    ## eyes:HearingNoviceASL-eyes:DeafNative         0.33722836 0.9995121
+    ## mouth:HearingNoviceASL-eyes:DeafNative        0.67600905 0.0000113
+    ## chin:HearingNoviceASL-eyes:DeafNative         0.31897446 0.9999803
+    ## chin:DeafNative-mouth:DeafNative             -0.07146447 0.0014941
+    ## eyes:DeafEarlyASL-mouth:DeafNative           -0.11444829 0.0003563
+    ## mouth:DeafEarlyASL-mouth:DeafNative           0.33371304 0.9999999
+    ## chin:DeafEarlyASL-mouth:DeafNative           -0.10228977 0.0006526
+    ## eyes:DeafLateASL-mouth:DeafNative            -0.08608974 0.0024019
+    ## mouth:DeafLateASL-mouth:DeafNative            0.53133695 0.8577403
+    ## chin:DeafLateASL-mouth:DeafNative            -0.21258891 0.0000079
+    ## eyes:HearingLateASL-mouth:DeafNative         -0.04869286 0.0052585
+    ## mouth:HearingLateASL-mouth:DeafNative         0.17762889 0.9996174
+    ## chin:HearingLateASL-mouth:DeafNative         -0.20035633 0.0000003
+    ## eyes:HearingNoviceASL-mouth:DeafNative       -0.14606852 0.0000148
+    ## mouth:HearingNoviceASL-mouth:DeafNative       0.19271217 0.9999760
+    ## chin:HearingNoviceASL-mouth:DeafNative       -0.16432242 0.0000042
+    ## eyes:DeafEarlyASL-chin:DeafNative             0.20737255 0.9993584
+    ## mouth:DeafEarlyASL-chin:DeafNative            0.65553388 0.0022232
+    ## chin:DeafEarlyASL-chin:DeafNative             0.21953107 0.9998783
+    ## eyes:DeafLateASL-chin:DeafNative              0.23573110 0.9991347
+    ## mouth:DeafLateASL-chin:DeafNative             0.85315779 0.0000702
+    ## chin:DeafLateASL-chin:DeafNative              0.10923193 0.5643536
+    ## eyes:HearingLateASL-chin:DeafNative           0.27312798 1.0000000
+    ## mouth:HearingLateASL-chin:DeafNative          0.49944973 0.0526764
+    ## chin:HearingLateASL-chin:DeafNative           0.12146451 0.9091122
+    ## eyes:HearingNoviceASL-chin:DeafNative         0.17575232 0.9994890
+    ## mouth:HearingNoviceASL-chin:DeafNative        0.51453301 0.0275726
+    ## chin:HearingNoviceASL-chin:DeafNative         0.15749842 0.9946996
     ## mouth:DeafEarlyASL-eyes:DeafEarlyASL          0.78807315 0.0004344
     ## chin:DeafEarlyASL-eyes:DeafEarlyASL           0.35114265 1.0000000
     ## eyes:DeafLateASL-eyes:DeafEarlyASL            0.36252343 1.0000000
@@ -982,7 +953,7 @@ ggplot(data.face3, aes(x=aoasl,y=percent)) +
 
     ## Warning: Removed 6 rows containing missing values (geom_point).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-32-1.png) and the ANCOVA itself...which gives us almost identical results as the `big5` stats. So maybe it's easier overall to just drop all AOIs except eye, mouth, chin when trying to look for AoA, group effects, etc? We can present summary stats overall for all AOIs, then when it gets down to the dirty stats work, we keep it simple and show ... that whatever we found.
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-29-1.png) and the ANCOVA itself...which gives us almost identical results as the `big5` stats. So maybe it's easier overall to just drop all AOIs except eye, mouth, chin when trying to look for AoA, group effects, etc? We can present summary stats overall for all AOIs, then when it gets down to the dirty stats work, we keep it simple and show ... that whatever we found.
 
 ``` r
 continuous.anova.face3 <- aov(data=data.face3, percent ~ aoi * direction * hearing * aoasl)
@@ -1103,7 +1074,7 @@ Let's go for it. Creating the `data.lr` thing here. And again because we're stil
 # Make LR df with reference levels
 data.lr <- filter(data2,aoi == "left" | aoi == "right") %>%
   mutate(aoi = as.factor(aoi))
-data.lr$maingroup <- relevel(data.lr$maingroup, ref="NativeDeaf")
+data.lr$maingroup <- relevel(data.lr$maingroup, ref="DeafNative")
 
 data.lr.item <- data.lr # save item-level data for later
 
@@ -1133,7 +1104,7 @@ ggplot(data.lr) +
 
     ## Warning: Removed 110 rows containing non-finite values (stat_boxplot).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-36-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-33-1.png)
 
 Let's try the group ANOVA and the AoASL ANCOVAs. Group ANOVA first...nothing significant here.
 
@@ -1198,7 +1169,7 @@ ggplot(data.lr, aes(x=aoasl,y=percent)) +
 
     ## Warning: Removed 110 rows containing missing values (geom_point).
 
-![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-39-1.png)
+![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-36-1.png)
 
 Assorted/older stuff pushed to the bottom
 =========================================
