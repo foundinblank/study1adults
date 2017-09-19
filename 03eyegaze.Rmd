@@ -151,7 +151,7 @@ data <- bind_rows(data.cinderella,data.goldilocks,data.kingmidas,data.redridingh
 # Calculations
 lowlooking <- data %>%
   group_by(story) %>%
-  summarize(lessthan25 = sum(!quarter),
+  dplyr::summarize(lessthan25 = sum(!quarter),
             lessthan50 = sum(!half),
             total = sum(!quarter,quarter))
 lowlooking
@@ -176,19 +176,29 @@ difference <- originalrows - nrow(data)
 So `r difference` stories were dropped from the previous total of `r originalrows` stories for a new total of `r nrow(data)` stories. 
 
 ## Percentage Data and Viz
-We need to work with percentages, because of participants' idiosyntractic eye behavior. Some blink a lot, some don't, so automatically the maximum number of eye gaze data points each participant is able to contribute is different. For that reason we work with percent of total data points on a per-participant basis. That's also why we took out stories with <25% looking data. And I will save this as `cleanpercentdata.csv.` Now here's the boxplots for each AOI.
+We need to work with percentages, because of participants' idiosyntractic eye behavior. Some blink a lot, some don't, so automatically the maximum number of eye gaze data points each participant is able to contribute is different. For that reason we work with percent of total data points on a per-participant basis. That's also why we took out stories with <25% looking data. 
+
+I also want to have Face and Chest AOIs defined, such that: 
+- Face = eyes + mouth + chin
+- Chest = upperchest + midchest + lowerchest
+- And a Face-Chest ratio, defined by (F-Chest)/(F+Chest)
+
+And I will save this as `cleanpercentdata.csv.` Now here's the boxplots for each AOI.
 ```{r}
 # data2 uses percentage data!
 data2 <- data %>%
   mutate_at(vars(forehead:right), funs(./total)) %>%
   select(-total, -quarter, -half) %>%
-  gather(aoi,percent,forehead:right)
-
-ggplot(data2, aes(x=aoi,y=percent)) +
-  geom_boxplot() 
+  group_by(participant,story) %>%
+  mutate(face = sum(eyes,mouth,chin,na.rm=TRUE),
+         chest = sum(upperchest,midchest,lowerchest,na.rm=TRUE),
+         facechest = (face-chest)/(face+chest)) %>%
+  gather(aoi,percent,forehead:facechest)
 
 write.csv(data2,"cleanpercentdata.csv",row.names=FALSE)
 
+ggplot(data2, aes(x=aoi,y=percent)) +
+  geom_boxplot() 
 ```
 
 But we should also look at histograms of percentage data. Those should have more normal-like distributions for the high-hitting AOIs, unlike the actual looking data in seconds which has a upper limit.  

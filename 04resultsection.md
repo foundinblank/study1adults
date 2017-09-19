@@ -1,15 +1,17 @@
 Results Section (study1adults)
 ================
 Adam Stone, PhD
-09-18-2017
+09-19-2017
 
 -   [Refreshing Ourselves](#refreshing-ourselves)
 -   [Participant Characteristics](#participant-characteristics)
 -   [Lexical Recall Data, Summarized.](#lexical-recall-data-summarized.)
 -   [Eye Gaze Data, Summarized.](#eye-gaze-data-summarized.)
 -   [Bivariate Correlations](#bivariate-correlations)
+    -   [Behavioral Correlations](#behavioral-correlations)
     -   [Forward Correlations](#forward-correlations)
     -   [Reversed Correlations](#reversed-correlations)
+    -   [Summary](#summary)
 -   [ANOVAs](#anovas)
     -   [All-ANOVA](#all-anova)
     -   [Forward ANOVA](#forward-anova)
@@ -80,6 +82,31 @@ data <- data %>%
 
 dataoriginal <- data # Save item-level data just in case
 
+# Load awesome function to make correlation tables with stars for significance
+# From: https://myowelt.blogspot.co.uk/2008/04/beautiful-correlation-tables-in-r.html
+corstarsl <- function(x){ 
+require(Hmisc) 
+x <- as.matrix(x) 
+R <- rcorr(x)$r 
+p <- rcorr(x)$P 
+## define notions for significance levels; spacing is important.
+mystars <- ifelse(p < .001, "***", ifelse(p < .01, "** ", ifelse(p < .05, "* ", " ")))
+## trunctuate the matrix that holds the correlations to two decimal
+R <- format(round(cbind(rep(-1.11, ncol(x)), R), 2))[,-1] 
+## build a new matrix that includes the correlations with their apropriate stars 
+Rnew <- matrix(paste(R, mystars, sep=""), ncol=ncol(x)) 
+diag(Rnew) <- paste(diag(R), " ", sep="") 
+rownames(Rnew) <- colnames(x) 
+colnames(Rnew) <- paste(colnames(x), "", sep="") 
+## remove upper triangle
+Rnew <- as.matrix(Rnew)
+Rnew[upper.tri(Rnew, diag = TRUE)] <- ""
+Rnew <- as.data.frame(Rnew) 
+## remove last column and return the matrix (which is now a data frame)
+Rnew <- cbind(Rnew[1:length(Rnew)-1])
+return(Rnew) 
+}
+
 # Pull out subject info, and averge the accuracy scores
 data.subjectinfo <- data %>%
   select(-aoi,-percent,-video,-story) %>%
@@ -91,7 +118,7 @@ data.subjectinfo <- data %>%
 # Now collapse eye gaze data to subject-level 
 data <- data %>%
   group_by(participant,direction,aoi) %>%
-  summarize(percent = mean(percent,na.rm=TRUE))
+  dplyr::summarize(percent = mean(percent,na.rm=TRUE))
 data[data=="NaN"] <- NA
 
 # Join subject info with data that's now subject-level
@@ -116,7 +143,7 @@ groupmeans <- data %>%
   select(id,participant,maingroup,age,selfrate,signyrs,aoasl) %>%
   distinct() %>%
   group_by(maingroup) %>%
-  summarize(n = n(),
+  dplyr::summarize(n = n(),
             age.m = mean(age),
             age.sd = sd(age),
             selfrate.m = mean(selfrate),
@@ -336,32 +363,32 @@ Lexical Recall Data, Summarized.
 Quick summary of lexical recall data here. We have to collapse here as well from subject-level to group-level.
 
 ``` r
-data.acc <- data %>%
+data.groupacc <- data %>%
   ungroup() %>%
   select(-aoi,-percent) %>%
   distinct() %>%
   group_by(maingroup,direction) %>%
-  summarize(mean = mean(acc, na.rm=TRUE),
+  dplyr::summarize(mean = mean(acc, na.rm=TRUE),
             sd = sd(acc, na.rm=TRUE))
-data.acc1 <- data.acc %>%
+data.acc1 <- data.groupacc %>%
   select(-mean) %>%
   spread(direction,sd) %>%
   rename(forward.sd = forward,
          reversed.sd = reversed)
-data.acc2 <- data.acc %>%
+data.acc2 <- data.groupacc %>%
   select(-sd) %>%
   spread(direction,mean) %>%
   rename(forward.mean = forward,
          reversed.mean = reversed)
 groupcount <- select(groupmeans,maingroup,n)
-data.acc <- left_join(data.acc2,data.acc1, by="maingroup") %>%
+data.groupacc <- left_join(data.acc2,data.acc1, by="maingroup") %>%
   left_join(groupcount, by="maingroup") %>%
   # mutate(forward.se = forward.sd/sqrt(n),
   #        reversed.se = reversed.sd/sqrt(n)) %>%
   #select(maingroup,n,forward.mean,forward.sd,forward.se,reversed.mean,reversed.sd,reversed.se)
   select(maingroup,n,forward.mean,forward.sd,reversed.mean,reversed.sd)
 #data.acc
-kable(data.acc, digits=2) %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+kable(data.groupacc, digits=2) %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
 ```
 
 <table class="table table-striped table-hover table-condensed" style="margin-left: auto; margin-right: auto;">
@@ -515,7 +542,7 @@ data.acc.se <- left_join(data.acc1,data.acc2, by=c("maingroup","direction")) %>%
   mutate(se = sd/sqrt(n))
 ggplot(data.acc.se,aes(maingroup,mean,color=direction)) +
   geom_point(position=position_dodge(0.5)) +
-  geom_errorbar(aes(ymin=mean-se,ymax=mean+se),width=0.1,position=position_dodge(0.5)) +
+  geom_errorbar(aes(ymin=mean-se,ymax=mean+se),width=0.25,size=1,position=position_dodge(0.5)) +
   scale_y_continuous(limits=c(0,1)) +
   theme(axis.text.x=element_text(angle=45,hjust=1)) + xlab("") + ylab("mean accuracy")
 ```
@@ -525,10 +552,12 @@ ggplot(data.acc.se,aes(maingroup,mean,color=direction)) +
 Eye Gaze Data, Summarized.
 ==========================
 
-I guess we should have a big table of means and SDs for all AOIs for each group for forward and backward. I'll write the code for this later. For now, here's the boxplot. This is the part where we will say, from all the data we have concluded that we can work with **three AOIs** from here on due to sufficient data: chin, eyes, and mouth.
+I guess we should have a big table of means and SDs for all AOIs for each group for forward and backward. I'll write the code for this later. For now, here's the boxplot. This is the part where we will say, from all the data we have concluded that we can work with **three base AOIs** from here on due to sufficient data: chin, eyes, and mouth.
 
 ``` r
-ggplot(data,aes(aoi,percent,fill=direction)) + 
+data.aoionly <- data %>%
+  filter(aoi != "facechest" & aoi != "mouthchin" & aoi != "moutheyes")
+ggplot(data.aoionly,aes(aoi,percent,fill=direction)) + 
   geom_boxplot() +
   scale_y_continuous(limits=c(0,1)) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
@@ -545,9 +574,24 @@ data.five <- data %>%
   ungroup() %>%
   filter(aoi == "upperchest" | aoi == "chin" | aoi == "mouth" | aoi == "eyes" | aoi == "forehead") %>%
   group_by(maingroup,aoi,direction) %>%
-  summarize(mean = mean(percent, na.rm=TRUE)) %>%
-  ungroup() %>% 
+  dplyr::summarize(mean = mean(percent, na.rm=TRUE)) %>%
+  ungroup() %>%
   mutate(aoi = factor(aoi,levels=c("upperchest","chin","mouth","eyes","forehead")))
+
+# data.five <- data %>%
+#   ungroup() %>%
+#   filter(aoi == "upperchest" | aoi == "chin" | aoi == "mouth" | aoi == "eyes" | aoi == "forehead" | aoi == "upperchest" | aoi == "midchest" | aoi == "lowerchest" | aoi == "belly") %>%
+#   group_by(maingroup,aoi,direction) %>%
+#   dplyr::summarize(mean = mean(percent, na.rm=TRUE)) %>%
+#   ungroup() %>% 
+#   mutate(aoi = factor(aoi,levels=c("belly","lowerchest","midchest","upperchest","chin","mouth","eyes","forehead")))
+
+# data.five <- data %>%
+#   ungroup() %>%
+#   filter(aoi == "torso" | aoi == "face") %>%
+#   group_by(maingroup,aoi,direction) %>%
+#   dplyr::summarize(mean = mean(percent, na.rm=TRUE)) %>%
+#   ungroup()
 
 ggplot(data.five, aes(x = maingroup, y = aoi)) +
   geom_tile(aes(fill=mean),color="lightgray",na.rm=TRUE) + 
@@ -560,16 +604,70 @@ ggplot(data.five, aes(x = maingroup, y = aoi)) +
 
 ![](04resultsection_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-1.png)
 
+Also of interest is how the FaceChest Index changes. And it shows us there's definitely more of a pull to the Chest during reversed stories.
+
+``` r
+data.indexonly <- data %>%
+  filter(aoi == "facechest")
+ggplot(data.indexonly,aes(aoi,percent,fill=direction)) + 
+  geom_violin() +
+  scale_y_continuous(limits=c(-1,1)) +
+  theme(axis.text.x=element_text(angle=45,hjust=1))
+```
+
+![](04resultsection_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-8-1.png)
+
 Bivariate Correlations
 ======================
 
 We temporarily drop groups here. We just want to ask: *"What is correlated in terms of subject characteristics and their behavioral measures?"* We'll do this separately for forward and reversed, and using only important AOIs. - Looking at signing years, AoA, lexical recall, gaze data - Which is stronger – signing years or AoA? - Is lexical recall correlated with looking at any AOI?
 
+Behavioral Correlations
+-----------------------
+
+First, we'll look at correlations between participant characteristics, including AoASL, and their performance on the lexical recall task. - Forward accuracy is correlated with all characteristics BUT AoASL. Your years of signing, your self-rating, your age all predict forward accuracy, but age of acquisition doesn't. - Reversed accuracy *is correlated with AoASL* and self-rating. Now, self-rating is really subjective so let's not use that. Neither your signing years or age predicts reversed accuracy. Only AoASL does! - Reversal effect is not correlated with anything.
+
+-   `*` p &lt; 0.05 `**` p &lt; 0.01 `***` p &lt; 0.001 \*
+
 ``` r
-# Drop all other AOIs
+# We're going to need to make another data frame with participant-level accuracy information, this time including a reversal effect which we've calculated for each participant. 
+data.subjectinfo <- data.subjectinfo %>%
+  ungroup() %>%
+  select(-direction,-acc)
+data.acc <- data %>%
+  ungroup() %>%
+  select(-aoi,-percent) %>%
+  distinct() %>%
+  group_by(participant,direction) %>%
+  dplyr::summarize(mean = mean(acc, na.rm=TRUE)) %>%
+  spread(direction,mean) %>%
+  mutate(effect = forward - reversed) %>%
+  rename(acc.forward = forward,
+         acc.reversed = reversed,
+         acc.effect = effect) %>%
+  left_join(data.subjectinfo, by="participant") %>%
+  ungroup() %>% 
+  distinct() %>%
+  select(aoasl,signyrs,selfrate,age,acc.forward,acc.reversed,acc.effect)
+
+#data.acc.results <- rcorr(as.matrix(data.acc))
+corstarsl(data.acc) # Use the awesome function!
+```
+
+    ##                 aoasl  signyrs selfrate     age acc.forward acc.reversed
+    ## aoasl                                                                   
+    ## signyrs      -0.82***                                                   
+    ## selfrate     -0.55***  0.71***                                          
+    ## age          -0.40**   0.85***  0.63***                                 
+    ## acc.forward    -0.14    0.30*   0.44**   0.33*                          
+    ## acc.reversed  -0.31*     0.30   0.39**    0.20        0.27              
+    ## acc.effect      0.18    -0.06    -0.05    0.05      0.46**      -0.73***
+
+``` r
+# Gather the AOIs we want
 data.allaoi <- data # save current dataset
 data <- data %>%
-  filter(aoi == "eyes" | aoi == "mouth" | aoi == "chin")
+ filter(aoi == "eyes" | aoi == "mouth" | aoi == "chin" | aoi == "face" | aoi == "chest" | aoi == "facechest")
 
 # Need to put AOIs in their own columns
 data.spread <- data %>%
@@ -579,11 +677,11 @@ data.spread <- data %>%
 # Fwd and Rev data
 data.fw <- data.spread %>%
   filter(direction == "forward") %>%
-  select(age,selfrate,signyrs,aoasl,acc,eyes,mouth,chin)
+  select(acc,aoasl,signyrs,selfrate,age,eyes,mouth,chin,face,chest,facechest)
 
 data.rv <- data.spread %>%
   filter(direction == "reversed") %>%
-  select(age,selfrate,signyrs,aoasl,acc,eyes,mouth,chin)
+  select(acc,aoasl,signyrs,selfrate,age,eyes,mouth,chin,face,chest,facechest)
 
 # Correlations
 # data.fw.corr <- cor(data.fw, use="pairwise.complete.obs")
@@ -594,95 +692,90 @@ data.rv <- data.spread %>%
 Forward Correlations
 --------------------
 
-Here's the Pearson's correlation matrix for forward stories. -AoASL & Accuracy: -0.14 (weak) *p = 0.349* -SignYrs & Accuracy: 0.30 (medium) *p = 0.045* -SelfRating & Accuracy: 0.44 (medium) *p = 0.003* -Age & Accuracy: 0.33 (medium) *p = 0.027*
+Here's the Pearson's correlation matrix for forward stories. - No eye behavior metric predicts accuracy on forward stories. - Signing years is medium-correlated with amount of time looking at the face, and a higher face/chest ratio - Same for age (then again, signing years and age are very correlated)
 
-The best relationship between any AOI and accuracy is for eyes: r = -0.24 (weak), p = 0.119. Less looking at eyes equals more accurate. Interesting cluster among all 3 AOIs - all strongly negatively correlated with each other. Meaning people just pick one and not "float" among all three.
+So. For forward stories it's a crapshoot.
 
 ``` r
-#corrplot(data.fw.corr, method="number")
-rcorr(as.matrix(data.fw))
+#rcorr(as.matrix(data.fw))
+corstarsl(data.fw)
 ```
 
-    ##            age selfrate signyrs aoasl   acc  eyes mouth  chin
-    ## age       1.00     0.63    0.85 -0.40  0.33 -0.15  0.33 -0.13
-    ## selfrate  0.63     1.00    0.71 -0.55  0.44 -0.20  0.12  0.16
-    ## signyrs   0.85     0.71    1.00 -0.82  0.30 -0.21  0.28  0.01
-    ## aoasl    -0.40    -0.55   -0.82  1.00 -0.14  0.22 -0.11 -0.18
-    ## acc       0.33     0.44    0.30 -0.14  1.00 -0.24  0.16  0.09
-    ## eyes     -0.15    -0.20   -0.21  0.22 -0.24  1.00 -0.56 -0.43
-    ## mouth     0.33     0.12    0.28 -0.11  0.16 -0.56  1.00 -0.54
-    ## chin     -0.13     0.16    0.01 -0.18  0.09 -0.43 -0.54  1.00
-    ## 
-    ## n
-    ##          age selfrate signyrs aoasl acc eyes mouth chin
-    ## age       44       44      44    44  44   43    44   44
-    ## selfrate  44       44      44    44  44   43    44   44
-    ## signyrs   44       44      44    44  44   43    44   44
-    ## aoasl     44       44      44    44  44   43    44   44
-    ## acc       44       44      44    44  44   43    44   44
-    ## eyes      43       43      43    43  43   43    43   43
-    ## mouth     44       44      44    44  44   43    44   44
-    ## chin      44       44      44    44  44   43    44   44
-    ## 
-    ## P
-    ##          age    selfrate signyrs aoasl  acc    eyes   mouth  chin  
-    ## age             0.0000   0.0000  0.0068 0.0274 0.3478 0.0292 0.3923
-    ## selfrate 0.0000          0.0000  0.0001 0.0026 0.1988 0.4497 0.3063
-    ## signyrs  0.0000 0.0000           0.0000 0.0453 0.1679 0.0690 0.9252
-    ## aoasl    0.0068 0.0001   0.0000         0.3488 0.1582 0.4709 0.2316
-    ## acc      0.0274 0.0026   0.0453  0.3488        0.1190 0.3117 0.5472
-    ## eyes     0.3478 0.1988   0.1679  0.1582 0.1190        0.0001 0.0039
-    ## mouth    0.0292 0.4497   0.0690  0.4709 0.3117 0.0001        0.0002
-    ## chin     0.3923 0.3063   0.9252  0.2316 0.5472 0.0039 0.0002
+    ##                acc    aoasl  signyrs selfrate      age     eyes    mouth
+    ## acc                                                                     
+    ## aoasl       -0.14                                                       
+    ## signyrs     0.30*  -0.82***                                             
+    ## selfrate   0.44**  -0.55***  0.71***                                    
+    ## age         0.33*  -0.40**   0.85***  0.63***                           
+    ## eyes        -0.24     0.22    -0.21    -0.20    -0.15                   
+    ## mouth        0.16    -0.11     0.28     0.12    0.33*  -0.56***         
+    ## chin         0.09    -0.18     0.01     0.16    -0.13  -0.43**  -0.54***
+    ## face         0.12    -0.25    0.38*     0.26   0.39**    -0.09   0.51***
+    ## chest       -0.02     0.17    -0.29    -0.29   -0.32*    -0.18   -0.36* 
+    ## facechest    0.02    -0.17    0.30*     0.29    0.32*     0.18    0.36* 
+    ##              chin     face    chest
+    ## acc                                
+    ## aoasl                              
+    ## signyrs                            
+    ## selfrate                           
+    ## age                                
+    ## eyes                               
+    ## mouth                              
+    ## chin                               
+    ## face       -0.22                   
+    ## chest      0.35*  -0.87***         
+    ## facechest -0.34*   0.88*** -1.00***
 
 Reversed Correlations
 ---------------------
 
-Here's the Pearson's correlation matrix for reversed stories. -AoASL & Accuracy: -0.31 (medium) *p = 0.042* -SignYrs & Accuracy: 0.3 (medium) *p = 0.511* -SelfRating & Accuracy: 0.39 (medium) *p = 0.009* -Age & Accuracy: 0.2 (weak) *p = 0.189*
+Here's the Pearson's correlation matrix for reversed stories. - Again, no eye behavior metric predicts accuracy on reversed stories. - Again, signing years is medium-correlated with amount of time looking at the face, and a higher face/chest ratio - Same for age.
 
-But what's interesting is now eye gaze/AOIs has much weaker relationships with accuracy. We had a small negative relationship between eyes and accuracy in forward, but in reverse there's even less...more scattered, more all over the place. Gaze behavior is impacted by reversal. *Caveat: not even forward had any significant correlations w AOIs*
+So.
 
 ``` r
-#corrplot(data.rv.corr, method="number")
-rcorr(as.matrix(data.rv))
+#rcorr(as.matrix(data.rv))
+corstarsl(data.rv)
 ```
 
-    ##            age selfrate signyrs aoasl   acc  eyes mouth  chin
-    ## age       1.00     0.62    0.85 -0.40  0.20  0.06  0.31 -0.25
-    ## selfrate  0.62     1.00    0.71 -0.55  0.39  0.05  0.08 -0.01
-    ## signyrs   0.85     0.71    1.00 -0.82  0.30 -0.02  0.26 -0.09
-    ## aoasl    -0.40    -0.55   -0.82  1.00 -0.31  0.11 -0.10 -0.11
-    ## acc       0.20     0.39    0.30 -0.31  1.00 -0.12  0.10  0.06
-    ## eyes      0.06     0.05   -0.02  0.11 -0.12  1.00 -0.61 -0.47
-    ## mouth     0.31     0.08    0.26 -0.10  0.10 -0.61  1.00 -0.49
-    ## chin     -0.25    -0.01   -0.09 -0.11  0.06 -0.47 -0.49  1.00
-    ## 
-    ## n
-    ##          age selfrate signyrs aoasl acc eyes mouth chin
-    ## age       43       43      43    43  43   39    43   42
-    ## selfrate  43       43      43    43  43   39    43   42
-    ## signyrs   43       43      43    43  43   39    43   42
-    ## aoasl     43       43      43    43  43   39    43   42
-    ## acc       43       43      43    43  43   39    43   42
-    ## eyes      39       39      39    39  39   39    39   38
-    ## mouth     43       43      43    43  43   39    43   42
-    ## chin      42       42      42    42  42   38    42   42
-    ## 
-    ## P
-    ##          age    selfrate signyrs aoasl  acc    eyes   mouth  chin  
-    ## age             0.0000   0.0000  0.0081 0.1892 0.7158 0.0414 0.1176
-    ## selfrate 0.0000          0.0000  0.0002 0.0091 0.7769 0.6138 0.9363
-    ## signyrs  0.0000 0.0000           0.0000 0.0511 0.8837 0.0966 0.5598
-    ## aoasl    0.0081 0.0002   0.0000         0.0420 0.5054 0.5145 0.4953
-    ## acc      0.1892 0.0091   0.0511  0.0420        0.4666 0.5081 0.7202
-    ## eyes     0.7158 0.7769   0.8837  0.5054 0.4666        0.0000 0.0027
-    ## mouth    0.0414 0.6138   0.0966  0.5145 0.5081 0.0000        0.0009
-    ## chin     0.1176 0.9363   0.5598  0.4953 0.7202 0.0027 0.0009
+    ##                acc    aoasl  signyrs selfrate     age     eyes    mouth
+    ## acc                                                                    
+    ## aoasl      -0.31*                                                      
+    ## signyrs      0.30  -0.82***                                            
+    ## selfrate   0.39**  -0.55***  0.71***                                   
+    ## age          0.20  -0.40**   0.85***  0.62***                          
+    ## eyes        -0.12     0.11    -0.02     0.05    0.06                   
+    ## mouth        0.10    -0.10     0.26     0.08   0.31*  -0.61***         
+    ## chin         0.06    -0.11    -0.09    -0.01   -0.25  -0.47**  -0.49***
+    ## face         0.16    -0.19    0.33*     0.20   0.36*    -0.19   0.64***
+    ## chest       -0.07     0.17   -0.33*    -0.28  -0.38*    -0.16  -0.45** 
+    ## facechest    0.09    -0.18    0.33*     0.27   0.38*     0.14   0.46** 
+    ##              chin     face    chest
+    ## acc                                
+    ## aoasl                              
+    ## signyrs                            
+    ## selfrate                           
+    ## age                                
+    ## eyes                               
+    ## mouth                              
+    ## chin                               
+    ## face       -0.20                   
+    ## chest      0.36*  -0.82***         
+    ## facechest -0.35*   0.84*** -1.00***
+
+Summary
+-------
+
+What have we learned from the bivariate correlations? AoA is correlated with accuracy on the reversed tasks, showing that our manipulation **is** sensitive to effects of AoASL. Specifically, AoASL was correlated with accuracy such that people who acquired ASL later tended to do worse on lexical recall for reversed stories. There was no such relationship found for lexical recall for forward stories.
+
+For no AOI was looking behavior was correlated with accuracy, for either forward or reversed stories.
+
+Years of signing appeared to have an influence on the amount of time spent looking at the face area, both by itself and in contrast with the chest. People with more signing-years spend more time on the face and less on the chest. *(We can run a quick linear regression on it...it is very significant)*
 
 ANOVAs
 ======
 
-Now we're going to do ANOVAs. WE'll do an all-factors ANOVA including Directoin, then also do separate Forward and Reversed ANOVAs.
+Now we're going to do ANOVAs. We'll do an all-factors ANOVA including Direction, then also do separate Forward and Reversed ANOVAs.
 
 > We do this separately for lexical recall and gaze data. But be prepared to compare the two sets of results side by side, in a summary like say “subject groups differed significantly for lexical recall (stat values) but not gaze data (stat values)” or whatever the result is. At least this can be done in the discussion, if not in the results section.
 
@@ -706,6 +799,7 @@ How come lexical recall isn’t a predictor in a model with gaze data? Yes, that
 
 Here is an example of what I had noted to myself previously, which is not current any more, and I would put correlation values in here:
 
--Bivariate correlations were calculated for all subjects, irrespective of hearing status (which we address in a later section). Surprisingly, for no AOI was looking behavior was correlated with accuracy, for either forward or reversed stories. -Remarkably, percent-looking at mid chest and lower chest, for both forward and reversed (and left side for reversed) are highly negatively correlated with years signing and positively correlated with AoA. That means that greater looking in those areas are associated with older ages of acquisition and fewer years of experience. What is equally interesting is that looking at the eyes was not related to subject characteristics at all (contrast with Emmorey’s finding). -Also, looking at the mouth for reversed stimuli was significantly correlated with years signing (r = 0.38), this means the longer one signed, the more (in terms of % looking) one looked at the mouth.
+-   Remarkably, percent-looking at mid chest and lower chest, for both forward and reversed (and left side for reversed) are highly negatively correlated with years signing and positively correlated with AoA. That means that greater looking in those areas are associated with older ages of acquisition and fewer years of experience. What is equally interesting is that looking at the eyes was not related to subject characteristics at all (contrast with Emmorey’s finding).
+-   Also, looking at the mouth for reversed stimuli was significantly correlated with years signing (r = 0.38), this means the longer one signed, the more (in terms of % looking) one looked at the mouth.
 
 Then, maybe we can have a section called “Hearing Status” and in this paragraph say what happens when we compare hearing and deaf, using the same range of AoA, excluding hearing Novice. Or maybe separate regressions for hearing and deaf groups, looking at AoA, AOI’s, and lexical recall, to examine the relationship between the three. I don't know.
