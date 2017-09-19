@@ -265,16 +265,14 @@ ggplot(data.indexonly,aes(aoi,percent,fill=direction)) +
 
 
 # Bivariate Correlations
-We temporarily drop groups here. We just want to ask: *"What is correlated in terms of subject characteristics and their behavioral measures?"* We'll do this separately for forward and reversed, and using only important AOIs. 
-*Looking at signing years, AoA, lexical recall, gaze data
-*Which is stronger – signing years or AoA?
-*Is lexical recall correlated with looking at any AOI?
+We temporarily drop groups here. We just want to ask: *"What is correlated in terms of subject characteristics and their behavioral measures?"* We'll do this separately for forward and reversed, and using only important AOIs. We can also ask additional questions like, *which is stronger - signing years or AOA? is lexical recall correlated with looking at any AOI?*
 
 ## Behavioral Correlations
 First, we'll look at correlations between participant characteristics, including AoASL, and their performance on the lexical recall task. 
-*Forward accuracy is correlated with all characteristics BUT AoASL. Your years of signing, your self-rating, your age all predict forward accuracy, but age of acquisition doesn't.
-*Reversed accuracy *is correlated with AoASL* and self-rating. Now, self-rating is really subjective so let's not use that. Neither your signing years or age predicts reversed accuracy. Only AoASL does! 
-*Reversal effect is not correlated with anything. 
+
+* Forward accuracy is correlated with all characteristics BUT AoASL. Your years of signing, your self-rating, your age all predict forward accuracy, but age of acquisition doesn't.
+* Reversed accuracy *is correlated with AoASL* and self-rating. Now, self-rating is really subjective so let's not use that. Neither your signing years or age predicts reversed accuracy. Only AoASL does! 
+* Reversal effect is not correlated with anything. 
 
 `*` p < 0.05 `**` p < 0.01 `***` p < 0.001
 ```{r}
@@ -332,9 +330,10 @@ data.rv <- data.spread %>%
 
 ## Forward Correlations
 Here's the Pearson's correlation matrix for forward stories. 
-*No eye behavior metric predicts accuracy on forward stories.
-*Signing years is medium-correlated with amount of time looking at the face, and a higher face/chest ratio
-*Same for age (then again, signing years and age are very correlated)
+
+* No eye behavior metric predicts accuracy on forward stories.
+* Signing years is medium-correlated with amount of time looking at the face, and a higher face/chest ratio
+* Same for age (then again, signing years and age are very correlated)
 
 So. For forward stories it's a crapshoot. 
 ```{r rows.print=11}
@@ -344,9 +343,10 @@ corstarsl(data.fw)
 
 ## Reversed Correlations
 Here's the Pearson's correlation matrix for reversed stories. 
-*Again, no eye behavior metric predicts accuracy on reversed stories.
-*Again, signing years is medium-correlated with amount of time looking at the face, and a higher face/chest ratio
-*Same for age.
+
+* Again, no eye behavior metric predicts accuracy on reversed stories.
+* Again, signing years is medium-correlated with amount of time looking at the face, and a higher face/chest ratio
+* Same for age.
 
 So. 
 ```{r rows.print=11}
@@ -382,7 +382,7 @@ How come lexical recall isn’t a predictor in a model with gaze data?  Yes, tha
  
 Here is an example of what I had noted to myself previously, which is not current any more, and I would put correlation values in here:
 
-*Remarkably, percent-looking at mid chest and lower chest, for both forward and reversed (and left side for reversed) are highly negatively correlated with years signing and positively correlated with AoA. That means that greater looking in those areas are associated with older ages of acquisition and fewer years of experience.  What is equally interesting is that looking at the eyes was not related to subject characteristics at all (contrast with Emmorey’s finding). 
-*Also, looking at the mouth for reversed stimuli was significantly correlated with years signing (r = 0.38), this means the longer one signed, the more (in terms of % looking) one looked at the mouth.
+* Remarkably, percent-looking at mid chest and lower chest, for both forward and reversed (and left side for reversed) are highly negatively correlated with years signing and positively correlated with AoA. That means that greater looking in those areas are associated with older ages of acquisition and fewer years of experience.  What is equally interesting is that looking at the eyes was not related to subject characteristics at all (contrast with Emmorey’s finding). 
+* Also, looking at the mouth for reversed stimuli was significantly correlated with years signing (r = 0.38), this means the longer one signed, the more (in terms of % looking) one looked at the mouth.
 
 Then, maybe we can have a section called “Hearing Status” and in this paragraph say what happens when we compare hearing and deaf, using the same range of AoA, excluding hearing Novice.    Or maybe separate regressions for hearing and deaf groups, looking at AoA, AOI’s, and lexical recall, to examine the relationship between the three.    I don't know.
