@@ -620,14 +620,14 @@ ggplot(data.indexonly,aes(aoi,percent,fill=direction)) +
 Bivariate Correlations
 ======================
 
-We temporarily drop groups here. We just want to ask: *"What is correlated in terms of subject characteristics and their behavioral measures?"* We'll do this separately for forward and reversed, and using only important AOIs. - Looking at signing years, AoA, lexical recall, gaze data - Which is stronger – signing years or AoA? - Is lexical recall correlated with looking at any AOI?
+We temporarily drop groups here. We just want to ask: *"What is correlated in terms of subject characteristics and their behavioral measures?"* We'll do this separately for forward and reversed, and using only important AOIs. \* Looking at signing years, AoA, lexical recall, gaze data \* Which is stronger – signing years or AoA? \* Is lexical recall correlated with looking at any AOI?
 
 Behavioral Correlations
 -----------------------
 
-First, we'll look at correlations between participant characteristics, including AoASL, and their performance on the lexical recall task. - Forward accuracy is correlated with all characteristics BUT AoASL. Your years of signing, your self-rating, your age all predict forward accuracy, but age of acquisition doesn't. - Reversed accuracy *is correlated with AoASL* and self-rating. Now, self-rating is really subjective so let's not use that. Neither your signing years or age predicts reversed accuracy. Only AoASL does! - Reversal effect is not correlated with anything.
+First, we'll look at correlations between participant characteristics, including AoASL, and their performance on the lexical recall task. \* Forward accuracy is correlated with all characteristics BUT AoASL. Your years of signing, your self-rating, your age all predict forward accuracy, but age of acquisition doesn't. \* Reversed accuracy *is correlated with AoASL* and self-rating. Now, self-rating is really subjective so let's not use that. Neither your signing years or age predicts reversed accuracy. Only AoASL does! \* Reversal effect is not correlated with anything.
 
--   `*` p &lt; 0.05 `**` p &lt; 0.01 `***` p &lt; 0.001 \*
+`*` p &lt; 0.05 `**` p &lt; 0.01 `***` p &lt; 0.001
 
 ``` r
 # We're going to need to make another data frame with participant-level accuracy information, this time including a reversal effect which we've calculated for each participant. 
@@ -692,7 +692,7 @@ data.rv <- data.spread %>%
 Forward Correlations
 --------------------
 
-Here's the Pearson's correlation matrix for forward stories. - No eye behavior metric predicts accuracy on forward stories. - Signing years is medium-correlated with amount of time looking at the face, and a higher face/chest ratio - Same for age (then again, signing years and age are very correlated)
+Here's the Pearson's correlation matrix for forward stories. \* No eye behavior metric predicts accuracy on forward stories. \* Signing years is medium-correlated with amount of time looking at the face, and a higher face/chest ratio \* Same for age (then again, signing years and age are very correlated)
 
 So. For forward stories it's a crapshoot.
 
@@ -729,7 +729,7 @@ corstarsl(data.fw)
 Reversed Correlations
 ---------------------
 
-Here's the Pearson's correlation matrix for reversed stories. - Again, no eye behavior metric predicts accuracy on reversed stories. - Again, signing years is medium-correlated with amount of time looking at the face, and a higher face/chest ratio - Same for age.
+Here's the Pearson's correlation matrix for reversed stories. \* Again, no eye behavior metric predicts accuracy on reversed stories. \* Again, signing years is medium-correlated with amount of time looking at the face, and a higher face/chest ratio \* Same for age.
 
 So.
 
