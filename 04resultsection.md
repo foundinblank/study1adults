@@ -17,6 +17,7 @@ Adam Stone, PhD
     -   [Forward ANOVA](#forward-anova)
     -   [Reversed ANOVA](#reversed-anova)
     -   [Summary of ANOVAs](#summary-of-anovas)
+-   [Recovery](#recovery)
 -   [Other Notes from Rain](#other-notes-from-rain)
 
 Refreshing Ourselves
@@ -154,10 +155,18 @@ cleanlexdata <- read_csv('cleandata.csv',col_types =
                      percent = col_double()
                    ))
 
-# cleanlexdata <- cleanlexdata %>%
-#   select(participant,direction,acc) %>%
-#   group_by(participant,direction) %>%
-#   mutate()
+cleanlexdata <- cleanlexdata %>%
+  select(participant,direction,acc) %>%
+  group_by(participant,direction) %>%
+  dplyr::summarize(acc = mean(acc,na.rm=TRUE)) %>%
+  ungroup()
+
+data <- data %>%
+  select(-acc) %>%
+  left_join(cleanlexdata,by=c("participant","direction")) %>%
+  ungroup() %>%
+  mutate(direction = as.factor(direction),
+         participant = as.factor(participant))
 ```
 
 Participant Characteristics
@@ -457,10 +466,10 @@ DeafNative
 0.05
 </td>
 <td style="text-align:right;">
-0.75
+0.77
 </td>
 <td style="text-align:right;">
-0.12
+0.10
 </td>
 </tr>
 <tr>
@@ -471,16 +480,16 @@ DeafEarlyASL
 7
 </td>
 <td style="text-align:right;">
-0.86
+0.84
 </td>
 <td style="text-align:right;">
-0.03
+0.04
 </td>
 <td style="text-align:right;">
-0.66
+0.65
 </td>
 <td style="text-align:right;">
-0.07
+0.10
 </td>
 </tr>
 <tr>
@@ -511,16 +520,16 @@ HearingLateASL
 11
 </td>
 <td style="text-align:right;">
-0.85
+0.87
+</td>
+<td style="text-align:right;">
+0.08
+</td>
+<td style="text-align:right;">
+0.68
 </td>
 <td style="text-align:right;">
 0.09
-</td>
-<td style="text-align:right;">
-0.66
-</td>
-<td style="text-align:right;">
-0.11
 </td>
 </tr>
 <tr>
@@ -655,8 +664,8 @@ Behavioral Correlations
 
 First, we'll look at correlations between participant characteristics, including AoASL, and their performance on the lexical recall task.
 
--   Forward accuracy is correlated with all characteristics BUT AoASL. Your years of signing, your self-rating, your age all predict forward accuracy, but age of acquisition doesn't.
--   Reversed accuracy *is correlated with AoASL* and self-rating. Now, self-rating is really subjective so let's not use that. Neither your signing years or age predicts reversed accuracy. Only AoASL does!
+-   Forward accuracy is correlated with all characteristics BUT AoASL or Signing Years. So your self-rating or age predict forward accuracy, but age of acquisition or signing years doesn't.
+-   Reversed accuracy *is correlated with AoASL* and signing years and self-rating. Now, self-rating is really subjective so let's not use that. Your age doesn't predict reversed accuracy. AoASL does!
 -   Reversal effect is not correlated with anything.
 
 `*` p &lt; 0.05 `**` p &lt; 0.01 `***` p &lt; 0.001
@@ -691,9 +700,9 @@ corstarsl(data.acc) # Use the awesome function!
     ## signyrs      -0.80***                                                   
     ## selfrate     -0.53***  0.71***                                          
     ## age           -0.35*   0.84***  0.63***                                 
-    ## acc.forward    -0.13    0.32*   0.45**   0.36*                          
-    ## acc.reversed  -0.31*     0.29   0.39**    0.18        0.26              
-    ## acc.effect      0.19    -0.04    -0.03    0.09      0.47**      -0.73***
+    ## acc.forward    -0.09     0.28   0.46**   0.34*                          
+    ## acc.reversed  -0.35*    0.30*   0.40**    0.15       0.37*              
+    ## acc.effect      0.27    -0.07    -0.04    0.11      0.41**      -0.69***
 
 ``` r
 # Gather the AOIs we want
@@ -727,8 +736,9 @@ Forward Correlations
 Here's the Pearson's correlation matrix for forward stories.
 
 -   No eye behavior metric predicts accuracy on forward stories.
--   Signing years is medium-correlated with amount of time looking at the face, and a higher face/chest ratio
--   Same for age (then again, signing years and age are very correlated)
+-   AoASL or Signing Years do not predict accuracy.
+-   Self-rating is medium-correlated with amount of time looking at the face, and a higher face/chest ratio
+-   Same for age.
 
 So. For forward stories it's a crapshoot.
 
@@ -739,16 +749,16 @@ corstarsl(data.fw)
 
     ##                acc    aoasl  signyrs selfrate     age     eyes    mouth
     ## acc                                                                    
-    ## aoasl       -0.13                                                      
-    ## signyrs     0.32*  -0.80***                                            
-    ## selfrate   0.45**  -0.53***  0.71***                                   
-    ## age         0.36*   -0.35*   0.84***  0.63***                          
-    ## eyes        -0.18     0.16    -0.15    -0.12   -0.07                   
-    ## mouth        0.13    -0.14     0.25     0.10    0.24  -0.61***         
-    ## chin         0.09    -0.14    -0.01     0.13   -0.13  -0.38**  -0.45** 
+    ## aoasl       -0.09                                                      
+    ## signyrs      0.28  -0.80***                                            
+    ## selfrate   0.46**  -0.53***  0.71***                                   
+    ## age         0.34*   -0.35*   0.84***  0.63***                          
+    ## eyes        -0.22     0.16    -0.15    -0.12   -0.07                   
+    ## mouth        0.19    -0.14     0.25     0.10    0.24  -0.61***         
+    ## chin         0.05    -0.14    -0.01     0.13   -0.13  -0.38**  -0.45** 
     ## face         0.12    -0.25   0.38**     0.27   0.36*    -0.14   0.49***
     ## chest       -0.03     0.16   -0.30*   -0.30*  -0.33*    -0.09   -0.31* 
-    ## facechest    0.04    -0.17    0.31*    0.30*   0.33*     0.09    0.32* 
+    ## facechest    0.03    -0.17    0.31*    0.30*   0.33*     0.09    0.32* 
     ##             chin     face    chest
     ## acc                               
     ## aoasl                             
@@ -768,7 +778,7 @@ Reversed Correlations
 Here's the Pearson's correlation matrix for reversed stories.
 
 -   Again, no eye behavior metric predicts accuracy on reversed stories.
--   Unlike forward stories, we see an effect of AoASL on looking at the face, chest, and FaceChest ratio. Those who acquired ASL later are more likely to look at the chest more and less at the face. Nice!
+-   Unlike forward stories, we see an effect of AoASL on looking at the face, chest, and FaceChest ratio. Those who acquired ASL later are more likely to look at the chest more and less at the face. Nice! Sign Years too at this.
 -   As before, signyears continues to be a strong correlator with looking behavior, and so does age.
 -   Same for age.
 
@@ -781,16 +791,16 @@ corstarsl(data.rv)
 
     ##                acc    aoasl  signyrs selfrate      age     eyes    mouth
     ## acc                                                                     
-    ## aoasl      -0.31*                                                       
-    ## signyrs      0.29  -0.80***                                             
-    ## selfrate   0.39**  -0.53***  0.71***                                    
-    ## age          0.18   -0.35*   0.84***  0.63***                           
-    ## eyes        -0.13     0.12    -0.01     0.06     0.11                   
-    ## mouth        0.15    -0.16     0.28     0.12     0.27  -0.63***         
+    ## aoasl      -0.35*                                                       
+    ## signyrs     0.30*  -0.80***                                             
+    ## selfrate   0.40**  -0.53***  0.71***                                    
+    ## age          0.15   -0.35*   0.84***  0.63***                           
+    ## eyes        -0.15     0.12    -0.01     0.06     0.11                   
+    ## mouth        0.16    -0.16     0.28     0.12     0.27  -0.63***         
     ## chin         0.04    -0.06    -0.14    -0.07    -0.26  -0.47**  -0.44** 
-    ## face         0.22   -0.30*   0.40**     0.28    0.35*    -0.14   0.58***
-    ## chest       -0.14    0.33*  -0.44**  -0.41**  -0.38**    -0.17   -0.36* 
-    ## facechest    0.16   -0.34*   0.44**   0.40**    0.38*     0.15    0.37* 
+    ## face         0.27   -0.30*   0.40**     0.28    0.35*    -0.14   0.58***
+    ## chest       -0.20    0.33*  -0.44**  -0.41**  -0.38**    -0.17   -0.36* 
+    ## facechest    0.22   -0.34*   0.44**   0.40**    0.38*     0.15    0.37* 
     ##             chin     face    chest
     ## acc                               
     ## aoasl                             
@@ -836,10 +846,10 @@ All-ANOVA
 
 Factors: Maingroup & Direction. First ANOVA summary is with Accuracy as outcome, second ANOVA summary is FaceChest Ratio.
 
--   For accuracy, there are main effects of group (p = 0.03) and direction (p &lt; 0.001), and no interactions (p = 0.42).
--   Posthocs for maingroup tell us that DeafNative and HearingNovice are significantly different (p = 0.02) but no other group-pairs are.
+-   For accuracy, there are main effects of group (p = 0.01) and direction (p &lt; 0.001), and no interactions (p = 0.42).
+    -   Posthocs for maingroup tell us that DeafNative and HearingNovice are significantly different (p = 0.005) but no other group-pairs are.
 -   For facechest ratio, there is a main effect of group (p = 0.001), no main effect of direction (p = 0.14), and no interactions (p = 0.61).
--   Posthocs for maingroup tell us that the main effect was driven by HearingNovice being significantly different from DeafNative (p &lt; 0.01), DeafEarly (p = 0.01), DeafLate (p = 0.01), and HearingLate (p = 0.02). No other pairs were significant.
+    -   Posthocs for maingroup tell us that the main effect was driven by HearingNovice being significantly different from DeafNative (p &lt; 0.01), DeafEarly (p = 0.01), DeafLate (p = 0.01), and HearingLate (p = 0.02). No other pairs were significant. *recheck p-values*
 
 ``` r
 data.aov.all <- data %>% filter(aoi=="facechest")
@@ -872,9 +882,9 @@ left_join(aov.lex.all.tidy,aov.gaze.all.tidy,by="term") %>%
 ```
 
     ##                  term  F.acc P.acc F.facechest P.facechest
-    ## 1           maingroup  2.772 0.033       5.136       0.001
-    ## 2           direction 61.224 0.000       2.220       0.140
-    ## 3 maingroup:direction  0.979 0.424       0.683       0.606
+    ## 1           maingroup  3.565 0.010       5.136       0.001
+    ## 2           direction 61.539 0.000       2.220       0.140
+    ## 3 maingroup:direction  1.186 0.323       0.683       0.606
     ## 4           Residuals     NA    NA          NA          NA
 
 ``` r
@@ -918,7 +928,7 @@ left_join(aov.lex.fw.tidy,aov.gaze.fw.tidy,by="term") %>%
 ```
 
     ##        term F.acc P.acc F.facechest P.facechest
-    ## 1 maingroup 1.763 0.155       1.695        0.17
+    ## 1 maingroup 1.956 0.119       1.695        0.17
     ## 2 Residuals    NA    NA          NA          NA
 
 ``` r
@@ -929,7 +939,7 @@ left_join(aov.lex.fw.tidy,aov.gaze.fw.tidy,by="term") %>%
 Reversed ANOVA
 --------------
 
-There is no main effect of group on accuracy (p = 0.12). There is, however, a main effect of group on facechest ratio (p = 0.01). Posthocs tell us the effect is driven by a significant difference between DeafNative and HearingNovice (p = 0.01).
+There are main effects of group on accuracy (p = 0.04) and on facechest ratio (p = 0.01). Posthocs tell us the effect is driven by a significant difference between DeafNative and HearingNovice (p = 0.01).
 
 ``` r
 data.aov.rv <- data %>% filter(aoi=="facechest" & direction=="reversed")
@@ -962,7 +972,7 @@ left_join(aov.lex.rv.tidy,aov.gaze.rv.tidy,by="term") %>%
 ```
 
     ##        term F.acc P.acc F.facechest P.facechest
-    ## 1 maingroup  1.93 0.124       3.586       0.014
+    ## 1 maingroup   2.7 0.044       3.586       0.014
     ## 2 Residuals    NA    NA          NA          NA
 
 ``` r
@@ -973,7 +983,7 @@ left_join(aov.lex.rv.tidy,aov.gaze.rv.tidy,by="term") %>%
 Summary of ANOVAs
 -----------------
 
-What have the ANOVAs told us? Let's make a table here, and graphs below. We are able to find significant effects of group on both accuracy and face-chest ratio in the all-ANOVA. However, most of our significant effects of group are driven by HearingNovice doing poorly on accuracy. So...the ANOVA story is that, really, Hearing Novices don't really know ASL well, and that's why they're doing poorly. There is no AoASL story there.
+What have the ANOVAs told us? Let's make a table here, and graphs below. We are able to find significant effects of group on both accuracy and face-chest ratio in the all-ANOVA, as well as the reversed ANOVA. However, most of our significant effects of group are driven by HearingNovice doing poorly on accuracy and looking at the hands/chest more. So...the ANOVA story is that, really, Hearing Novices don't really know ASL well, and that's why they're doing poorly. There is no *strong* AoASL story there, it's more of a L2 language learning thing?.
 
 ``` r
 aov.summary <- tribble(~ANOVA, ~Accuracy, ~FaceChestRatio,
@@ -981,7 +991,7 @@ aov.summary <- tribble(~ANOVA, ~Accuracy, ~FaceChestRatio,
         "All-Direction","Sig.","ns",
         "All-Interactions","ns","ns",
         "Forward-MainGroup","ns","ns",
-        "Reversed-MainGroup","ns","Sig.")
+        "Reversed-MainGroup","Sig.","Sig.")
 aov.summary
 ```
 
@@ -992,7 +1002,7 @@ aov.summary
     ## 2      All-Direction     Sig.             ns
     ## 3   All-Interactions       ns             ns
     ## 4  Forward-MainGroup       ns             ns
-    ## 5 Reversed-MainGroup       ns           Sig.
+    ## 5 Reversed-MainGroup     Sig.           Sig.
 
 ``` r
 data.aov.chart <- data.aov.all %>%
@@ -1006,6 +1016,30 @@ ggplot(data.aov.chart,aes(x=maingroup,y=value,fill=direction)) +
 ```
 
 ![](04resultsection_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-17-1.png)
+
+Recovery
+========
+
+Throwing this in, will move it into a better place for now but it's great! It supports AoASL effects on the video manipulation. Because look at the medians of each boxplot.
+
+``` r
+accdiff <- dataoriginal %>%
+  select(participant,maingroup,video,acc) %>%
+  distinct() %>%
+  spread(video,acc) %>%
+  mutate(fw = fw3-fw1,
+         rv = rv4-rv2) %>%
+  select(participant,maingroup,fw,rv) %>%
+  gather(direction,diff,fw:rv)
+
+accdiff$maingroup = factor(accdiff$maingroup,levels=c("DeafNative","DeafEarlyASL","DeafLateASL","HearingLateASL","HearingNoviceASL"))
+
+ggplot(accdiff,aes(x=maingroup,y=diff,fill=direction)) + geom_boxplot() + ylab("diff: 2nd rv story - 1st rv story")
+```
+
+    ## Warning: Removed 15 rows containing non-finite values (stat_boxplot).
+
+![](04resultsection_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-18-1.png)
 
 Other Notes from Rain
 =====================
