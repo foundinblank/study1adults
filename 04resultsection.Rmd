@@ -345,7 +345,8 @@ corstarsl(data.fw)
 Here's the Pearson's correlation matrix for reversed stories. 
 
 * Again, no eye behavior metric predicts accuracy on reversed stories.
-* Again, signing years is medium-correlated with amount of time looking at the face, and a higher face/chest ratio
+* Unlike forward stories, we see an effect of AoASL on looking at the face, chest, and FaceChest ratio. Those who acquired ASL later are more likely to look at the chest more and less at the face. Nice!
+* As before, signyears continues to be a strong correlator with looking behavior, and so does age. 
 * Same for age.
 
 So. 
@@ -357,9 +358,17 @@ corstarsl(data.rv)
 ## Summary
 What have we learned from the bivariate correlations? AoA is correlated with accuracy on the reversed tasks, showing that our manipulation **is** sensitive to effects of AoASL. Specifically, AoASL was correlated with accuracy such that people who acquired ASL later tended to do worse on lexical recall for reversed stories. There was no such relationship found for lexical recall for forward stories. 
 
-For no AOI was looking behavior was correlated with accuracy, for either forward or reversed stories. 
+For no AOI was looking behavior was correlated with accuracy, for either forward or reversed stories. However, AoASL was correlated with looking behavior *only* for reversed stories. Late ASL learners, when confronted with reversed stories, looked more at the chest and less at the face (a more scattered pattern). 
 
 Years of signing appeared to have an influence on the amount of time spent looking at the face area, both by itself and in contrast with the chest. People with more signing-years spend more time on the face and less on the chest. *(We can run a quick linear regression on it...it is very significant)* 
+
+```{r}
+ggplot(filter(data,aoi=="facechest"),aes(x=aoasl,y=percent,color=direction)) + 
+  geom_point() + 
+  geom_smooth(method="lm",se=FALSE) +
+  ylab("Face-Chest Ratio")
+```
+
 
 # ANOVAs
 Now we're going to do ANOVAs. We'll do an all-factors ANOVA including Direction, then also do separate Forward and Reversed ANOVAs. 

@@ -1,7 +1,7 @@
 Results Section (study1adults)
 ================
 Adam Stone, PhD
-09-19-2017
+09-20-2017
 
 -   [Refreshing Ourselves](#refreshing-ourselves)
 -   [Participant Characteristics](#participant-characteristics)
@@ -260,13 +260,13 @@ DeafEarlyASL
 DeafLateASL
 </td>
 <td style="text-align:right;">
-4
+6
 </td>
 <td style="text-align:right;">
-34.0
+37.2
 </td>
 <td style="text-align:right;">
-5.7
+6.6
 </td>
 <td style="text-align:right;">
 5.0
@@ -275,13 +275,13 @@ DeafLateASL
 0.0
 </td>
 <td style="text-align:right;">
-21.5
+23.7
 </td>
 <td style="text-align:right;">
-6.6
+6.2
 </td>
 <td style="text-align:right;">
-12.5
+12.8
 </td>
 <td style="text-align:right;">
 1.7
@@ -460,16 +460,16 @@ DeafEarlyASL
 DeafLateASL
 </td>
 <td style="text-align:right;">
-4
+6
 </td>
 <td style="text-align:right;">
-0.85
+0.87
 </td>
 <td style="text-align:right;">
-0.09
+0.07
 </td>
 <td style="text-align:right;">
-0.72
+0.71
 </td>
 <td style="text-align:right;">
 0.04
@@ -563,7 +563,7 @@ ggplot(data.aoionly,aes(aoi,percent,fill=direction)) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 
-    ## Warning: Removed 303 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 311 rows containing non-finite values (stat_boxplot).
 
 ![](04resultsection_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-6-1.png)
 
@@ -660,12 +660,12 @@ corstarsl(data.acc) # Use the awesome function!
 
     ##                 aoasl  signyrs selfrate     age acc.forward acc.reversed
     ## aoasl                                                                   
-    ## signyrs      -0.82***                                                   
-    ## selfrate     -0.55***  0.71***                                          
-    ## age          -0.40**   0.85***  0.63***                                 
-    ## acc.forward    -0.14    0.30*   0.44**   0.33*                          
-    ## acc.reversed  -0.31*     0.30   0.39**    0.20        0.27              
-    ## acc.effect      0.18    -0.06    -0.05    0.05      0.46**      -0.73***
+    ## signyrs      -0.80***                                                   
+    ## selfrate     -0.53***  0.71***                                          
+    ## age           -0.35*   0.84***  0.63***                                 
+    ## acc.forward    -0.13    0.32*   0.45**   0.36*                          
+    ## acc.reversed  -0.31*     0.29   0.39**    0.18        0.26              
+    ## acc.effect      0.19    -0.04    -0.03    0.09      0.47**      -0.73***
 
 ``` r
 # Gather the AOIs we want
@@ -709,30 +709,30 @@ So. For forward stories it's a crapshoot.
 corstarsl(data.fw)
 ```
 
-    ##                acc    aoasl  signyrs selfrate      age     eyes    mouth
-    ## acc                                                                     
-    ## aoasl       -0.14                                                       
-    ## signyrs     0.30*  -0.82***                                             
-    ## selfrate   0.44**  -0.55***  0.71***                                    
-    ## age         0.33*  -0.40**   0.85***  0.63***                           
-    ## eyes        -0.24     0.22    -0.21    -0.20    -0.15                   
-    ## mouth        0.16    -0.11     0.28     0.12    0.33*  -0.56***         
-    ## chin         0.09    -0.18     0.01     0.16    -0.13  -0.43**  -0.54***
-    ## face         0.12    -0.25    0.38*     0.26   0.39**    -0.09   0.51***
-    ## chest       -0.02     0.17    -0.29    -0.29   -0.32*    -0.18   -0.36* 
-    ## facechest    0.02    -0.17    0.30*     0.29    0.32*     0.18    0.36* 
-    ##              chin     face    chest
-    ## acc                                
-    ## aoasl                              
-    ## signyrs                            
-    ## selfrate                           
-    ## age                                
-    ## eyes                               
-    ## mouth                              
-    ## chin                               
-    ## face       -0.22                   
-    ## chest      0.35*  -0.87***         
-    ## facechest -0.34*   0.88*** -1.00***
+    ##                acc    aoasl  signyrs selfrate     age     eyes    mouth
+    ## acc                                                                    
+    ## aoasl       -0.13                                                      
+    ## signyrs     0.32*  -0.80***                                            
+    ## selfrate   0.45**  -0.53***  0.71***                                   
+    ## age         0.36*   -0.35*   0.84***  0.63***                          
+    ## eyes        -0.18     0.16    -0.15    -0.12   -0.07                   
+    ## mouth        0.13    -0.14     0.25     0.10    0.24  -0.61***         
+    ## chin         0.09    -0.14    -0.01     0.13   -0.13  -0.38**  -0.45** 
+    ## face         0.12    -0.25   0.38**     0.27   0.36*    -0.14   0.49***
+    ## chest       -0.03     0.16   -0.30*   -0.30*  -0.33*    -0.09   -0.31* 
+    ## facechest    0.04    -0.17    0.31*    0.30*   0.33*     0.09    0.32* 
+    ##             chin     face    chest
+    ## acc                               
+    ## aoasl                             
+    ## signyrs                           
+    ## selfrate                          
+    ## age                               
+    ## eyes                              
+    ## mouth                             
+    ## chin                              
+    ## face      -0.16                   
+    ## chest      0.27  -0.88***         
+    ## facechest -0.27   0.88*** -1.00***
 
 Reversed Correlations
 ---------------------
@@ -740,7 +740,8 @@ Reversed Correlations
 Here's the Pearson's correlation matrix for reversed stories.
 
 -   Again, no eye behavior metric predicts accuracy on reversed stories.
--   Again, signing years is medium-correlated with amount of time looking at the face, and a higher face/chest ratio
+-   Unlike forward stories, we see an effect of AoASL on looking at the face, chest, and FaceChest ratio. Those who acquired ASL later are more likely to look at the chest more and less at the face. Nice!
+-   As before, signyears continues to be a strong correlator with looking behavior, and so does age.
 -   Same for age.
 
 So.
@@ -750,39 +751,48 @@ So.
 corstarsl(data.rv)
 ```
 
-    ##                acc    aoasl  signyrs selfrate     age     eyes    mouth
-    ## acc                                                                    
-    ## aoasl      -0.31*                                                      
-    ## signyrs      0.30  -0.82***                                            
-    ## selfrate   0.39**  -0.55***  0.71***                                   
-    ## age          0.20  -0.40**   0.85***  0.62***                          
-    ## eyes        -0.12     0.11    -0.02     0.05    0.06                   
-    ## mouth        0.10    -0.10     0.26     0.08   0.31*  -0.61***         
-    ## chin         0.06    -0.11    -0.09    -0.01   -0.25  -0.47**  -0.49***
-    ## face         0.16    -0.19    0.33*     0.20   0.36*    -0.19   0.64***
-    ## chest       -0.07     0.17   -0.33*    -0.28  -0.38*    -0.16  -0.45** 
-    ## facechest    0.09    -0.18    0.33*     0.27   0.38*     0.14   0.46** 
-    ##              chin     face    chest
-    ## acc                                
-    ## aoasl                              
-    ## signyrs                            
-    ## selfrate                           
-    ## age                                
-    ## eyes                               
-    ## mouth                              
-    ## chin                               
-    ## face       -0.20                   
-    ## chest      0.36*  -0.82***         
-    ## facechest -0.35*   0.84*** -1.00***
+    ##                acc    aoasl  signyrs selfrate      age     eyes    mouth
+    ## acc                                                                     
+    ## aoasl      -0.31*                                                       
+    ## signyrs      0.29  -0.80***                                             
+    ## selfrate   0.39**  -0.53***  0.71***                                    
+    ## age          0.18   -0.35*   0.84***  0.63***                           
+    ## eyes        -0.13     0.12    -0.01     0.06     0.11                   
+    ## mouth        0.15    -0.16     0.28     0.12     0.27  -0.63***         
+    ## chin         0.04    -0.06    -0.14    -0.07    -0.26  -0.47**  -0.44** 
+    ## face         0.22   -0.30*   0.40**     0.28    0.35*    -0.14   0.58***
+    ## chest       -0.14    0.33*  -0.44**  -0.41**  -0.38**    -0.17   -0.36* 
+    ## facechest    0.16   -0.34*   0.44**   0.40**    0.38*     0.15    0.37* 
+    ##             chin     face    chest
+    ## acc                               
+    ## aoasl                             
+    ## signyrs                           
+    ## selfrate                          
+    ## age                               
+    ## eyes                              
+    ## mouth                             
+    ## chin                              
+    ## face      -0.13                   
+    ## chest      0.29  -0.79***         
+    ## facechest -0.28   0.81*** -1.00***
 
 Summary
 -------
 
 What have we learned from the bivariate correlations? AoA is correlated with accuracy on the reversed tasks, showing that our manipulation **is** sensitive to effects of AoASL. Specifically, AoASL was correlated with accuracy such that people who acquired ASL later tended to do worse on lexical recall for reversed stories. There was no such relationship found for lexical recall for forward stories.
 
-For no AOI was looking behavior was correlated with accuracy, for either forward or reversed stories.
+For no AOI was looking behavior was correlated with accuracy, for either forward or reversed stories. However, AoASL was correlated with looking behavior *only* for reversed stories. Late ASL learners, when confronted with reversed stories, looked more at the chest and less at the face (a more scattered pattern).
 
 Years of signing appeared to have an influence on the amount of time spent looking at the face area, both by itself and in contrast with the chest. People with more signing-years spend more time on the face and less on the chest. *(We can run a quick linear regression on it...it is very significant)*
+
+``` r
+ggplot(filter(data,aoi=="facechest"),aes(x=aoasl,y=percent,color=direction)) + 
+  geom_point() + 
+  geom_smooth(method="lm",se=FALSE) +
+  ylab("Face-Chest Ratio")
+```
+
+![](04resultsection_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-13-1.png)
 
 ANOVAs
 ======

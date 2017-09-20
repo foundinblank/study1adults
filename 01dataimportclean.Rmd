@@ -97,13 +97,13 @@ data <- read_csv('finaladultdata.csv', col_types=
 select(data,-participant)
 ```
 
-Remove dropped participants (they have no main group name, or no data, or are bad). I'm also removing Sara G for now due to her weird data file. These are who we dropped. 
+Remove dropped participants (they have no main group name, or no data, or are bad). I'm also removing Sara for now due to her weird data file. These are who we dropped. 
 
 ```{r, message=FALSE, warning=FALSE}
 # Removes those with no maingroup name
 nodata <- filter(data, is.na(maingroup)==TRUE) 
 # Removes those with no data
-manual <- filter(data,participant=="Lucinda" | participant=="Joe" | participant=="Cathy" | participant=="ChrissyG" | participant=="Sara") 
+manual <- filter(data,participant=="Lucinda" | participant=="Cathy" | participant=="Sara") 
 # Make table of all dropped participants
 dropped <- rbind(nodata,manual) %>% arrange(id)
 data <- data %>%
@@ -235,7 +235,6 @@ data <- data %>%
   mutate(total = sum(forehead,eyes,mouth,chin,upperchest,
                      midchest,lowerchest,belly,left,right,na.rm=TRUE)) %>%
   ungroup()
-
 
 ```
 Here's the final, "cleaned-up" dataset that we're going to use for all further analysis. Just the first 10 rows. Notice that there are now story and direction columns, and AOI-only columns, and each participant has 4 observation rows (one observation per story). So, more rows, less columns.  

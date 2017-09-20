@@ -70,7 +70,7 @@ data <- data %>%
 
 
 # ANOVAS
-Lexical recall accuracy violins and error bar charts for forward vs. backward stories. 
+Lexical recall accuracy violins and error bar charts for forward vs. backward stories. The error bars represent standard deviations. 
 ```{r}
 # Summarizing means and SDs
 accdata <- data %>%
@@ -180,7 +180,7 @@ acc.lm.order <- lm(data=data, acc ~ videogroup)
 kable(tidy(summary(acc.lm.order)),digits=4)
 ```
 
-Yikes. Group has an significant effect (p = 0.0396). On average they perform 4% better than Group 1. What's going on here...let's chart it. 
+Good, good, no sig diff between groups. 
 ```{r}
 ggplot(data, aes(x=videogroup, y=acc, fill=videogroup)) + 
 #  geom_point(position="jitter") +
@@ -188,7 +188,6 @@ ggplot(data, aes(x=videogroup, y=acc, fill=videogroup)) +
   geom_jitter(width=.3)
 ```
 
-So Group 1 has a lot more bad test results compared to Group 2. But maybe that's a good reason to be using mixed models, and we can account for that by allowing subjects and items (and item order, by definition...I think) to vary randomly. 
 
 ```{r}
 # ggplot(filter(data,direction=="reversed"),aes(x=aoasl,y=acc)) +

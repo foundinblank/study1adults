@@ -72,6 +72,7 @@ data <- data %>%
 
 # AOIs 
 These are our current AOIs. 
+
 1. Forehead (above eyes)
 2. Eyes
 3. Mouth
