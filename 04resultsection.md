@@ -16,6 +16,7 @@ Adam Stone, PhD
     -   [All-ANOVA](#all-anova)
     -   [Forward ANOVA](#forward-anova)
     -   [Reversed ANOVA](#reversed-anova)
+    -   [Summary of ANOVAs](#summary-of-anovas)
 -   [Other Notes from Rain](#other-notes-from-rain)
 
 Refreshing Ourselves
@@ -130,6 +131,33 @@ data$maingroup <- relevel(data$maingroup, ref="DeafNative")
 #   mutate(aoi = as.factor(aoi))
 # data.face3$aoi <- factor(data.face3$aoi, levels=c("eyes","mouth","chin"))
 # data.face3$aoi <- relevel(data.face3$aoi, ref="eyes")
+
+# But now we need to go back and add in a complete lexical recall dataset, even including those trials that got thrown out in 03eyegaze.nb.html. Because the lexical accuracy data is still good. So let's work on that. 
+cleanlexdata <- read_csv('cleandata.csv',col_types = 
+                   cols(
+                     id = col_integer(),
+                     participant = col_character(),
+                     hearing = col_character(),
+                     videogroup = col_character(),
+                     aoagroup = col_character(),
+                     languagegroup = col_character(),
+                     maingroup = col_character(),
+                     video = col_character(),
+                     story = col_character(),
+                     direction = col_character(),
+                     age = col_double(),
+                     selfrate = col_double(),
+                     signyrs = col_double(),
+                     aoasl = col_integer(),
+                     acc = col_double(),
+                     aoi = col_character(),
+                     percent = col_double()
+                   ))
+
+# cleanlexdata <- cleanlexdata %>%
+#   select(participant,direction,acc) %>%
+#   group_by(participant,direction) %>%
+#   mutate()
 ```
 
 Participant Characteristics
@@ -806,11 +834,178 @@ I like the idea of treating Native Deaf as baseline or the gold standard in comp
 All-ANOVA
 ---------
 
+Factors: Maingroup & Direction. First ANOVA summary is with Accuracy as outcome, second ANOVA summary is FaceChest Ratio.
+
+-   For accuracy, there are main effects of group (p = 0.03) and direction (p &lt; 0.001), and no interactions (p = 0.42).
+-   Posthocs for maingroup tell us that DeafNative and HearingNovice are significantly different (p = 0.02) but no other group-pairs are.
+-   For facechest ratio, there is a main effect of group (p = 0.001), no main effect of direction (p = 0.14), and no interactions (p = 0.61).
+-   Posthocs for maingroup tell us that the main effect was driven by HearingNovice being significantly different from DeafNative (p &lt; 0.01), DeafEarly (p = 0.01), DeafLate (p = 0.01), and HearingLate (p = 0.02). No other pairs were significant.
+
+``` r
+data.aov.all <- data %>% filter(aoi=="facechest")
+
+# Lex Recall ANOVA. Outcome: Acc. Factors: MainGroup, Direction
+aov.lex.all <- aov(data=data.aov.all, acc ~ maingroup * direction)
+aov.lex.all.tidy <- tidy(aov.lex.all)
+
+# Gaze Behavior ANOVA. Outcome: FaceChest. Factors: MainGroup, Direction
+aov.gaze.all <- aov(data=data.aov.all, percent ~ maingroup * direction)
+aov.gaze.all.tidy <- tidy(aov.gaze.all)
+
+# Prettify
+aov.lex.all.tidy <- aov.lex.all.tidy %>%
+  select(term,statistic,p.value) %>%
+  mutate(statistic = round(statistic,3),
+         p.value = round(p.value,3)) %>%
+  rename(F.acc = statistic,
+         P.acc = p.value)
+
+aov.gaze.all.tidy <- aov.gaze.all.tidy %>%
+  select(term,statistic,p.value) %>%
+  mutate(statistic = round(statistic,3),
+         p.value = round(p.value,3)) %>%
+  rename(F.facechest = statistic,
+         P.facechest = p.value)
+
+left_join(aov.lex.all.tidy,aov.gaze.all.tidy,by="term") %>%
+  print()
+```
+
+    ##                  term  F.acc P.acc F.facechest P.facechest
+    ## 1           maingroup  2.772 0.033       5.136       0.001
+    ## 2           direction 61.224 0.000       2.220       0.140
+    ## 3 maingroup:direction  0.979 0.424       0.683       0.606
+    ## 4           Residuals     NA    NA          NA          NA
+
+``` r
+#TukeyHSD(aov.lex.all,'maingroup',conf.level = 0.95) 
+#TukeyHSD(aov.gaze.all,'maingroup',conf.level = 0.95) 
+```
+
 Forward ANOVA
 -------------
 
+There is no main effect of group on accuracy (p = 0.16) or facechest ratio (p = 0.17) for forward stories.
+
+``` r
+data.aov.fw <- data %>% filter(aoi=="facechest" & direction=="forward")
+
+# Lex Recall ANOVA. Outcome: Acc. Factors: MainGroup, Direction
+aov.lex.fw <- aov(data=data.aov.fw, acc ~ maingroup)
+aov.lex.fw.tidy <- tidy(aov.lex.fw)
+
+# Gaze Behavior ANOVA. Outcome: FaceChest. Factors: MainGroup, Direction
+aov.gaze.fw <- aov(data=data.aov.fw, percent ~ maingroup)
+aov.gaze.fw.tidy <- tidy(aov.gaze.fw)
+
+# Prettify
+aov.lex.fw.tidy <- aov.lex.fw.tidy %>%
+  select(term,statistic,p.value) %>%
+  mutate(statistic = round(statistic,3),
+         p.value = round(p.value,3)) %>%
+  rename(F.acc = statistic,
+         P.acc = p.value)
+
+aov.gaze.fw.tidy <- aov.gaze.fw.tidy %>%
+  select(term,statistic,p.value) %>%
+  mutate(statistic = round(statistic,3),
+         p.value = round(p.value,3)) %>%
+  rename(F.facechest = statistic,
+         P.facechest = p.value)
+
+left_join(aov.lex.fw.tidy,aov.gaze.fw.tidy,by="term") %>%
+  print()
+```
+
+    ##        term F.acc P.acc F.facechest P.facechest
+    ## 1 maingroup 1.763 0.155       1.695        0.17
+    ## 2 Residuals    NA    NA          NA          NA
+
+``` r
+#TukeyHSD(aov.lex.fw,'maingroup',conf.level = 0.95) 
+#TukeyHSD(aov.gaze.fw,'maingroup',conf.level = 0.95) 
+```
+
 Reversed ANOVA
 --------------
+
+There is no main effect of group on accuracy (p = 0.12). There is, however, a main effect of group on facechest ratio (p = 0.01). Posthocs tell us the effect is driven by a significant difference between DeafNative and HearingNovice (p = 0.01).
+
+``` r
+data.aov.rv <- data %>% filter(aoi=="facechest" & direction=="reversed")
+
+# Lex Recall ANOVA. Outcome: Acc. Factors: MainGroup, Direction
+aov.lex.rv <- aov(data=data.aov.rv, acc ~ maingroup)
+aov.lex.rv.tidy <- tidy(aov.lex.rv)
+
+# Gaze Behavior ANOVA. Outcome: FaceChest. Factors: MainGroup, Direction
+aov.gaze.rv <- aov(data=data.aov.rv, percent ~ maingroup)
+aov.gaze.rv.tidy <- tidy(aov.gaze.rv)
+
+# Prettify
+aov.lex.rv.tidy <- aov.lex.rv.tidy %>%
+  select(term,statistic,p.value) %>%
+  mutate(statistic = round(statistic,3),
+         p.value = round(p.value,3)) %>%
+  rename(F.acc = statistic,
+         P.acc = p.value)
+
+aov.gaze.rv.tidy <- aov.gaze.rv.tidy %>%
+  select(term,statistic,p.value) %>%
+  mutate(statistic = round(statistic,3),
+         p.value = round(p.value,3)) %>%
+  rename(F.facechest = statistic,
+         P.facechest = p.value)
+
+left_join(aov.lex.rv.tidy,aov.gaze.rv.tidy,by="term") %>%
+  print()
+```
+
+    ##        term F.acc P.acc F.facechest P.facechest
+    ## 1 maingroup  1.93 0.124       3.586       0.014
+    ## 2 Residuals    NA    NA          NA          NA
+
+``` r
+#TukeyHSD(aov.lex.rv,'maingroup',conf.level = 0.95) 
+#TukeyHSD(aov.gaze.rv,'maingroup',conf.level = 0.95) 
+```
+
+Summary of ANOVAs
+-----------------
+
+What have the ANOVAs told us? Let's make a table here, and graphs below. We are able to find significant effects of group on both accuracy and face-chest ratio in the all-ANOVA. However, most of our significant effects of group are driven by HearingNovice doing poorly on accuracy. So...the ANOVA story is that, really, Hearing Novices don't really know ASL well, and that's why they're doing poorly. There is no AoASL story there.
+
+``` r
+aov.summary <- tribble(~ANOVA, ~Accuracy, ~FaceChestRatio,
+        "All-MainGroup","Sig.","Sig.",
+        "All-Direction","Sig.","ns",
+        "All-Interactions","ns","ns",
+        "Forward-MainGroup","ns","ns",
+        "Reversed-MainGroup","ns","Sig.")
+aov.summary
+```
+
+    ## # A tibble: 5 x 3
+    ##                ANOVA Accuracy FaceChestRatio
+    ##                <chr>    <chr>          <chr>
+    ## 1      All-MainGroup     Sig.           Sig.
+    ## 2      All-Direction     Sig.             ns
+    ## 3   All-Interactions       ns             ns
+    ## 4  Forward-MainGroup       ns             ns
+    ## 5 Reversed-MainGroup       ns           Sig.
+
+``` r
+data.aov.chart <- data.aov.all %>%
+  select(participant,maingroup,direction,acc,percent) %>%
+  rename(facechest = percent) %>%
+  gather(metric,value,acc:facechest)
+
+ggplot(data.aov.chart,aes(x=maingroup,y=value,fill=direction)) +
+  geom_boxplot() + facet_wrap("metric") +
+  theme(axis.text.x=element_text(angle=45,hjust=1))
+```
+
+![](04resultsection_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-17-1.png)
 
 Other Notes from Rain
 =====================
@@ -825,3 +1020,5 @@ Here is an example of what I had noted to myself previously, which is not curren
 -   Also, looking at the mouth for reversed stimuli was significantly correlated with years signing (r = 0.38), this means the longer one signed, the more (in terms of % looking) one looked at the mouth.
 
 Then, maybe we can have a section called “Hearing Status” and in this paragraph say what happens when we compare hearing and deaf, using the same range of AoA, excluding hearing Novice. Or maybe separate regressions for hearing and deaf groups, looking at AoA, AOI’s, and lexical recall, to examine the relationship between the three. I don't know.
+
+Do you find that NATIVE signers pretty much look at the same place for forward and reversed but that the novice signers show greater dispersion of gaze points for reversed than forward (like more on the chest, by way of lower face looking percent)? Because I always thought that experts are already using their efficient gaze pattern, nothing throws this off…. But novice are easily “thrown off”, gaze-wise. They have very little tolerance of phonetic variation. So they might get really good at understanding their own ASL teacher, and then give them a new variant of a signer, they start to look at the signers’ hands maybe. The same thing happens for the reversed stories, maybe.
