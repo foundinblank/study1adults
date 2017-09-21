@@ -1,7 +1,7 @@
 Results Section (study1adults)
 ================
 Adam Stone, PhD
-09-20-2017
+09-21-2017
 
 -   [Refreshing Ourselves](#refreshing-ourselves)
 -   [Participant Characteristics](#participant-characteristics)
@@ -83,6 +83,10 @@ data <- data %>%
   mutate(aoi = as.factor(aoi))
 
 dataoriginal <- data # Save item-level data just in case
+
+# Take out HearingNoviceASL
+# data <- data %>%
+#   filter(maingroup!="HearingNoviceASL")
 
 # Load awesome function to make correlation tables with stars for significance
 # From: https://myowelt.blogspot.co.uk/2008/04/beautiful-correlation-tables-in-r.html
@@ -1043,6 +1047,12 @@ ggplot(accdiff,aes(x=maingroup,y=diff,fill=direction)) + geom_boxplot() + ylab("
 
 Other Notes from Rain
 =====================
+
+It would be nice to include all lexical data in an ANOVA just to confirm that reversal DOES have an effect on comprehension (it does) and confirm that AoA also has an effect on comprehension, which is to be expected, right? This just backs up what every one else has found – that the later you learn the worse you do.
+
+So maybe think of it as first confirming that we KNOW lexical recall is impacted. That is confirmed with ANOVA. Get that out of the way.
+
+Then, with that confirmed….. then (and only then) we are in a position to ask:\* What is the relationship between a) the range of intelligibility scores (accuracy) and gaze…. and b) between AoA and gaze. And you can even load all these factors in together to find the unique variance. \* We know who performs well and who performs poorly…. do their gaze behaviors differ?
 
 1.  If you do LLM or ANCOVA, do so with AoA, and without subject group or hearing status. I would set aside any stats you did with both Hearing Status and AoA, I don't think you can do that.
 
