@@ -1,7 +1,7 @@
 Lexical Recall Analysis (study1adults)
 ================
 Adam Stone, PhD
-09-20-2017
+09-22-2017
 
 -   [Re-Initializing](#re-initializing)
 -   [ANOVAS](#anovas)

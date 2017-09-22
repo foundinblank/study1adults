@@ -1,7 +1,7 @@
 Data Import & Cleaning (study1adults)
 ================
 Adam Stone, PhD
-09-20-2017
+09-22-2017
 
 -   [Importing and Reshaping Data](#importing-and-reshaping-data)
 -   [Participant Demographics](#participant-demographics)

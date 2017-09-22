@@ -1,7 +1,7 @@
 Results Section (study1adults)
 ================
 Adam Stone, PhD
-09-21-2017
+09-22-2017
 
 -   [Refreshing Ourselves](#refreshing-ourselves)
 -   [Participant Characteristics](#participant-characteristics)
@@ -757,11 +757,11 @@ corstarsl(data.fw)
     ## signyrs      0.28  -0.80***                                            
     ## selfrate   0.46**  -0.53***  0.71***                                   
     ## age         0.34*   -0.35*   0.84***  0.63***                          
-    ## eyes        -0.22     0.16    -0.15    -0.12   -0.07                   
+    ## eyes        -0.22     0.16    -0.15    -0.12   -0.08                   
     ## mouth        0.19    -0.14     0.25     0.10    0.24  -0.61***         
-    ## chin         0.05    -0.14    -0.01     0.13   -0.13  -0.38**  -0.45** 
-    ## face         0.12    -0.25   0.38**     0.27   0.36*    -0.14   0.49***
-    ## chest       -0.03     0.16   -0.30*   -0.30*  -0.33*    -0.09   -0.31* 
+    ## chin         0.05    -0.14    -0.01     0.13   -0.13  -0.38**  -0.46** 
+    ## face         0.10    -0.25   0.38**    0.30*   0.35*    -0.09   0.46** 
+    ## chest       -0.03     0.16   -0.30*   -0.30*  -0.33*    -0.09   -0.32* 
     ## facechest    0.03    -0.17    0.31*    0.30*   0.33*     0.09    0.32* 
     ##             chin     face    chest
     ## acc                               
@@ -772,9 +772,9 @@ corstarsl(data.fw)
     ## eyes                              
     ## mouth                             
     ## chin                              
-    ## face      -0.16                   
-    ## chest      0.27  -0.88***         
-    ## facechest -0.27   0.88*** -1.00***
+    ## face      -0.19                   
+    ## chest      0.27  -0.93***         
+    ## facechest -0.27   0.94*** -1.00***
 
 Reversed Correlations
 ---------------------
@@ -887,8 +887,8 @@ left_join(aov.lex.all.tidy,aov.gaze.all.tidy,by="term") %>%
 
     ##                  term  F.acc P.acc F.facechest P.facechest
     ## 1           maingroup  3.565 0.010       5.136       0.001
-    ## 2           direction 61.539 0.000       2.220       0.140
-    ## 3 maingroup:direction  1.186 0.323       0.683       0.606
+    ## 2           direction 61.539 0.000       2.225       0.140
+    ## 3 maingroup:direction  1.186 0.323       0.683       0.605
     ## 4           Residuals     NA    NA          NA          NA
 
 ``` r
@@ -932,7 +932,7 @@ left_join(aov.lex.fw.tidy,aov.gaze.fw.tidy,by="term") %>%
 ```
 
     ##        term F.acc P.acc F.facechest P.facechest
-    ## 1 maingroup 1.956 0.119       1.695        0.17
+    ## 1 maingroup 1.956 0.119       1.696       0.169
     ## 2 Residuals    NA    NA          NA          NA
 
 ``` r

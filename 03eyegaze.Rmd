@@ -208,14 +208,12 @@ But we should also look at histograms of percentage data. Those should have more
 ggplot(data2,aes(x=percent)) +
   geom_histogram() +
   facet_grid(aoi ~ story) +
-  xlab("secs") +
-  ggtitle("Looking times of each AOI for each participant for each story")
+  xlab("percent") +
+  ggtitle("Looking percentages of each AOI for each participant for each story - or index for FaceChest")
 ```
 
-### Problem people are Allison, SaraG, and ChrissyK for the reasons below:
+### Problem people are Sara G for the reasons below:
 * **Sara G. What is happening...her story sums are still over the limit (one story has 41 s, and no story is more than 37 s). There isn't another Sara G recording hiding somewhere or maybe her scenes are wrong? I'm attaching what I have for her, and from the histograms it's her forehead in Cinderella and eyes in King Midas that seem way out of the ordinary (I highlighted both cells in yellow). **
-* **ChrissyK (yes, K) doesn't show any eye or forehead AOI data for any of her 4 stories. (no other participant fails to provide eye AOI data, although several have very low, <1 s eye AOI data). Is it possible her calibration is shifted a little?**
-* **Allison's data for King Midas (2nd FW story) is strange, she has 33% looking for the right-side AOI. Nobody else even gets to 10%. Double-check?**
 
 
 # Big Five AOIs
