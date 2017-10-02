@@ -85,7 +85,7 @@ And I can get x or y plots of one participant across 4 stories. Let's do Adam (m
 
 ``` r
 adam <- filter(rawdata,participant=="Adam") %>% mutate(y = y*-1)
-ggplot(adam,aes(x=x,y=y,color=media)) + geom_point() + geom_path() + facet_wrap("media",ncol=2,nrow=2) + guides(color="none") + scale_x_continuous(limit=c(0,1600)) + scale_y_continuous(limit=c(-1200,0))
+ggplot(adam,aes(x=x,y=y,color=media)) + geom_point(size=0.1) + geom_path() + facet_wrap("media",ncol=2,nrow=2) + guides(color="none") + scale_x_continuous(limit=c(0,1600)) + scale_y_continuous(limit=c(-1200,0))
 ```
 
     ## Warning: Removed 643 rows containing missing values (geom_point).
@@ -96,7 +96,7 @@ Let's try this again but let the x and y limits match the data. That will "zoom"
 
 ``` r
 adam <- filter(adam,x<800)
-ggplot(adam,aes(x=x,y=y,color=media)) + geom_point() + geom_path() + facet_wrap("media",ncol=2,nrow=2) + guides(color="none") 
+ggplot(adam,aes(x=x,y=y,color=media)) + geom_point(size=0.1) + geom_path() + facet_wrap("media",ncol=2,nrow=2) + guides(color="none") 
 ```
 
 ![](05viewingspace_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-4-1.png)
