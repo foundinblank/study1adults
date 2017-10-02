@@ -81,15 +81,22 @@ means
     ## 10 Alicia Deaf  redridinghood_forward 700.9295 405.4189
     ## # ... with 261 more rows
 
-And I can get x or y plots of one participant across 4 stories. Let's do Adam (me?).
+And I can get x or y plots of one participant across 4 stories. Let's do Adam (me?). We'll set the x and y limits to the whole width of the Tobii monitor (1600x1200). But because Tobii considers (0,0) to be the upper left corner (and not the bottom left corner), we also need to flip the y axis.
 
 ``` r
-adam <- filter(rawdata,participant=="Adam")
-ggplot(adam,aes(x=x,y=y,color=media)) + geom_point() + geom_line() + facet_wrap("media",ncol=2,nrow=2) + guides(color="none")
+adam <- filter(rawdata,participant=="Adam") %>% mutate(y = y*-1)
+ggplot(adam,aes(x=x,y=y,color=media)) + geom_point() + geom_path() + facet_wrap("media",ncol=2,nrow=2) + guides(color="none") + scale_x_continuous(limit=c(0,1600)) + scale_y_continuous(limit=c(-1200,0))
 ```
 
     ## Warning: Removed 643 rows containing missing values (geom_point).
 
-    ## Warning: Removed 643 rows containing missing values (geom_path).
+![](05viewingspace_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-3-1.png) Cool, yeah?
 
-![](05viewingspace_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-3-1.png)
+Let's try this again but let the x and y limits match the data. That will "zoom" in. We'll also get rid of that weird right-side outlier in RRH. Neatooooo.
+
+``` r
+adam <- filter(adam,x<800)
+ggplot(adam,aes(x=x,y=y,color=media)) + geom_point() + geom_path() + facet_wrap("media",ncol=2,nrow=2) + guides(color="none") 
+```
+
+![](05viewingspace_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-4-1.png)
