@@ -287,7 +287,7 @@ ggplot(data.five, aes(x = maingroup, y = aoi)) +
   geom_tile(aes(fill=mean),color="lightgray",na.rm=TRUE) + 
 #  scale_fill_gradient(low = "lightblue",high = "steelblue") +
 #  scale_fill_distiller(type="div", palette = "RdYlBu") +
-  scale_fill_viridis(option = "inferno") +
+  scale_fill_viridis(option = "magma", direction=-1) +
   facet_wrap("direction") +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
@@ -297,7 +297,7 @@ Also of interest is how the FaceChest Index changes. And it shows us there's def
 data.indexonly <- data %>%
   filter(aoi == "facechest")
 ggplot(data.indexonly,aes(aoi,percent,fill=direction)) + 
-  geom_violin() +
+  geom_boxplot() +
   scale_y_continuous(limits=c(-1,1)) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
@@ -585,3 +585,16 @@ Here is an example of what I had noted to myself previously, which is not curren
 Then, maybe we can have a section called “Hearing Status” and in this paragraph say what happens when we compare hearing and deaf, using the same range of AoA, excluding hearing Novice.    Or maybe separate regressions for hearing and deaf groups, looking at AoA, AOI’s, and lexical recall, to examine the relationship between the three.    I don't know.
 
 Do you find that NATIVE signers pretty much look at the same place for forward and reversed but that the novice signers show greater dispersion of gaze points for reversed than forward (like more on the chest, by way of lower face looking percent)? Because I always thought that experts are already using their efficient gaze pattern, nothing throws this off…. But novice are easily “thrown off”, gaze-wise.  They have very little tolerance of phonetic variation.  So they might get really good at understanding their own ASL teacher, and then give them a new variant of a signer, they start to look at the signers’ hands maybe.  The same thing happens for the reversed stories, maybe.
+
+```{r}
+# Me trying to run models for eye behavior -> lexical accuracy
+datafc <- dataoriginal
+model <- lmer(acc ~ percent * direction + (direction|id), data = filter(datafc,aoi=="mouth" & maingroup!="NoviceASL"))
+model2 <- lm(acc ~ percent * direction, datafc) # datafc filtered to mouth AOI only
+summary(model)
+plot(model)
+library(ggfortify)
+autoplot(model2)
+autoplot(model2,which=1:6,data = datafc,colour='direction',label.size=3)
+```
+

@@ -103,6 +103,10 @@
 29,"DeAnna","Hearing","Group 2","Late","LateASL","HearingLateASL","fw3","Cinderella","forward",23,4.5,9,13,0.75,2.36,13.27,4.74,0.85,NA,NA,NA,NA,0.06,0.31,21.59
 29,"DeAnna","Hearing","Group 2","Late","LateASL","HearingLateASL","rv2","KingMidas","reversed",23,4.5,9,13,0.65,0.18,14.25,16.03,2.7,1.47,0.04,0.15,NA,1.54,0.21,36.57
 29,"DeAnna","Hearing","Group 2","Late","LateASL","HearingLateASL","rv4","Goldilocks","reversed",23,4.5,9,13,0.8,0.27,11.68,4.89,1.16,0.93,2.26,0.12,NA,NA,NA,21.31
+30,"Sara","Hearing","Group 1","Late","LateASL","HearingLateASL","fw1","Goldilocks","forward",29,4,15,14,0.9,0.61,1.12,0.5,0.02,NA,NA,NA,NA,0.29,0.02,2.56
+30,"Sara","Hearing","Group 1","Late","LateASL","HearingLateASL","fw3","KingMidas","forward",29,4,15,14,0.85,1.57,25.77,7.62,0.28,0.01,NA,NA,0.01,0.97,0.16,36.39
+30,"Sara","Hearing","Group 1","Late","LateASL","HearingLateASL","rv2","Cinderella","reversed",29,4,15,14,0.7,8.48,2.76,1.89,0.96,0.71,0.57,0.37,NA,0.12,1.32,17.18
+30,"Sara","Hearing","Group 1","Late","LateASL","HearingLateASL","rv4","RedRidingHood","reversed",29,4,15,14,0.85,0.58,11.99,4.5,0.25,0.15,NA,NA,NA,NA,NA,17.47
 31,"Jennifer","Hearing","Group 2","Late","LateASL","HearingLateASL","fw1","RedRidingHood","forward",32,5,17,15,0.75,NA,0.36,17.39,0.44,NA,NA,NA,NA,NA,NA,18.19
 31,"Jennifer","Hearing","Group 2","Late","LateASL","HearingLateASL","fw3","Cinderella","forward",32,5,17,15,1,NA,NA,4.63,0.1,NA,NA,NA,NA,NA,NA,4.73
 31,"Jennifer","Hearing","Group 2","Late","LateASL","HearingLateASL","rv2","KingMidas","reversed",32,5,17,15,0.65,NA,NA,34.54,2.01,NA,NA,NA,NA,NA,NA,36.55
@@ -183,3 +187,7 @@
 52,"Austin","Hearing","Group 2","Novice","NoviceASL","HearingNoviceASL","fw3","Cinderella","forward",19.75,4,2.75,17,0.9,NA,0.1,17.37,2.25,0.05,0.03,0.02,0.01,NA,NA,19.83
 52,"Austin","Hearing","Group 2","Novice","NoviceASL","HearingNoviceASL","rv2","KingMidas","reversed",19.75,4,2.75,17,0.7,NA,0.01,8.91,25.85,0.07,0.02,0.02,0.08,NA,NA,34.96
 52,"Austin","Hearing","Group 2","Novice","NoviceASL","HearingNoviceASL","rv4","Goldilocks","reversed",19.75,4,2.75,17,0.7,NA,0.36,15.5,3.82,0.02,0.02,NA,0.03,NA,NA,19.75
+53,"Matthew","Deaf","Group 2","Late","LateASL","DeafLateASL","fw1","RedRidingHood","forward",39,5,21,18,0.9,0.15,1.98,15.88,0.37,NA,NA,NA,NA,NA,NA,18.38
+53,"Matthew","Deaf","Group 2","Late","LateASL","DeafLateASL","fw3","Cinderella","forward",39,5,21,18,0.85,NA,2.95,19.01,0.04,NA,NA,NA,NA,NA,NA,22
+53,"Matthew","Deaf","Group 2","Late","LateASL","DeafLateASL","rv2","KingMidas","reversed",39,5,21,18,0.6,0.02,0.54,34.37,1.83,NA,NA,NA,NA,NA,NA,36.76
+53,"Matthew","Deaf","Group 2","Late","LateASL","DeafLateASL","rv4","Goldilocks","reversed",39,5,21,18,0.95,NA,3.1,17.88,0.47,NA,NA,NA,NA,NA,NA,21.45
