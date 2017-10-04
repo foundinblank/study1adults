@@ -1,7 +1,7 @@
 Results Section (study1adults)
 ================
 Adam Stone, PhD
-09-22-2017
+10-04-2017
 
 -   [Refreshing Ourselves](#refreshing-ourselves)
 -   [Participant Characteristics](#participant-characteristics)
@@ -301,13 +301,13 @@ DeafEarlyASL
 DeafLateASL
 </td>
 <td style="text-align:right;">
-6
+7
 </td>
 <td style="text-align:right;">
-37.2
+37.4
 </td>
 <td style="text-align:right;">
-6.6
+6.1
 </td>
 <td style="text-align:right;">
 5.0
@@ -316,16 +316,16 @@ DeafLateASL
 0.0
 </td>
 <td style="text-align:right;">
-23.7
+23.3
 </td>
 <td style="text-align:right;">
-6.2
+5.7
 </td>
 <td style="text-align:right;">
-12.8
+13.6
 </td>
 <td style="text-align:right;">
-1.7
+2.5
 </td>
 </tr>
 <tr>
@@ -333,28 +333,28 @@ DeafLateASL
 HearingLateASL
 </td>
 <td style="text-align:right;">
-11
+12
 </td>
 <td style="text-align:right;">
 28.9
 </td>
 <td style="text-align:right;">
-6.5
+6.2
 </td>
 <td style="text-align:right;">
-4.7
+4.6
 </td>
 <td style="text-align:right;">
 0.5
 </td>
 <td style="text-align:right;">
-11.5
+11.8
 </td>
 <td style="text-align:right;">
-5.0
+4.8
 </td>
 <td style="text-align:right;">
-17.5
+17.2
 </td>
 <td style="text-align:right;">
 3.4
@@ -501,7 +501,7 @@ DeafEarlyASL
 DeafLateASL
 </td>
 <td style="text-align:right;">
-6
+7
 </td>
 <td style="text-align:right;">
 0.87
@@ -510,7 +510,7 @@ DeafLateASL
 0.07
 </td>
 <td style="text-align:right;">
-0.71
+0.72
 </td>
 <td style="text-align:right;">
 0.04
@@ -521,16 +521,16 @@ DeafLateASL
 HearingLateASL
 </td>
 <td style="text-align:right;">
-11
+12
 </td>
 <td style="text-align:right;">
 0.87
 </td>
 <td style="text-align:right;">
-0.08
+0.07
 </td>
 <td style="text-align:right;">
-0.68
+0.69
 </td>
 <td style="text-align:right;">
 0.09
@@ -604,7 +604,7 @@ ggplot(data.aoionly,aes(aoi,percent,fill=direction)) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 
-    ## Warning: Removed 311 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 326 rows containing non-finite values (stat_boxplot).
 
 ![](04resultsection_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-6-1.png)
 
@@ -638,7 +638,7 @@ ggplot(data.five, aes(x = maingroup, y = aoi)) +
   geom_tile(aes(fill=mean),color="lightgray",na.rm=TRUE) + 
 #  scale_fill_gradient(low = "lightblue",high = "steelblue") +
 #  scale_fill_distiller(type="div", palette = "RdYlBu") +
-  scale_fill_viridis(option = "inferno") +
+  scale_fill_viridis(option = "magma", direction=-1) +
   facet_wrap("direction") +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
@@ -651,7 +651,7 @@ Also of interest is how the FaceChest Index changes. And it shows us there's def
 data.indexonly <- data %>%
   filter(aoi == "facechest")
 ggplot(data.indexonly,aes(aoi,percent,fill=direction)) + 
-  geom_violin() +
+  geom_boxplot() +
   scale_y_continuous(limits=c(-1,1)) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
@@ -701,12 +701,12 @@ corstarsl(data.acc) # Use the awesome function!
 
     ##                 aoasl  signyrs selfrate     age acc.forward acc.reversed
     ## aoasl                                                                   
-    ## signyrs      -0.80***                                                   
-    ## selfrate     -0.53***  0.71***                                          
-    ## age           -0.35*   0.84***  0.63***                                 
-    ## acc.forward    -0.09     0.28   0.46**   0.34*                          
-    ## acc.reversed  -0.35*    0.30*   0.40**    0.15       0.37*              
-    ## acc.effect      0.27    -0.07    -0.04    0.11      0.41**      -0.69***
+    ## signyrs      -0.79***                                                   
+    ## selfrate     -0.52***  0.71***                                          
+    ## age           -0.32*   0.84***  0.63***                                 
+    ## acc.forward    -0.08     0.28   0.45**   0.34*                          
+    ## acc.reversed  -0.32*    0.29*   0.40**    0.17      0.38**              
+    ## acc.effect      0.26    -0.07    -0.04    0.10      0.40**      -0.69***
 
 ``` r
 # Gather the AOIs we want
@@ -753,16 +753,16 @@ corstarsl(data.fw)
 
     ##                acc    aoasl  signyrs selfrate     age     eyes    mouth
     ## acc                                                                    
-    ## aoasl       -0.09                                                      
-    ## signyrs      0.28  -0.80***                                            
-    ## selfrate   0.46**  -0.53***  0.71***                                   
-    ## age         0.34*   -0.35*   0.84***  0.63***                          
-    ## eyes        -0.22     0.16    -0.15    -0.12   -0.08                   
-    ## mouth        0.19    -0.14     0.25     0.10    0.24  -0.61***         
-    ## chin         0.05    -0.14    -0.01     0.13   -0.13  -0.38**  -0.46** 
-    ## face         0.10    -0.25   0.38**    0.30*   0.35*    -0.09   0.46** 
-    ## chest       -0.03     0.16   -0.30*   -0.30*  -0.33*    -0.09   -0.32* 
-    ## facechest    0.03    -0.17    0.31*    0.30*   0.33*     0.09    0.32* 
+    ## aoasl       -0.08                                                      
+    ## signyrs      0.28  -0.79***                                            
+    ## selfrate   0.45**  -0.52***  0.71***                                   
+    ## age         0.34*   -0.32*   0.84***  0.63***                          
+    ## eyes        -0.19     0.16    -0.16    -0.14   -0.08                   
+    ## mouth        0.17    -0.13     0.26     0.13    0.25  -0.64***         
+    ## chin         0.03    -0.15    -0.01     0.12   -0.14  -0.38**  -0.42** 
+    ## face         0.10    -0.24   0.38**    0.31*   0.36*    -0.12   0.47***
+    ## chest       -0.04     0.15   -0.30*   -0.30*  -0.34*    -0.10   -0.29* 
+    ## facechest    0.04    -0.15    0.30*    0.30*   0.34*     0.11    0.29* 
     ##             chin     face    chest
     ## acc                               
     ## aoasl                             
@@ -772,9 +772,9 @@ corstarsl(data.fw)
     ## eyes                              
     ## mouth                             
     ## chin                              
-    ## face      -0.19                   
-    ## chest      0.27  -0.93***         
-    ## facechest -0.27   0.94*** -1.00***
+    ## face      -0.18                   
+    ## chest      0.28  -0.92***         
+    ## facechest -0.28   0.93*** -1.00***
 
 Reversed Correlations
 ---------------------
@@ -795,28 +795,28 @@ corstarsl(data.rv)
 
     ##                acc    aoasl  signyrs selfrate      age     eyes    mouth
     ## acc                                                                     
-    ## aoasl      -0.35*                                                       
-    ## signyrs     0.30*  -0.80***                                             
-    ## selfrate   0.40**  -0.53***  0.71***                                    
-    ## age          0.15   -0.35*   0.84***  0.63***                           
-    ## eyes        -0.15     0.12    -0.01     0.06     0.11                   
-    ## mouth        0.16    -0.16     0.28     0.12     0.27  -0.63***         
-    ## chin         0.04    -0.06    -0.14    -0.07    -0.26  -0.47**  -0.44** 
-    ## face         0.27   -0.30*   0.40**     0.28    0.35*    -0.14   0.58***
-    ## chest       -0.20    0.33*  -0.44**  -0.41**  -0.38**    -0.17   -0.36* 
-    ## facechest    0.22   -0.34*   0.44**   0.40**    0.38*     0.15    0.37* 
-    ##             chin     face    chest
-    ## acc                               
-    ## aoasl                             
-    ## signyrs                           
-    ## selfrate                          
-    ## age                               
-    ## eyes                              
-    ## mouth                             
-    ## chin                              
-    ## face      -0.13                   
-    ## chest      0.29  -0.79***         
-    ## facechest -0.28   0.81*** -1.00***
+    ## aoasl      -0.32*                                                       
+    ## signyrs     0.29*  -0.79***                                             
+    ## selfrate   0.40**  -0.51***  0.71***                                    
+    ## age          0.17   -0.32*   0.83***  0.63***                           
+    ## eyes        -0.14     0.11    -0.01     0.04     0.09                   
+    ## mouth        0.15    -0.14     0.28     0.14     0.29  -0.64***         
+    ## chin         0.02    -0.07    -0.13    -0.07    -0.27  -0.46**  -0.42** 
+    ## face         0.21    -0.28   0.38**    0.30*    0.34*    -0.19   0.61***
+    ## chest       -0.20    0.32*  -0.44**  -0.42**  -0.39**    -0.16   -0.37* 
+    ## facechest    0.21   -0.33*   0.44**   0.41**   0.38**     0.13   0.40** 
+    ##              chin     face    chest
+    ## acc                                
+    ## aoasl                              
+    ## signyrs                            
+    ## selfrate                           
+    ## age                                
+    ## eyes                               
+    ## mouth                              
+    ## chin                               
+    ## face       -0.09                   
+    ## chest      0.29*  -0.73***         
+    ## facechest  -0.27   0.79*** -0.99***
 
 Summary
 -------
@@ -886,9 +886,9 @@ left_join(aov.lex.all.tidy,aov.gaze.all.tidy,by="term") %>%
 ```
 
     ##                  term  F.acc P.acc F.facechest P.facechest
-    ## 1           maingroup  3.565 0.010       5.136       0.001
-    ## 2           direction 61.539 0.000       2.225       0.140
-    ## 3 maingroup:direction  1.186 0.323       0.683       0.605
+    ## 1           maingroup  3.872 0.006       5.379       0.001
+    ## 2           direction 64.384 0.000       2.817       0.097
+    ## 3 maingroup:direction  1.125 0.350       0.740       0.568
     ## 4           Residuals     NA    NA          NA          NA
 
 ``` r
@@ -932,7 +932,7 @@ left_join(aov.lex.fw.tidy,aov.gaze.fw.tidy,by="term") %>%
 ```
 
     ##        term F.acc P.acc F.facechest P.facechest
-    ## 1 maingroup 1.956 0.119       1.696       0.169
+    ## 1 maingroup  2.16  0.09       1.852       0.136
     ## 2 Residuals    NA    NA          NA          NA
 
 ``` r
@@ -976,7 +976,7 @@ left_join(aov.lex.rv.tidy,aov.gaze.rv.tidy,by="term") %>%
 ```
 
     ##        term F.acc P.acc F.facechest P.facechest
-    ## 1 maingroup   2.7 0.044       3.586       0.014
+    ## 1 maingroup 2.773 0.039       3.709       0.011
     ## 2 Residuals    NA    NA          NA          NA
 
 ``` r
@@ -1041,7 +1041,7 @@ accdiff$maingroup = factor(accdiff$maingroup,levels=c("DeafNative","DeafEarlyASL
 ggplot(accdiff,aes(x=maingroup,y=diff,fill=direction)) + geom_boxplot() + ylab("diff: 2nd rv story - 1st rv story")
 ```
 
-    ## Warning: Removed 15 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 16 rows containing non-finite values (stat_boxplot).
 
 ![](04resultsection_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-18-1.png)
 
@@ -1066,3 +1066,83 @@ Here is an example of what I had noted to myself previously, which is not curren
 Then, maybe we can have a section called “Hearing Status” and in this paragraph say what happens when we compare hearing and deaf, using the same range of AoA, excluding hearing Novice. Or maybe separate regressions for hearing and deaf groups, looking at AoA, AOI’s, and lexical recall, to examine the relationship between the three. I don't know.
 
 Do you find that NATIVE signers pretty much look at the same place for forward and reversed but that the novice signers show greater dispersion of gaze points for reversed than forward (like more on the chest, by way of lower face looking percent)? Because I always thought that experts are already using their efficient gaze pattern, nothing throws this off…. But novice are easily “thrown off”, gaze-wise. They have very little tolerance of phonetic variation. So they might get really good at understanding their own ASL teacher, and then give them a new variant of a signer, they start to look at the signers’ hands maybe. The same thing happens for the reversed stories, maybe.
+
+``` r
+# Me trying to run models for eye behavior -> lexical accuracy
+datafc <- dataoriginal
+model <- lmer(acc ~ percent * signyrs + (1|id) + (1|story), data = filter(datafc,aoi=="mouth" & direction=="forward"))
+summary(model)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: acc ~ percent * signyrs + (1 | id) + (1 | story)
+    ##    Data: filter(datafc, aoi == "mouth" & direction == "forward")
+    ## 
+    ## REML criterion at convergence: -154.3
+    ## 
+    ## Scaled residuals: 
+    ##      Min       1Q   Median       3Q      Max 
+    ## -1.66945 -0.56054 -0.07572  0.60179  1.53674 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.004825 0.06946 
+    ##  story    (Intercept) 0.001259 0.03549 
+    ##  Residual             0.003569 0.05974 
+    ## Number of obs: 89, groups:  id, 48; story, 4
+    ## 
+    ## Fixed effects:
+    ##                  Estimate Std. Error        df t value Pr(>|t|)    
+    ## (Intercept)      0.873182   0.048300 54.870000  18.078   <2e-16 ***
+    ## percent         -0.114207   0.065749 82.670000  -1.737   0.0861 .  
+    ## signyrs         -0.002512   0.002348 83.140000  -1.070   0.2877    
+    ## percent:signyrs  0.006484   0.003159 78.910000   2.052   0.0435 *  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) percnt sgnyrs
+    ## percent     -0.823              
+    ## signyrs     -0.746  0.696       
+    ## prcnt:sgnyr  0.705 -0.811 -0.918
+
+``` r
+model <- lmer(percent ~ direction + (1|id), data = filter(datafc,aoi=="mouth"))
+summary(model) 
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: percent ~ direction + (1 | id)
+    ##    Data: filter(datafc, aoi == "mouth")
+    ## 
+    ## REML criterion at convergence: -7.1
+    ## 
+    ## Scaled residuals: 
+    ##      Min       1Q   Median       3Q      Max 
+    ## -2.63522 -0.49785  0.09266  0.60598  2.34197 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.05078  0.2254  
+    ##  Residual             0.03213  0.1793  
+    ## Number of obs: 179, groups:  id, 48
+    ## 
+    ## Fixed effects:
+    ##                    Estimate Std. Error        df t value Pr(>|t|)    
+    ## (Intercept)         0.63741    0.03764  60.48000  16.934  < 2e-16 ***
+    ## directionreversed  -0.09606    0.02702 131.06000  -3.555 0.000526 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr)
+    ## dirctnrvrsd -0.350
+
+``` r
+# plot(model)
+# library(ggfortify)
+# autoplot(model2)
+# autoplot(model2,which=1:6,data = datafc,colour='direction',label.size=3)
+```
