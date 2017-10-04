@@ -203,12 +203,12 @@ iqr.global <- iqr.global %>% left_join(medians, by="direction") %>%
          ymax = y+(yIQR/2))
 
 img <- readPNG("cindy.png")
-g <- rasterGrob(img, interpolate=TRUE) 
+g <- rasterGrob(img, interpolate=TRUE, width=unit(1,"npc"), height=unit(1,"npc")) 
 
 ggplot(iqr.global, aes(fill=direction,color=direction)) +
   annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
   geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
-  theme_minimal() + xlim(0,1440) + ylim(-1080,0)
+  theme_classic() + xlim(0,1440) + ylim(-1080,0)
 
 ```
 
@@ -216,8 +216,13 @@ Yayyy! It worked! A bit hard to see! Let's zoom in.
 
 
 ```{r}
+# ggplot(iqr.global, aes(fill=direction,color=direction)) +
+#   annotation_custom(g, xmin=0, xmax=1440, ymin=-1080, ymax=0) +
+#   geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
+#   theme_minimal() + xlim(600,800) + ylim(-500,-300)
+
 ggplot(iqr.global, aes(fill=direction,color=direction)) +
   geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
-  theme_minimal()
+  theme_minimal() + xlim(677,743) + ylim(-420,-370)
 ```
 I have to figure out how to get Cindy to zoom in - or crop a zoomed in version of Cindy manually and use that.
