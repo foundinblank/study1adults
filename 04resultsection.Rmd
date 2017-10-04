@@ -589,12 +589,14 @@ Do you find that NATIVE signers pretty much look at the same place for forward a
 ```{r}
 # Me trying to run models for eye behavior -> lexical accuracy
 datafc <- dataoriginal
-model <- lmer(acc ~ percent * direction + (direction|id), data = filter(datafc,aoi=="mouth" & maingroup!="NoviceASL"))
-model2 <- lm(acc ~ percent * direction, datafc) # datafc filtered to mouth AOI only
+model <- lmer(acc ~ percent * signyrs + (1|id) + (1|story), data = filter(datafc,aoi=="mouth" & direction=="forward"))
 summary(model)
-plot(model)
-library(ggfortify)
-autoplot(model2)
-autoplot(model2,which=1:6,data = datafc,colour='direction',label.size=3)
+
+model <- lmer(percent ~ direction + (1|id), data = filter(datafc,aoi=="mouth"))
+summary(model) 
+# plot(model)
+# library(ggfortify)
+# autoplot(model2)
+# autoplot(model2,which=1:6,data = datafc,colour='direction',label.size=3)
 ```
 

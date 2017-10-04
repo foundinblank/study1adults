@@ -22,6 +22,10 @@ We'll load the raw data from all 8 .xls files. Each file shows the participant's
 # Import packages we'll need.
 library(tidyverse)
 library(stringr)
+library(lme4)
+library(lmerTest)
+library(png)
+library(grid)
 
 # Gather up the files
 files <- list.files(pattern = "\\.csv",path="rawdata")
@@ -37,9 +41,10 @@ rawdata <- rawdata %>%
          language = "[Language]Value",
          media = MediaName,
          x = "GazePointX (MCSpx)",
-         y = "GazePointY (MCSpx)") %>%
-  select(participant,group,language,media,x,y) %>%
-  add_column(story=NA,direction=NA) %>%
+         y = "GazePointY (MCSpx)",
+         gazeindex = GazePointIndex) %>%
+  select(participant,group,language,media,x,y,gazeindex) %>%
+  add_column(story=NA,direction=NA,maingroup=NA) %>%
   mutate(story = case_when(
     str_detect(media,"bears") ~ "bears",
     str_detect(media,"cinderella") ~ "cinderella",   
@@ -48,18 +53,34 @@ rawdata <- rawdata %>%
   mutate(direction = case_when(
     str_detect(media,"FW") ~ "forward",
     str_detect(media,"ER") ~ "reversed")) %>%
-  mutate(media = str_c(story,direction, sep="_"))
+  mutate(media = str_c(story,direction, sep="_")) %>%
+  mutate(language = case_when(
+    str_detect(language,"EarlyASL") ~ "Early",
+    str_detect(language,"LateASL") ~ "Late",
+    str_detect(language,"NoviceASL_Trained") ~ "Trained",
+    str_detect(language,"NoviceASL") ~ "Novice")) %>%
+  mutate(maingroup = str_c(group,language, sep="")) %>%
+  filter(!is.na(maingroup))
 glimpse(rawdata)
 ```
 
-Now that it's in the right format...it's ridiculously easy to get what we need. For example, here's the mean x and y coordinate for each story for each participant. 
+Now that it's in the right format...it's easy to get what we need! :-D 
+
+# Analysis
+
+First, let's trim each participant's data, getting rid of the first 30 samples (0.5 secs). Then we'll get the the mean x and y coordinate for each story for each participant.
 
 ```{r}
+rawdata <- rawdata %>%
+  arrange(participant,media,gazeindex) %>%
+  group_by(participant,media) %>%
+  slice(30:n())
+
 means <- rawdata %>%
   group_by(participant,media) %>%
   dplyr::summarize(x = mean(x,na.rm=TRUE),
             y = mean(y,na.rm=TRUE))
-means
+head(means,10)
 ```
 
 And I can get x or y plots of one participant across 4 stories. Let's do Adam (me?). We'll set the x and y limits to the whole width of the Tobii monitor (1600x1200). But because Tobii considers (0,0) to be the upper left corner (and not the bottom left corner), we also need to flip the y axis. 
@@ -77,3 +98,126 @@ adam <- filter(adam,x<800)
 ggplot(adam,aes(x=x,y=y,color=media)) + geom_point(size=0.1) + geom_path() + facet_wrap("media",ncol=2,nrow=2) + guides(color="none") 
 ```
 
+# IQR 
+Now let's get the middle 50% (aka the IQR) of x and y for each participant's story. That should also take care of further weird outliers. And we are defining "viewing space" as the IQR of the x and y axis. 
+
+```{r}
+iqr <- rawdata %>%
+  group_by(participant,media) %>%
+  dplyr::summarize(xIQR = IQR(x,na.rm=TRUE),
+            yIQR = IQR(y,na.rm=TRUE))
+head(iqr,10)
+```
+
+And check out the histograms:
+
+```{r}
+iqr %>% 
+  gather(axis,iqr,xIQR:yIQR) %>%
+  ggplot(aes(x=iqr,fill=axis)) + geom_histogram() + facet_grid(axis~.)
+```
+
+There's one weird outlier for xIQR. That's Rebecca. Let's look at her data. 
+
+```{r}
+rebecca <- filter(rawdata,participant=="Rebecca") %>% mutate(y = y*-1)
+ggplot(rebecca,aes(x=x,y=y,color=media)) + geom_point(size=0.1) + geom_path() + facet_wrap("media",ncol=2,nrow=2) + guides(color="none") + xlim(0,1440) + ylim(-1080,0)
+```
+
+So we'll remove Rebecca's midas_forward story. Then we're ready to do stats based on group, direction, etc. 
+
+```{r}
+rbc <- tribble(~participant, ~media, "Rebecca","midas_forward")
+iqr <- iqr %>%
+  ungroup() %>%
+  anti_join(rbc, by=c("participant","media")) # for some reason filter wouldn't work
+
+subjectinfo <- rawdata %>%
+  select(participant,maingroup,group,language,media,story,direction) %>%
+  distinct() %>%
+  filter(!is.na(participant))
+
+iqr <- iqr %>%
+  left_join(subjectinfo,by=c("participant","media")) %>%
+  filter(!is.na(maingroup))
+
+iqr.gather <- iqr %>% gather(axis,iqr,xIQR:yIQR)
+
+ggplot(iqr.gather,aes(x=maingroup,y=iqr,fill=direction)) + 
+  geom_boxplot() + facet_grid(.~axis) +
+  theme(axis.text.x=element_text(angle=45,hjust=1))
+
+```
+
+First, does reversal have an effect on X IQR? We have random intercepts for each participant and media, and a random slope adjustment for reversed for each participant. 
+
+```{r}
+xiqr.reversal <- lmer(xIQR ~ direction + (direction|participant) + (1|media), data = iqr)
+summary(xiqr.reversal)$coefficients
+```
+ 
+Welp. No. Y IQR?
+```{r}
+yiqr.reversal <- lmer(yIQR ~ direction + (direction|participant) + (1|media), data = iqr)
+summary(yiqr.reversal)$coefficients
+```
+
+No effect here either. Let's try adding maingroups. X IQR first. 
+```{r}
+xiqr.group <- lmer(xIQR ~ direction * maingroup + (direction|participant) + (1|media), data = iqr)
+summary(xiqr.group)$coefficients
+```
+
+This means there is a significant difference of DeafEarly vs. HearingLate and HearingTrained on xIQR, but in the forward condition only. Basically, those two groups have a "wider" viewing space than other groups.
+
+```{r}
+yiqr.group <- lmer(yIQR ~ direction * maingroup + (direction|participant) + (1|media), data = iqr)
+summary(yiqr.group)$coefficients
+```
+No differences among groups or reversal effect for xIQR. Viewing space doesn't get significantly taller or shorter. 
+
+# Viewing Space Charts
+I want to learn how to make rectangle plots so here we go. Let's just get global medians (NOT averages) of the x and y IQRs, and the median x and y position, so I can get the logic and code down. Let's assume all calibrations were correct. Here's the chart for the whole media size of 1440x1080 (as reported in Tobii). 
+```{r}
+iqr.global <- iqr %>%
+  group_by(direction) %>%
+  dplyr::summarize(xIQR = median(xIQR,na.rm=TRUE),
+                   yIQR = median(yIQR,na.rm=TRUE))
+
+medians <- rawdata %>%
+  group_by(story,participant,direction) %>%
+  dplyr::summarize(x = median(x,na.rm=TRUE),
+            y = median(y,na.rm=TRUE)) %>%
+  group_by(participant,direction) %>%
+  dplyr::summarize(x = median(x,na.rm=TRUE),
+          y = median(y,na.rm=TRUE)) %>%
+  group_by(direction) %>%
+  dplyr::summarize(x = median(x,na.rm=TRUE),
+          y = median(y,na.rm=TRUE))
+
+iqr.global <- iqr.global %>% left_join(medians, by="direction") %>%
+  mutate(y = y*-1,
+         xmin = x-(xIQR/2),
+         xmax = x+(xIQR/2),
+         ymin = y-(yIQR/2),
+         ymax = y+(yIQR/2))
+
+img <- readPNG("cindy.png")
+g <- rasterGrob(img, interpolate=TRUE) 
+
+ggplot(iqr.global, aes(fill=direction,color=direction)) +
+  annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
+  geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
+  theme_minimal() + xlim(0,1440) + ylim(-1080,0)
+
+```
+
+Yayyy! It worked! A bit hard to see! Let's zoom in. 
+
+
+```{r}
+ggplot(iqr.global, aes(fill=direction,color=direction)) +
+  geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
+  theme_minimal()
+```
+I have to figure out how to get Cindy to zoom in - or crop a zoomed in version of Cindy manually and use that.
