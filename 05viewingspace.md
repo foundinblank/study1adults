@@ -1,12 +1,14 @@
 Viewing Space (study1adults)
 ================
 Adam Stone, PhD
-10-04-2017
+10-05-2017
 
 -   [Get Data](#get-data)
 -   [Analysis](#analysis)
 -   [IQR](#iqr)
 -   [Viewing Space Charts](#viewing-space-charts)
+-   [Viewing Space Charts for Individuals](#viewing-space-charts-for-individuals)
+-   [Standard Deviations?](#standard-deviations)
 
 Get Data
 ========
@@ -136,24 +138,26 @@ Now let's get the middle 50% (aka the IQR) of x and y for each participant's sto
 iqr <- rawdata %>%
   group_by(participant,media) %>%
   dplyr::summarize(xIQR = IQR(x,na.rm=TRUE),
-            yIQR = IQR(y,na.rm=TRUE))
+                   yIQR = IQR(y,na.rm=TRUE),
+                   xmed = median(x, na.rm=TRUE),
+                   ymed = median(y, na.rm=TRUE))
 head(iqr,10)
 ```
 
-    ## # A tibble: 10 x 4
+    ## # A tibble: 10 x 6
     ## # Groups:   participant [3]
-    ##    participant                  media  xIQR  yIQR
-    ##          <chr>                  <chr> <dbl> <dbl>
-    ##  1        Adam          bears_forward 20.00 32.00
-    ##  2        Adam    cinderella_reversed 34.00 33.00
-    ##  3        Adam          midas_forward 28.00 58.00
-    ##  4        Adam redridinghood_reversed 14.00 47.00
-    ##  5    alicia 2         bears_reversed 44.75 30.00
-    ##  6    alicia 2     cinderella_forward 37.00 44.00
-    ##  7    alicia 2         midas_reversed 46.00 45.00
-    ##  8    alicia 2  redridinghood_forward 28.00 33.75
-    ##  9 Alicia Deaf         midas_reversed 27.00 20.00
-    ## 10 Alicia Deaf  redridinghood_forward 23.00 35.00
+    ##    participant                  media  xIQR  yIQR  xmed  ymed
+    ##          <chr>                  <chr> <dbl> <dbl> <dbl> <dbl>
+    ##  1        Adam          bears_forward 20.00 32.00   685 388.0
+    ##  2        Adam    cinderella_reversed 34.00 33.00   693 376.0
+    ##  3        Adam          midas_forward 28.00 58.00   690 389.0
+    ##  4        Adam redridinghood_reversed 14.00 47.00   698 382.0
+    ##  5    alicia 2         bears_reversed 44.75 30.00   685 411.0
+    ##  6    alicia 2     cinderella_forward 37.00 44.00   699 415.0
+    ##  7    alicia 2         midas_reversed 46.00 45.00   684 385.0
+    ##  8    alicia 2  redridinghood_forward 28.00 33.75   692 348.5
+    ##  9 Alicia Deaf         midas_reversed 27.00 20.00   682 389.0
+    ## 10 Alicia Deaf  redridinghood_forward 23.00 35.00   704 395.0
 
 And check out the histograms:
 
@@ -182,7 +186,23 @@ ggplot(rebecca,aes(x=x,y=y,color=media)) + geom_point(size=0.1) + geom_path() + 
 
 ![](05viewingspace_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-1.png)
 
-So we'll remove Rebecca's midas\_forward story. Then we're ready to do stats based on group, direction, etc.
+So we'll remove Rebecca's midas\_forward story. Next, check the medians.
+
+``` r
+iqr %>% 
+  gather(axis,med,xmed:ymed) %>%
+  ggplot(aes(x=med,fill=axis)) + geom_histogram() + facet_grid(axis~.)
+```
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+    ## Warning: Removed 14 rows containing non-finite values (stat_bin).
+
+![](05viewingspace_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-8-1.png)
+
+Looks great! But it also looks pretty interesting doesn't it...Y median has a wider spread than X median. That would make sense.
+
+Now we're ready to do stats based on group, direction, etc.
 
 ``` r
 rbc <- tribble(~participant, ~media, "Rebecca","midas_forward")
@@ -199,16 +219,31 @@ iqr <- iqr %>%
   left_join(subjectinfo,by=c("participant","media")) %>%
   filter(!is.na(maingroup))
 
-iqr.gather <- iqr %>% gather(axis,iqr,xIQR:yIQR)
+iqr.gather <- iqr %>% gather(axis,value,xIQR:ymed)
+iqr.iqr <- filter(iqr.gather,axis=="xIQR" | axis=="yIQR")
+iqr.med <- filter(iqr.gather,axis=="xmed" | axis=="ymed")
 
-ggplot(iqr.gather,aes(x=maingroup,y=iqr,fill=direction)) + 
-  geom_boxplot() + facet_grid(.~axis) +
-  theme(axis.text.x=element_text(angle=45,hjust=1))
+
+ggplot(iqr.iqr,aes(x=maingroup,y=value,fill=direction)) + 
+  geom_boxplot() + theme(axis.text.x=element_text(angle=45,hjust=1)) +
+  facet_grid(.~axis)
 ```
 
     ## Warning: Removed 14 rows containing non-finite values (stat_boxplot).
 
-![](05viewingspace_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-8-1.png)
+![](05viewingspace_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-9-1.png)
+
+And the median x and y position (this assumes all calibrations are correct):
+
+``` r
+ggplot(iqr.med,aes(x=maingroup,y=value,fill=direction)) + 
+  geom_boxplot() + theme(axis.text.x=element_text(angle=45,hjust=1)) +
+  facet_grid(.~axis)
+```
+
+    ## Warning: Removed 14 rows containing non-finite values (stat_boxplot).
+
+![](05viewingspace_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-10-1.png)
 
 First, does reversal have an effect on X IQR? We have random intercepts for each participant and media, and a random slope adjustment for reversed for each participant.
 
@@ -305,26 +340,23 @@ No differences among groups or reversal effect for xIQR. Viewing space doesn't g
 Viewing Space Charts
 ====================
 
-I want to learn how to make rectangle plots so here we go. Let's just get global medians (NOT averages) of the x and y IQRs, and the median x and y position, so I can get the logic and code down. Let's assume all calibrations were correct. Here's the chart for the whole media size of 1440x1080 (as reported in Tobii).
+I want to learn how to make rectangle plots so here we go. Using each participant's four x and y medians and 4 x and y IQRs (one set for each story, for 4 stories). So I can get the logic and code down. Let's assume all calibrations were correct. Here's the chart for the whole media size of 1440x1080 (as reported in Tobii).
 
 ``` r
-iqr.global <- iqr %>%
-  group_by(direction) %>%
-  dplyr::summarize(xIQR = median(xIQR,na.rm=TRUE),
-                   yIQR = median(yIQR,na.rm=TRUE))
-
-medians <- rawdata %>%
-  group_by(story,participant,direction) %>%
-  dplyr::summarize(x = median(x,na.rm=TRUE),
-            y = median(y,na.rm=TRUE)) %>%
+# In this order, we'll get a grand median by taking a participant's median across their 4 stories, than the median for forward and reverse across all participants. 
+medians <- iqr %>%
   group_by(participant,direction) %>%
-  dplyr::summarize(x = median(x,na.rm=TRUE),
-          y = median(y,na.rm=TRUE)) %>%
-  group_by(direction) %>%
-  dplyr::summarize(x = median(x,na.rm=TRUE),
-          y = median(y,na.rm=TRUE))
+  dplyr::summarize(xIQR = median(xIQR,na.rm=TRUE),
+                   yIQR = median(yIQR,na.rm=TRUE),
+                   xmed = median(xmed,na.rm=TRUE),
+                   ymed = median(ymed,na.rm=TRUE)) %>%
+  group_by(direction) %>% 
+  dplyr::summarize(xIQR = median(xIQR,na.rm=TRUE),
+                   yIQR = median(yIQR,na.rm=TRUE),
+                   x = median(xmed,na.rm=TRUE),
+                   y = median(ymed,na.rm=TRUE))
 
-iqr.global <- iqr.global %>% left_join(medians, by="direction") %>%
+medians <- medians %>%
   mutate(y = y*-1,
          xmin = x-(xIQR/2),
          xmax = x+(xIQR/2),
@@ -334,13 +366,27 @@ iqr.global <- iqr.global %>% left_join(medians, by="direction") %>%
 img <- readPNG("cindy.png")
 g <- rasterGrob(img, interpolate=TRUE, width=unit(1,"npc"), height=unit(1,"npc")) 
 
-ggplot(iqr.global, aes(fill=direction,color=direction)) +
+ggplot(medians, aes(fill=direction,color=direction)) +
   annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
   geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
-  theme_classic() + xlim(0,1440) + ylim(-1080,0)
+  theme_minimal() + xlim(0,1440) + ylim(-1080,0)
 ```
 
-![](05viewingspace_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-13-1.png)
+![](05viewingspace_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-15-1.png)
+
+``` r
+# ggplot(iqr.global, aes(fill=direction,color=direction)) +
+#   annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
+#   geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
+#   theme_minimal() + xlim(0,1440) + ylim(-1080,0) +
+#   geom_hline(yintercept=-1080+885) +
+#   geom_hline(yintercept=-1080+525) + 
+#   annotate(geom="text", x = 300, y = -1080+555, label = "upper shoulder point") +
+#   annotate(geom="point", x = 535, y = -1080+525) + 
+#   annotate(geom="text", x = 535, y = -1080+910, label = "height line") + 
+#   annotate(geom="rect", xmin = 535, xmax = 535+365, ymin = -525-551, ymax = -1080+525, fill="maroon", color="black", alpha=0.5) + 
+#   annotate(geom="text", x = 700, y = -900, label = "torso")
+```
 
 Yayyy! It worked! A bit hard to see! Let's zoom in.
 
@@ -350,9 +396,78 @@ Yayyy! It worked! A bit hard to see! Let's zoom in.
 #   geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
 #   theme_minimal() + xlim(600,800) + ylim(-500,-300)
 
-ggplot(iqr.global, aes(fill=direction,color=direction)) +
+ggplot(medians, aes(fill=direction,color=direction)) +
   geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
-  theme_minimal() + xlim(677,743) + ylim(-420,-370)
+  theme_minimal() + xlim(677,743) + ylim(-421,-370)
 ```
 
-![](05viewingspace_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-14-1.png) I have to figure out how to get Cindy to zoom in - or crop a zoomed in version of Cindy manually and use that.
+![](05viewingspace_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-16-1.png)
+
+``` r
+#ggplot(iqr.global, aes(fill=direction,color=direction)) +
+#  geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1)
+```
+
+I have to figure out how to get Cindy to zoom in - or crop a zoomed in version of Cindy manually and use that.
+
+Viewing Space Charts for Individuals
+====================================
+
+Now let's see the variation in viewing spaces for all our individuals. Should be fun.
+
+``` r
+iqr.individuals <- iqr %>%
+  rename(x = xmed,
+         y = ymed) %>%
+  mutate(y = y*-1,
+         xmin = x-(xIQR/2),
+         xmax = x+(xIQR/2),
+         ymin = y-(yIQR/2),
+         ymax = y+(yIQR/2))
+
+ggplot(iqr.individuals, aes(fill=direction,color=direction)) +
+  annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
+  geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
+  theme_minimal() + xlim(0,1440) + ylim(-1080,0) + facet_wrap("direction") +
+  ggtitle("with IQRs")
+```
+
+    ## Warning: Removed 7 rows containing missing values (geom_rect).
+
+![](05viewingspace_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-17-1.png)
+
+Standard Deviations?
+====================
+
+Let's try using standard deviations instead.
+
+``` r
+sd <- rawdata %>%
+  group_by(participant,media) %>%
+  dplyr::summarize(xsd = sd(x,na.rm=TRUE),
+                   ysd = sd(y,na.rm=TRUE),
+                   xmean = mean(x, na.rm=TRUE),
+                   ymean = mean(y, na.rm=TRUE))
+
+sd.individuals <- sd %>%
+  rename(x = xmean,
+         y = ymean) %>%
+  mutate(y = y*-1,
+         xmin = x-xsd,
+         xmax = x+xsd,
+         ymin = y-ysd,
+         ymax = y+ysd) %>%
+  left_join(subjectinfo,by=c("participant","media")) %>%
+  filter(!is.na(maingroup))
+
+
+ggplot(sd.individuals, aes(fill=direction,color=direction)) +
+  annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
+  geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
+  theme_minimal() + xlim(0,1440) + ylim(-1080,0) + facet_wrap("direction") +
+  ggtitle("with SDs")
+```
+
+    ## Warning: Removed 7 rows containing missing values (geom_rect).
+
+![](05viewingspace_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-18-1.png)

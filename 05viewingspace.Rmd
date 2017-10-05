@@ -105,7 +105,9 @@ Now let's get the middle 50% (aka the IQR) of x and y for each participant's sto
 iqr <- rawdata %>%
   group_by(participant,media) %>%
   dplyr::summarize(xIQR = IQR(x,na.rm=TRUE),
-            yIQR = IQR(y,na.rm=TRUE))
+                   yIQR = IQR(y,na.rm=TRUE),
+                   xmed = median(x, na.rm=TRUE),
+                   ymed = median(y, na.rm=TRUE))
 head(iqr,10)
 ```
 
@@ -124,7 +126,18 @@ rebecca <- filter(rawdata,participant=="Rebecca") %>% mutate(y = y*-1)
 ggplot(rebecca,aes(x=x,y=y,color=media)) + geom_point(size=0.1) + geom_path() + facet_wrap("media",ncol=2,nrow=2) + guides(color="none") + xlim(0,1440) + ylim(-1080,0)
 ```
 
-So we'll remove Rebecca's midas_forward story. Then we're ready to do stats based on group, direction, etc. 
+So we'll remove Rebecca's midas_forward story. Next, check the medians.
+
+```{r}
+iqr %>% 
+  gather(axis,med,xmed:ymed) %>%
+  ggplot(aes(x=med,fill=axis)) + geom_histogram() + facet_grid(axis~.)
+
+```
+
+Looks great! But it also looks pretty interesting doesn't it...Y median has a wider spread than X median. That would make sense. 
+
+Now we're ready to do stats based on group, direction, etc. 
 
 ```{r}
 rbc <- tribble(~participant, ~media, "Rebecca","midas_forward")
@@ -141,13 +154,24 @@ iqr <- iqr %>%
   left_join(subjectinfo,by=c("participant","media")) %>%
   filter(!is.na(maingroup))
 
-iqr.gather <- iqr %>% gather(axis,iqr,xIQR:yIQR)
+iqr.gather <- iqr %>% gather(axis,value,xIQR:ymed)
+iqr.iqr <- filter(iqr.gather,axis=="xIQR" | axis=="yIQR")
+iqr.med <- filter(iqr.gather,axis=="xmed" | axis=="ymed")
 
-ggplot(iqr.gather,aes(x=maingroup,y=iqr,fill=direction)) + 
-  geom_boxplot() + facet_grid(.~axis) +
-  theme(axis.text.x=element_text(angle=45,hjust=1))
 
+ggplot(iqr.iqr,aes(x=maingroup,y=value,fill=direction)) + 
+  geom_boxplot() + theme(axis.text.x=element_text(angle=45,hjust=1)) +
+  facet_grid(.~axis)
 ```
+
+And the median x and y position (this assumes all calibrations are correct):
+
+```{r}
+ggplot(iqr.med,aes(x=maingroup,y=value,fill=direction)) + 
+  geom_boxplot() + theme(axis.text.x=element_text(angle=45,hjust=1)) +
+  facet_grid(.~axis)
+```
+
 
 First, does reversal have an effect on X IQR? We have random intercepts for each participant and media, and a random slope adjustment for reversed for each participant. 
 
@@ -177,25 +201,22 @@ summary(yiqr.group)$coefficients
 No differences among groups or reversal effect for xIQR. Viewing space doesn't get significantly taller or shorter. 
 
 # Viewing Space Charts
-I want to learn how to make rectangle plots so here we go. Let's just get global medians (NOT averages) of the x and y IQRs, and the median x and y position, so I can get the logic and code down. Let's assume all calibrations were correct. Here's the chart for the whole media size of 1440x1080 (as reported in Tobii). 
+I want to learn how to make rectangle plots so here we go. Using each participant's four x and y medians and 4 x and y IQRs (one set for each story, for 4 stories). So I can get the logic and code down. Let's assume all calibrations were correct. Here's the chart for the whole media size of 1440x1080 (as reported in Tobii). 
 ```{r}
-iqr.global <- iqr %>%
-  group_by(direction) %>%
-  dplyr::summarize(xIQR = median(xIQR,na.rm=TRUE),
-                   yIQR = median(yIQR,na.rm=TRUE))
-
-medians <- rawdata %>%
-  group_by(story,participant,direction) %>%
-  dplyr::summarize(x = median(x,na.rm=TRUE),
-            y = median(y,na.rm=TRUE)) %>%
+# In this order, we'll get a grand median by taking a participant's median across their 4 stories, than the median for forward and reverse across all participants. 
+medians <- iqr %>%
   group_by(participant,direction) %>%
-  dplyr::summarize(x = median(x,na.rm=TRUE),
-          y = median(y,na.rm=TRUE)) %>%
-  group_by(direction) %>%
-  dplyr::summarize(x = median(x,na.rm=TRUE),
-          y = median(y,na.rm=TRUE))
+  dplyr::summarize(xIQR = median(xIQR,na.rm=TRUE),
+                   yIQR = median(yIQR,na.rm=TRUE),
+                   xmed = median(xmed,na.rm=TRUE),
+                   ymed = median(ymed,na.rm=TRUE)) %>%
+  group_by(direction) %>% 
+  dplyr::summarize(xIQR = median(xIQR,na.rm=TRUE),
+                   yIQR = median(yIQR,na.rm=TRUE),
+                   x = median(xmed,na.rm=TRUE),
+                   y = median(ymed,na.rm=TRUE))
 
-iqr.global <- iqr.global %>% left_join(medians, by="direction") %>%
+medians <- medians %>%
   mutate(y = y*-1,
          xmin = x-(xIQR/2),
          xmax = x+(xIQR/2),
@@ -205,15 +226,27 @@ iqr.global <- iqr.global %>% left_join(medians, by="direction") %>%
 img <- readPNG("cindy.png")
 g <- rasterGrob(img, interpolate=TRUE, width=unit(1,"npc"), height=unit(1,"npc")) 
 
-ggplot(iqr.global, aes(fill=direction,color=direction)) +
+ggplot(medians, aes(fill=direction,color=direction)) +
   annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
   geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
-  theme_classic() + xlim(0,1440) + ylim(-1080,0)
+  theme_minimal() + xlim(0,1440) + ylim(-1080,0)
+
+
+# ggplot(iqr.global, aes(fill=direction,color=direction)) +
+#   annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
+#   geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
+#   theme_minimal() + xlim(0,1440) + ylim(-1080,0) +
+#   geom_hline(yintercept=-1080+885) +
+#   geom_hline(yintercept=-1080+525) + 
+#   annotate(geom="text", x = 300, y = -1080+555, label = "upper shoulder point") +
+#   annotate(geom="point", x = 535, y = -1080+525) + 
+#   annotate(geom="text", x = 535, y = -1080+910, label = "height line") + 
+#   annotate(geom="rect", xmin = 535, xmax = 535+365, ymin = -525-551, ymax = -1080+525, fill="maroon", color="black", alpha=0.5) + 
+#   annotate(geom="text", x = 700, y = -900, label = "torso")
 
 ```
 
 Yayyy! It worked! A bit hard to see! Let's zoom in. 
-
 
 ```{r}
 # ggplot(iqr.global, aes(fill=direction,color=direction)) +
@@ -221,8 +254,66 @@ Yayyy! It worked! A bit hard to see! Let's zoom in.
 #   geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
 #   theme_minimal() + xlim(600,800) + ylim(-500,-300)
 
-ggplot(iqr.global, aes(fill=direction,color=direction)) +
+ggplot(medians, aes(fill=direction,color=direction)) +
   geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
-  theme_minimal() + xlim(677,743) + ylim(-420,-370)
+  theme_minimal() + xlim(677,743) + ylim(-421,-370)
+
+#ggplot(iqr.global, aes(fill=direction,color=direction)) +
+#  geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1)
 ```
 I have to figure out how to get Cindy to zoom in - or crop a zoomed in version of Cindy manually and use that.
+
+# Viewing Space Charts for Individuals
+Now let's see the variation in viewing spaces for all our individuals. Should be fun.
+
+```{r fig.height=10, fig.width=26}
+iqr.individuals <- iqr %>%
+  rename(x = xmed,
+         y = ymed) %>%
+  mutate(y = y*-1,
+         xmin = x-(xIQR/2),
+         xmax = x+(xIQR/2),
+         ymin = y-(yIQR/2),
+         ymax = y+(yIQR/2))
+
+ggplot(iqr.individuals, aes(fill=direction,color=direction)) +
+  annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
+  geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
+  theme_minimal() + xlim(0,1440) + ylim(-1080,0) + facet_wrap("direction") +
+  ggtitle("with IQRs")
+```
+
+# Standard Deviations?
+
+Let's try using standard deviations instead.
+
+```{r fig.height=10, fig.width=26}
+sd <- rawdata %>%
+  group_by(participant,media) %>%
+  dplyr::summarize(xsd = sd(x,na.rm=TRUE),
+                   ysd = sd(y,na.rm=TRUE),
+                   xmean = mean(x, na.rm=TRUE),
+                   ymean = mean(y, na.rm=TRUE))
+
+sd.individuals <- sd %>%
+  rename(x = xmean,
+         y = ymean) %>%
+  mutate(y = y*-1,
+         xmin = x-xsd,
+         xmax = x+xsd,
+         ymin = y-ysd,
+         ymax = y+ysd) %>%
+  left_join(subjectinfo,by=c("participant","media")) %>%
+  filter(!is.na(maingroup))
+
+
+ggplot(sd.individuals, aes(fill=direction,color=direction)) +
+  annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
+  geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
+  theme_minimal() + xlim(0,1440) + ylim(-1080,0) + facet_wrap("direction") +
+  ggtitle("with SDs")
+
+
+```
+
+
