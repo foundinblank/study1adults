@@ -1,7 +1,7 @@
 Data Import & Cleaning (study1adults)
 ================
 Adam Stone, PhD
-09-22-2017
+10-06-2017
 
 -   [Importing and Reshaping Data](#importing-and-reshaping-data)
 -   [Participant Demographics](#participant-demographics)
@@ -12,7 +12,7 @@ Importing and Reshaping Data
 
 Here we're going to import the data, remove dropped participants, and reshape the data so story and direction are grouping variables (and the dataset will be more tall than wide). Let's see ALL of our data first (scroll horizontally).
 
-    ## # A tibble: 52 x 54
+    ## # A tibble: 57 x 54
     ##       id hearing videogroup aoagroup languagegroup    maingroup selfrate
     ##    <int>   <chr>      <chr>    <chr>         <chr>        <chr>    <dbl>
     ##  1     1    Deaf    Group 1    Early      EarlyASL DeafEarlyASL        5
@@ -25,7 +25,7 @@ Here we're going to import the data, remove dropped participants, and reshape th
     ##  8     8    Deaf    Group 2    Early      EarlyASL DeafEarlyASL        5
     ##  9     9    Deaf    Group 2    Early       LateASL  DeafLateASL        5
     ## 10    10    Deaf    Group 1    Early       LateASL  DeafLateASL        5
-    ## # ... with 42 more rows, and 47 more variables: age <dbl>, signyrs <dbl>,
+    ## # ... with 47 more rows, and 47 more variables: age <dbl>, signyrs <dbl>,
     ## #   aoasl <int>, acc.fw1 <dbl>, acc.rv2 <dbl>, acc.fw3 <dbl>,
     ## #   acc.rv4 <dbl>, forehead.fw1 <dbl>, forehead.fw3 <dbl>,
     ## #   forehead.rv2 <dbl>, forehead.rv4 <dbl>, eyes.fw1 <dbl>,
@@ -40,13 +40,13 @@ Here we're going to import the data, remove dropped participants, and reshape th
     ## #   left.fw3 <dbl>, left.rv2 <dbl>, left.rv4 <dbl>, right.fw1 <dbl>,
     ## #   right.fw3 <dbl>, right.rv2 <dbl>, right.rv4 <dbl>
 
-Remove dropped participants (they have no main group name, or no data, or are bad). I'm also removing Sara for now due to her weird data file. These are who we dropped.
+Remove dropped participants (they have no main group name, or no data, or are bad). These are who we dropped.
 
 ``` r
 # Removes those with no maingroup name
 nodata <- filter(data, is.na(maingroup)==TRUE) 
 # Removes those with no data
-manual <- filter(data,participant=="Lucinda" | participant=="Cathy" | participant=="Sara") 
+manual <- filter(data,participant=="Lucinda" | participant=="Cathy" | participant=="Elizabeth") 
 # Make table of all dropped participants
 dropped <- rbind(nodata,manual) %>% arrange(id)
 data <- data %>%
@@ -57,17 +57,17 @@ dropped
 ```
 
     ## # A tibble: 6 x 55
-    ##      id participant hearing videogroup aoagroup languagegroup
-    ##   <int>       <chr>   <chr>      <chr>    <chr>         <chr>
-    ## 1     8       Cathy    Deaf    Group 2    Early      EarlyASL
-    ## 2    23     Lucinda    Deaf    Group 2   Native        Native
-    ## 3    27       Megan Hearing    Group 2     Late      EarlyASL
-    ## 4    30        Sara Hearing    Group 1     Late       LateASL
-    ## 5    40      Dustin Hearing    Group 2   Native        Native
-    ## 6    41         Dan Hearing    Group 1   Native        Native
-    ## # ... with 49 more variables: maingroup <chr>, selfrate <dbl>, age <dbl>,
-    ## #   signyrs <dbl>, aoasl <int>, acc.fw1 <dbl>, acc.rv2 <dbl>,
-    ## #   acc.fw3 <dbl>, acc.rv4 <dbl>, forehead.fw1 <dbl>, forehead.fw3 <dbl>,
+    ##      id participant hearing videogroup aoagroup languagegroup    maingroup
+    ##   <int>       <chr>   <chr>      <chr>    <chr>         <chr>        <chr>
+    ## 1     8       Cathy    Deaf    Group 2    Early      EarlyASL DeafEarlyASL
+    ## 2    23     Lucinda    Deaf    Group 2   Native        Native   DeafNative
+    ## 3    27       Megan Hearing    Group 2     Late      EarlyASL         <NA>
+    ## 4    40      Dustin Hearing    Group 2   Native        Native         <NA>
+    ## 5    41         Dan Hearing    Group 1   Native        Native         <NA>
+    ## 6    53   Elizabeth    Deaf    Group 2     Late       LateASL  DeafLateASL
+    ## # ... with 48 more variables: selfrate <dbl>, age <dbl>, signyrs <dbl>,
+    ## #   aoasl <int>, acc.fw1 <dbl>, acc.rv2 <dbl>, acc.fw3 <dbl>,
+    ## #   acc.rv4 <dbl>, forehead.fw1 <dbl>, forehead.fw3 <dbl>,
     ## #   forehead.rv2 <dbl>, forehead.rv4 <dbl>, eyes.fw1 <dbl>,
     ## #   eyes.fw3 <dbl>, eyes.rv2 <dbl>, eyes.rv4 <dbl>, mouth.fw1 <dbl>,
     ## #   mouth.fw3 <dbl>, mouth.rv2 <dbl>, mouth.rv4 <dbl>, chin.fw1 <dbl>,
@@ -210,7 +210,7 @@ Here's the final, "cleaned-up" dataset that we're going to use for all further a
 select(data,-participant)
 ```
 
-    ## # A tibble: 184 x 25
+    ## # A tibble: 204 x 25
     ##       id hearing videogroup aoagroup languagegroup    maingroup  video
     ##    <int>  <fctr>     <fctr>   <fctr>        <fctr>       <fctr> <fctr>
     ##  1     1    Deaf    Group 1    Early      EarlyASL DeafEarlyASL    fw1
@@ -223,7 +223,7 @@ select(data,-participant)
     ##  8     2    Deaf    Group 1    Early      EarlyASL DeafEarlyASL    rv4
     ##  9     3    Deaf    Group 2    Early      EarlyASL DeafEarlyASL    fw1
     ## 10     3    Deaf    Group 2    Early      EarlyASL DeafEarlyASL    fw3
-    ## # ... with 174 more rows, and 18 more variables: story <fctr>,
+    ## # ... with 194 more rows, and 18 more variables: story <fctr>,
     ## #   direction <fctr>, age <dbl>, selfrate <dbl>, signyrs <dbl>,
     ## #   aoasl <int>, acc <dbl>, forehead <dbl>, eyes <dbl>, mouth <dbl>,
     ## #   chin <dbl>, upperchest <dbl>, midchest <dbl>, lowerchest <dbl>,
@@ -237,7 +237,7 @@ Now we can easily get group means.
 ``` r
 groupmeans <- data %>%
   group_by(maingroup) %>%
-  summarize(n = n()/4,
+  dplyr::summarize(n = n()/4,
             age = mean(age),
             selfrate = mean(selfrate),
             signyrs = mean(signyrs),
@@ -274,19 +274,19 @@ aoasl
 DeafEarlyASL
 </td>
 <td style="text-align:right;">
-7
+9
 </td>
 <td style="text-align:right;">
-34.9
+34.8
 </td>
 <td style="text-align:right;">
 5.0
 </td>
 <td style="text-align:right;">
-29.7
+29.8
 </td>
 <td style="text-align:right;">
-5.1
+5.0
 </td>
 </tr>
 <tr>
@@ -294,19 +294,19 @@ DeafEarlyASL
 DeafLateASL
 </td>
 <td style="text-align:right;">
-6
+8
 </td>
 <td style="text-align:right;">
-37.2
+38.0
 </td>
 <td style="text-align:right;">
 5.0
 </td>
 <td style="text-align:right;">
-23.7
+23.2
 </td>
 <td style="text-align:right;">
-12.8
+14.2
 </td>
 </tr>
 <tr>
@@ -334,19 +334,19 @@ DeafNative
 HearingLateASL
 </td>
 <td style="text-align:right;">
-11
+12
 </td>
 <td style="text-align:right;">
 28.9
 </td>
 <td style="text-align:right;">
-4.7
+4.6
 </td>
 <td style="text-align:right;">
-11.5
+11.8
 </td>
 <td style="text-align:right;">
-17.5
+17.2
 </td>
 </tr>
 <tr>

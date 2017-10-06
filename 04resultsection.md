@@ -1,7 +1,7 @@
 Results Section (study1adults)
 ================
 Adam Stone, PhD
-10-04-2017
+10-06-2017
 
 -   [Refreshing Ourselves](#refreshing-ourselves)
 -   [Participant Characteristics](#participant-characteristics)
@@ -269,13 +269,13 @@ DeafNative
 DeafEarlyASL
 </td>
 <td style="text-align:right;">
-7
+9
 </td>
 <td style="text-align:right;">
-34.9
+34.8
 </td>
 <td style="text-align:right;">
-5.8
+6.6
 </td>
 <td style="text-align:right;">
 5.0
@@ -284,16 +284,16 @@ DeafEarlyASL
 0.0
 </td>
 <td style="text-align:right;">
-29.7
+29.8
 </td>
 <td style="text-align:right;">
-5.3
+7.6
 </td>
 <td style="text-align:right;">
-5.1
+5.0
 </td>
 <td style="text-align:right;">
-2.4
+2.7
 </td>
 </tr>
 <tr>
@@ -301,13 +301,13 @@ DeafEarlyASL
 DeafLateASL
 </td>
 <td style="text-align:right;">
-7
+8
 </td>
 <td style="text-align:right;">
-37.4
+38.0
 </td>
 <td style="text-align:right;">
-6.1
+5.9
 </td>
 <td style="text-align:right;">
 5.0
@@ -316,16 +316,16 @@ DeafLateASL
 0.0
 </td>
 <td style="text-align:right;">
-23.3
+23.2
 </td>
 <td style="text-align:right;">
-5.7
+5.3
 </td>
 <td style="text-align:right;">
-13.6
+14.2
 </td>
 <td style="text-align:right;">
-2.5
+3.0
 </td>
 </tr>
 <tr>
@@ -481,7 +481,7 @@ DeafNative
 DeafEarlyASL
 </td>
 <td style="text-align:right;">
-7
+9
 </td>
 <td style="text-align:right;">
 0.84
@@ -490,10 +490,10 @@ DeafEarlyASL
 0.04
 </td>
 <td style="text-align:right;">
-0.65
+0.66
 </td>
 <td style="text-align:right;">
-0.10
+0.09
 </td>
 </tr>
 <tr>
@@ -501,13 +501,13 @@ DeafEarlyASL
 DeafLateASL
 </td>
 <td style="text-align:right;">
-7
+8
 </td>
 <td style="text-align:right;">
 0.87
 </td>
 <td style="text-align:right;">
-0.07
+0.06
 </td>
 <td style="text-align:right;">
 0.72
@@ -604,7 +604,7 @@ ggplot(data.aoionly,aes(aoi,percent,fill=direction)) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 
-    ## Warning: Removed 326 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 338 rows containing non-finite values (stat_boxplot).
 
 ![](04resultsection_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-6-1.png)
 
@@ -699,14 +699,14 @@ data.acc <- data %>%
 corstarsl(data.acc) # Use the awesome function!
 ```
 
-    ##                 aoasl  signyrs selfrate     age acc.forward acc.reversed
-    ## aoasl                                                                   
-    ## signyrs      -0.79***                                                   
-    ## selfrate     -0.52***  0.71***                                          
-    ## age           -0.32*   0.84***  0.63***                                 
-    ## acc.forward    -0.08     0.28   0.45**   0.34*                          
-    ## acc.reversed  -0.32*    0.29*   0.40**    0.17      0.38**              
-    ## acc.effect      0.26    -0.07    -0.04    0.10      0.40**      -0.69***
+    ##                 aoasl  signyrs selfrate      age acc.forward acc.reversed
+    ## aoasl                                                                    
+    ## signyrs      -0.78***                                                    
+    ## selfrate     -0.50***  0.71***                                           
+    ## age           -0.31*   0.83***  0.63***                                  
+    ## acc.forward    -0.07    0.29*   0.45***  0.36**                          
+    ## acc.reversed  -0.31*    0.29*   0.39**     0.17      0.38**              
+    ## acc.effect      0.25    -0.06    -0.03     0.12      0.41**      -0.69***
 
 ``` r
 # Gather the AOIs we want
@@ -751,30 +751,30 @@ So. For forward stories it's a crapshoot.
 corstarsl(data.fw)
 ```
 
-    ##                acc    aoasl  signyrs selfrate     age     eyes    mouth
-    ## acc                                                                    
-    ## aoasl       -0.08                                                      
-    ## signyrs      0.28  -0.79***                                            
-    ## selfrate   0.45**  -0.52***  0.71***                                   
-    ## age         0.34*   -0.32*   0.84***  0.63***                          
-    ## eyes        -0.19     0.16    -0.16    -0.14   -0.08                   
-    ## mouth        0.17    -0.13     0.26     0.13    0.25  -0.64***         
-    ## chin         0.03    -0.15    -0.01     0.12   -0.14  -0.38**  -0.42** 
-    ## face         0.10    -0.24   0.38**    0.31*   0.36*    -0.12   0.47***
-    ## chest       -0.04     0.15   -0.30*   -0.30*  -0.34*    -0.10   -0.29* 
-    ## facechest    0.04    -0.15    0.30*    0.30*   0.34*     0.11    0.29* 
-    ##             chin     face    chest
-    ## acc                               
-    ## aoasl                             
-    ## signyrs                           
-    ## selfrate                          
-    ## age                               
-    ## eyes                              
-    ## mouth                             
-    ## chin                              
-    ## face      -0.18                   
-    ## chest      0.28  -0.92***         
-    ## facechest -0.28   0.93*** -1.00***
+    ##                acc    aoasl  signyrs selfrate      age     eyes    mouth
+    ## acc                                                                     
+    ## aoasl       -0.07                                                       
+    ## signyrs     0.29*  -0.78***                                             
+    ## selfrate   0.45*** -0.50***  0.71***                                    
+    ## age        0.36**   -0.31*   0.83***  0.63***                           
+    ## eyes        -0.19     0.11    -0.12    -0.12    -0.08                   
+    ## mouth        0.19    -0.08     0.23     0.13     0.26  -0.65***         
+    ## chin         0.02    -0.15    -0.03     0.10    -0.15  -0.38**  -0.41** 
+    ## face         0.11    -0.23   0.38**    0.31*   0.37**    -0.13   0.47***
+    ## chest       -0.05     0.15   -0.31*   -0.30*   -0.34*    -0.11   -0.29* 
+    ## facechest    0.05    -0.15    0.31*    0.30*    0.34*     0.11    0.29* 
+    ##              chin     face    chest
+    ## acc                                
+    ## aoasl                              
+    ## signyrs                            
+    ## selfrate                           
+    ## age                                
+    ## eyes                               
+    ## mouth                              
+    ## chin                               
+    ## face       -0.19                   
+    ## chest      0.28*  -0.92***         
+    ## facechest -0.28*   0.93*** -1.00***
 
 Reversed Correlations
 ---------------------
@@ -795,28 +795,28 @@ corstarsl(data.rv)
 
     ##                acc    aoasl  signyrs selfrate      age     eyes    mouth
     ## acc                                                                     
-    ## aoasl      -0.32*                                                       
-    ## signyrs     0.29*  -0.79***                                             
-    ## selfrate   0.40**  -0.51***  0.71***                                    
-    ## age          0.17   -0.32*   0.83***  0.63***                           
-    ## eyes        -0.14     0.11    -0.01     0.04     0.09                   
-    ## mouth        0.15    -0.14     0.28     0.14     0.29  -0.64***         
-    ## chin         0.02    -0.07    -0.13    -0.07    -0.27  -0.46**  -0.42** 
-    ## face         0.21    -0.28   0.38**    0.30*    0.34*    -0.19   0.61***
-    ## chest       -0.20    0.32*  -0.44**  -0.42**  -0.39**    -0.16   -0.37* 
-    ## facechest    0.21   -0.33*   0.44**   0.41**   0.38**     0.13   0.40** 
-    ##              chin     face    chest
-    ## acc                                
-    ## aoasl                              
-    ## signyrs                            
-    ## selfrate                           
-    ## age                                
-    ## eyes                               
-    ## mouth                              
-    ## chin                               
-    ## face       -0.09                   
-    ## chest      0.29*  -0.73***         
-    ## facechest  -0.27   0.79*** -0.99***
+    ## aoasl      -0.31*                                                       
+    ## signyrs     0.29*  -0.78***                                             
+    ## selfrate   0.39**  -0.50***  0.71***                                    
+    ## age          0.17   -0.30*   0.83***  0.62***                           
+    ## eyes        -0.14     0.07     0.00     0.04     0.08                   
+    ## mouth        0.16    -0.10     0.27     0.14    0.29*  -0.64***         
+    ## chin         0.02    -0.06    -0.15    -0.08    -0.28  -0.46**  -0.43** 
+    ## face         0.26    -0.24   0.38**     0.28    0.36*    -0.17   0.60***
+    ## chest       -0.20    0.29*  -0.44**  -0.40**  -0.41**    -0.14  -0.38** 
+    ## facechest    0.22   -0.30*   0.44**   0.39**   0.40**     0.13   0.39** 
+    ##             chin     face    chest
+    ## acc                               
+    ## aoasl                             
+    ## signyrs                           
+    ## selfrate                          
+    ## age                               
+    ## eyes                              
+    ## mouth                             
+    ## chin                              
+    ## face      -0.12                   
+    ## chest      0.28  -0.79***         
+    ## facechest -0.26   0.82*** -1.00***
 
 Summary
 -------
@@ -886,9 +886,9 @@ left_join(aov.lex.all.tidy,aov.gaze.all.tidy,by="term") %>%
 ```
 
     ##                  term  F.acc P.acc F.facechest P.facechest
-    ## 1           maingroup  3.872 0.006       5.379       0.001
-    ## 2           direction 64.384 0.000       2.817       0.097
-    ## 3 maingroup:direction  1.125 0.350       0.740       0.568
+    ## 1           maingroup  4.194 0.004       5.523       0.001
+    ## 2           direction 74.458 0.000       3.358       0.070
+    ## 3 maingroup:direction  1.205 0.314       0.801       0.528
     ## 4           Residuals     NA    NA          NA          NA
 
 ``` r
@@ -932,7 +932,7 @@ left_join(aov.lex.fw.tidy,aov.gaze.fw.tidy,by="term") %>%
 ```
 
     ##        term F.acc P.acc F.facechest P.facechest
-    ## 1 maingroup  2.16  0.09       1.852       0.136
+    ## 1 maingroup   2.4 0.064       2.009       0.109
     ## 2 Residuals    NA    NA          NA          NA
 
 ``` r
@@ -976,7 +976,7 @@ left_join(aov.lex.rv.tidy,aov.gaze.rv.tidy,by="term") %>%
 ```
 
     ##        term F.acc P.acc F.facechest P.facechest
-    ## 1 maingroup 2.773 0.039       3.709       0.011
+    ## 1 maingroup 2.949  0.03       3.759        0.01
     ## 2 Residuals    NA    NA          NA          NA
 
 ``` r
@@ -1041,7 +1041,7 @@ accdiff$maingroup = factor(accdiff$maingroup,levels=c("DeafNative","DeafEarlyASL
 ggplot(accdiff,aes(x=maingroup,y=diff,fill=direction)) + geom_boxplot() + ylab("diff: 2nd rv story - 1st rv story")
 ```
 
-    ## Warning: Removed 16 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 18 rows containing non-finite values (stat_boxplot).
 
 ![](04resultsection_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-18-1.png)
 
@@ -1079,33 +1079,33 @@ summary(model)
     ## Formula: acc ~ percent * signyrs + (1 | id) + (1 | story)
     ##    Data: filter(datafc, aoi == "mouth" & direction == "forward")
     ## 
-    ## REML criterion at convergence: -154.3
+    ## REML criterion at convergence: -167.4
     ## 
     ## Scaled residuals: 
     ##      Min       1Q   Median       3Q      Max 
-    ## -1.66945 -0.56054 -0.07572  0.60179  1.53674 
+    ## -1.66734 -0.54815  0.01603  0.56072  1.55159 
     ## 
     ## Random effects:
     ##  Groups   Name        Variance Std.Dev.
-    ##  id       (Intercept) 0.004825 0.06946 
-    ##  story    (Intercept) 0.001259 0.03549 
-    ##  Residual             0.003569 0.05974 
-    ## Number of obs: 89, groups:  id, 48; story, 4
+    ##  id       (Intercept) 0.004614 0.06792 
+    ##  story    (Intercept) 0.001302 0.03609 
+    ##  Residual             0.003475 0.05895 
+    ## Number of obs: 94, groups:  id, 51; story, 4
     ## 
     ## Fixed effects:
     ##                  Estimate Std. Error        df t value Pr(>|t|)    
-    ## (Intercept)      0.873182   0.048300 54.870000  18.078   <2e-16 ***
-    ## percent         -0.114207   0.065749 82.670000  -1.737   0.0861 .  
-    ## signyrs         -0.002512   0.002348 83.140000  -1.070   0.2877    
-    ## percent:signyrs  0.006484   0.003159 78.910000   2.052   0.0435 *  
+    ## (Intercept)      0.870054   0.047191 53.600000  18.437   <2e-16 ***
+    ## percent         -0.112785   0.064080 87.370000  -1.760   0.0819 .  
+    ## signyrs         -0.002162   0.002236 88.350000  -0.967   0.3362    
+    ## percent:signyrs  0.006244   0.003058 84.560000   2.042   0.0443 *  
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr) percnt sgnyrs
-    ## percent     -0.823              
-    ## signyrs     -0.746  0.696       
-    ## prcnt:sgnyr  0.705 -0.811 -0.918
+    ## percent     -0.818              
+    ## signyrs     -0.745  0.702       
+    ## prcnt:sgnyr  0.699 -0.815 -0.918
 
 ``` r
 model <- lmer(percent ~ direction + (1|id), data = filter(datafc,aoi=="mouth"))
@@ -1117,28 +1117,28 @@ summary(model)
     ## Formula: percent ~ direction + (1 | id)
     ##    Data: filter(datafc, aoi == "mouth")
     ## 
-    ## REML criterion at convergence: -7.1
+    ## REML criterion at convergence: -14.9
     ## 
     ## Scaled residuals: 
     ##      Min       1Q   Median       3Q      Max 
-    ## -2.63522 -0.49785  0.09266  0.60598  2.34197 
+    ## -2.67237 -0.45071  0.07741  0.61139  2.39776 
     ## 
     ## Random effects:
     ##  Groups   Name        Variance Std.Dev.
-    ##  id       (Intercept) 0.05078  0.2254  
-    ##  Residual             0.03213  0.1793  
-    ## Number of obs: 179, groups:  id, 48
+    ##  id       (Intercept) 0.04848  0.2202  
+    ##  Residual             0.03096  0.1760  
+    ## Number of obs: 189, groups:  id, 51
     ## 
     ## Fixed effects:
     ##                    Estimate Std. Error        df t value Pr(>|t|)    
-    ## (Intercept)         0.63741    0.03764  60.48000  16.934  < 2e-16 ***
-    ## directionreversed  -0.09606    0.02702 131.06000  -3.555 0.000526 ***
+    ## (Intercept)         0.63786    0.03576  64.75000  17.836  < 2e-16 ***
+    ## directionreversed  -0.09058    0.02580 138.25000  -3.511 0.000603 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr)
-    ## dirctnrvrsd -0.350
+    ## dirctnrvrsd -0.352
 
 ``` r
 # plot(model)
