@@ -19,6 +19,7 @@ Adam Stone, PhD
     -   [Summary of ANOVAs](#summary-of-anovas)
 -   [Recovery](#recovery)
 -   [Other Notes from Rain](#other-notes-from-rain)
+-   [Deaf Hearing Analyses](#deaf-hearing-analyses)
 
 Refreshing Ourselves
 ====================
@@ -1146,3 +1147,760 @@ summary(model)
 # autoplot(model2)
 # autoplot(model2,which=1:6,data = datafc,colour='direction',label.size=3)
 ```
+
+Deaf Hearing Analyses
+=====================
+
+Let's try running models with deaf/hearing. First, a scatterplot...
+
+``` r
+data.acc <- dataoriginal %>% filter(aoi=="facechest") 
+ggplot(data.acc, aes(x=signyrs,y=acc,color=direction)) + geom_jitter() + geom_smooth(method="lm") + facet_grid(.~hearing)
+```
+
+    ## Warning: Removed 4 rows containing non-finite values (stat_smooth).
+
+    ## Warning: Removed 4 rows containing missing values (geom_point).
+
+![](04resultsection_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-20-1.png)
+
+So the slopes don't change for direction, but the seem to change for deaf/hearing. In other words, signyears doesn't have a big effect for deaf, but it does for hearing.
+
+``` r
+model <- lmer(acc ~ hearing * direction * signyrs + (1|id) + (1|story), data = data.acc)
+summary(model)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: acc ~ hearing * direction * signyrs + (1 | id) + (1 | story)
+    ##    Data: data.acc
+    ## 
+    ## REML criterion at convergence: -248.6
+    ## 
+    ## Scaled residuals: 
+    ##      Min       1Q   Median       3Q      Max 
+    ## -2.04733 -0.60227 -0.01045  0.52495  2.40592 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.002858 0.05346 
+    ##  story    (Intercept) 0.001473 0.03838 
+    ##  Residual             0.008685 0.09319 
+    ## Number of obs: 185, groups:  id, 51; story, 4
+    ## 
+    ## Fixed effects:
+    ##                                            Estimate Std. Error         df
+    ## (Intercept)                               7.930e-01  6.248e-02  7.951e+01
+    ## hearingHearing                           -9.419e-03  6.608e-02  9.335e+01
+    ## directionreversed                        -7.002e-02  6.654e-02  1.293e+02
+    ## signyrs                                   2.014e-03  1.974e-03  9.515e+01
+    ## hearingHearing:directionreversed         -7.788e-02  7.386e-02  1.294e+02
+    ## hearingHearing:signyrs                    3.443e-03  3.755e-03  9.512e+01
+    ## directionreversed:signyrs                -2.221e-03  2.207e-03  1.290e+02
+    ## hearingHearing:directionreversed:signyrs  5.103e-04  4.140e-03  1.306e+02
+    ##                                          t value Pr(>|t|)    
+    ## (Intercept)                               12.692   <2e-16 ***
+    ## hearingHearing                            -0.143    0.887    
+    ## directionreversed                         -1.052    0.295    
+    ## signyrs                                    1.020    0.310    
+    ## hearingHearing:directionreversed          -1.055    0.294    
+    ## hearingHearing:signyrs                     0.917    0.361    
+    ## directionreversed:signyrs                 -1.006    0.316    
+    ## hearingHearing:directionreversed:signyrs   0.123    0.902    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) hrngHr drctnr sgnyrs hrngHrng:d hrngHrng:s drctn:
+    ## hearingHrng -0.856                                                  
+    ## dirctnrvrsd -0.531  0.502                                           
+    ## signyrs     -0.913  0.864  0.535                                    
+    ## hrngHrng:dr  0.478 -0.557 -0.901 -0.483                             
+    ## hrngHrng:sg  0.480 -0.743 -0.281 -0.526  0.416                      
+    ## drctnrvrsd:  0.510 -0.483 -0.957 -0.559  0.864      0.295           
+    ## hrngHrng:d: -0.272  0.422  0.510  0.299 -0.747     -0.575     -0.535
+
+Eh, no effect here. How about eye gaze...
+
+``` r
+data.fc <- dataoriginal %>% filter(aoi=="facechest") 
+ggplot(data.fc, aes(x=signyrs,y=percent,color=direction)) + geom_jitter() + geom_smooth(method="lm") + facet_grid(.~hearing) + ylab("FaceChest Ratio")
+```
+
+![](04resultsection_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-22-1.png)
+
+``` r
+data.mouth <- dataoriginal %>% filter(aoi=="mouth") 
+ggplot(data.mouth, aes(x=signyrs,y=percent,color=direction)) + geom_jitter() + geom_smooth(method="lm") + facet_grid(.~hearing) + ylab("Mouth AOI Percent")
+```
+
+![](04resultsection_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-22-2.png)
+
+``` r
+data.eyes <- dataoriginal %>% filter(aoi=="eyes") 
+ggplot(data.eyes, aes(x=signyrs,y=percent,color=direction)) + geom_jitter() + geom_smooth(method="lm") + facet_grid(.~hearing) + ylab("Eyes AOI Percent")
+```
+
+    ## Warning: Removed 17 rows containing non-finite values (stat_smooth).
+
+    ## Warning: Removed 17 rows containing missing values (geom_point).
+
+![](04resultsection_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-22-3.png)
+
+Looks like we've got different reversal effects for FaceChest Ratio, Mouth AOI, and Eyes AOI...not terribly strong, though. Let's run models.
+
+``` r
+model <- lmer(percent ~ hearing * direction * signyrs + (1|id) + (1|story), data = data.fc)
+summary(model)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: percent ~ hearing * direction * signyrs + (1 | id) + (1 | story)
+    ##    Data: data.fc
+    ## 
+    ## REML criterion at convergence: -212
+    ## 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -4.8494 -0.1080  0.0599  0.3248  1.7385 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance  Std.Dev.
+    ##  id       (Intercept) 0.0101497 0.10075 
+    ##  story    (Intercept) 0.0002464 0.01570 
+    ##  Residual             0.0090914 0.09535 
+    ## Number of obs: 189, groups:  id, 51; story, 4
+    ## 
+    ## Fixed effects:
+    ##                                            Estimate Std. Error         df
+    ## (Intercept)                                0.945317   0.082384  66.730000
+    ## hearingHearing                            -0.068765   0.091686  65.830000
+    ## directionreversed                         -0.044191   0.065293 132.890000
+    ## signyrs                                    0.001083   0.002727  66.700000
+    ## hearingHearing:directionreversed          -0.069729   0.073098 133.940000
+    ## hearingHearing:signyrs                     0.005594   0.005245  68.740000
+    ## directionreversed:signyrs                  0.001034   0.002181 133.180000
+    ## hearingHearing:directionreversed:signyrs   0.003706   0.004197 134.720000
+    ##                                          t value Pr(>|t|)    
+    ## (Intercept)                               11.475   <2e-16 ***
+    ## hearingHearing                            -0.750    0.456    
+    ## directionreversed                         -0.677    0.500    
+    ## signyrs                                    0.397    0.692    
+    ## hearingHearing:directionreversed          -0.954    0.342    
+    ## hearingHearing:signyrs                     1.067    0.290    
+    ## directionreversed:signyrs                  0.474    0.636    
+    ## hearingHearing:directionreversed:signyrs   0.883    0.379    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) hrngHr drctnr sgnyrs hrngHrng:d hrngHrng:s drctn:
+    ## hearingHrng -0.891                                                  
+    ## dirctnrvrsd -0.395  0.355                                           
+    ## signyrs     -0.955  0.858  0.382                                    
+    ## hrngHrng:dr  0.353 -0.397 -0.895 -0.342                             
+    ## hrngHrng:sg  0.497 -0.745 -0.199 -0.521  0.301                      
+    ## drctnrvrsd:  0.379 -0.341 -0.955 -0.400  0.856      0.209           
+    ## hrngHrng:d: -0.198  0.300  0.498  0.209 -0.743     -0.419     -0.522
+
+``` r
+model <- lmer(percent ~ hearing * direction * signyrs + (1|id) + (1|story), data = data.mouth)
+summary(model)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: percent ~ hearing * direction * signyrs + (1 | id) + (1 | story)
+    ##    Data: data.mouth
+    ## 
+    ## REML criterion at convergence: 6
+    ## 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -2.7936 -0.5085  0.1167  0.6300  2.0897 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.046762 0.21624 
+    ##  story    (Intercept) 0.003873 0.06223 
+    ##  Residual             0.027039 0.16444 
+    ## Number of obs: 189, groups:  id, 51; story, 4
+    ## 
+    ## Fixed effects:
+    ##                                            Estimate Std. Error         df
+    ## (Intercept)                               5.948e-01  1.687e-01  6.038e+01
+    ## hearingHearing                           -2.002e-02  1.854e-01  5.810e+01
+    ## directionreversed                         5.647e-03  1.126e-01  1.307e+02
+    ## signyrs                                   3.108e-03  5.510e-03  5.870e+01
+    ## hearingHearing:directionreversed         -1.679e-01  1.263e-01  1.310e+02
+    ## hearingHearing:signyrs                   -4.888e-04  1.057e-02  6.014e+01
+    ## directionreversed:signyrs                -2.089e-03  3.764e-03  1.308e+02
+    ## hearingHearing:directionreversed:signyrs  2.740e-03  7.257e-03  1.315e+02
+    ##                                          t value Pr(>|t|)    
+    ## (Intercept)                                3.526 0.000813 ***
+    ## hearingHearing                            -0.108 0.914405    
+    ## directionreversed                          0.050 0.960088    
+    ## signyrs                                    0.564 0.574890    
+    ## hearingHearing:directionreversed          -1.330 0.185916    
+    ## hearingHearing:signyrs                    -0.046 0.963281    
+    ## directionreversed:signyrs                 -0.555 0.579897    
+    ## hearingHearing:directionreversed:signyrs   0.377 0.706424    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) hrngHr drctnr sgnyrs hrngHrng:d hrngHrng:s drctn:
+    ## hearingHrng -0.879                                                  
+    ## dirctnrvrsd -0.332  0.303                                           
+    ## signyrs     -0.943  0.858  0.326                                    
+    ## hrngHrng:dr  0.297 -0.340 -0.894 -0.292                             
+    ## hrngHrng:sg  0.492 -0.746 -0.171 -0.522  0.258                      
+    ## drctnrvrsd:  0.319 -0.292 -0.955 -0.341  0.856      0.179           
+    ## hrngHrng:d: -0.167  0.257  0.497  0.179 -0.744     -0.360     -0.523
+
+``` r
+model <- lmer(percent ~ hearing * direction * signyrs + (1|id) + (1|story), data = data.eyes)
+summary(model)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: percent ~ hearing * direction * signyrs + (1 | id) + (1 | story)
+    ##    Data: data.eyes
+    ## 
+    ## REML criterion at convergence: -33.9
+    ## 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -2.6831 -0.4912 -0.0854  0.4018  3.3478 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.036832 0.19192 
+    ##  story    (Intercept) 0.002119 0.04603 
+    ##  Residual             0.020111 0.14181 
+    ## Number of obs: 172, groups:  id, 51; story, 4
+    ## 
+    ## Fixed effects:
+    ##                                            Estimate Std. Error         df
+    ## (Intercept)                               1.677e-01  1.492e-01  5.850e+01
+    ## hearingHearing                            3.732e-02  1.648e-01  5.660e+01
+    ## directionreversed                        -6.009e-02  9.962e-02  1.141e+02
+    ## signyrs                                   4.978e-05  4.887e-03  5.677e+01
+    ## hearingHearing:directionreversed          1.484e-02  1.118e-01  1.144e+02
+    ## hearingHearing:signyrs                    5.592e-03  9.374e-03  5.802e+01
+    ## directionreversed:signyrs                 2.608e-03  3.308e-03  1.140e+02
+    ## hearingHearing:directionreversed:signyrs  6.614e-03  6.466e-03  1.153e+02
+    ##                                          t value Pr(>|t|)
+    ## (Intercept)                                1.124    0.266
+    ## hearingHearing                             0.226    0.822
+    ## directionreversed                         -0.603    0.548
+    ## signyrs                                    0.010    0.992
+    ## hearingHearing:directionreversed           0.133    0.895
+    ## hearingHearing:signyrs                     0.597    0.553
+    ## directionreversed:signyrs                  0.789    0.432
+    ## hearingHearing:directionreversed:signyrs   1.023    0.308
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) hrngHr drctnr sgnyrs hrngHrng:d hrngHrng:s drctn:
+    ## hearingHrng -0.884                                                  
+    ## dirctnrvrsd -0.335  0.304                                           
+    ## signyrs     -0.947  0.858  0.325                                    
+    ## hrngHrng:dr  0.300 -0.341 -0.892 -0.291                             
+    ## hrngHrng:sg  0.494 -0.746 -0.170 -0.522  0.257                      
+    ## drctnrvrsd:  0.321 -0.292 -0.951 -0.341  0.851      0.179           
+    ## hrngHrng:d: -0.166  0.254  0.488  0.176 -0.735     -0.350     -0.517
+
+Let's ask a very simple question. Are deaf and hearing doing differently on the lexical recall test?
+
+``` r
+model <- lmer(acc ~ hearing * direction + (1|id) + (1|story), data = data.acc)
+summary(model)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: acc ~ hearing * direction + (1 | id) + (1 | story)
+    ##    Data: data.acc
+    ## 
+    ## REML criterion at convergence: -284.9
+    ## 
+    ## Scaled residuals: 
+    ##      Min       1Q   Median       3Q      Max 
+    ## -2.08679 -0.66279  0.02155  0.57598  2.44153 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.003033 0.05507 
+    ##  story    (Intercept) 0.001467 0.03830 
+    ##  Residual             0.008629 0.09289 
+    ## Number of obs: 185, groups:  id, 51; story, 4
+    ## 
+    ## Fixed effects:
+    ##                                   Estimate Std. Error        df t value
+    ## (Intercept)                        0.85115    0.02554   7.30000  33.321
+    ## hearingHearing                    -0.02902    0.02483  94.20000  -1.169
+    ## directionreversed                 -0.13422    0.01918 134.77000  -6.999
+    ## hearingHearing:directionreversed  -0.02484    0.02751 133.26000  -0.903
+    ##                                  Pr(>|t|)    
+    ## (Intercept)                      3.01e-09 ***
+    ## hearingHearing                      0.245    
+    ## directionreversed                1.10e-10 ***
+    ## hearingHearing:directionreversed    0.368    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) hrngHr drctnr
+    ## hearingHrng -0.450              
+    ## dirctnrvrsd -0.357  0.363       
+    ## hrngHrng:dr  0.247 -0.546 -0.689
+
+Interestingly they are not. Direction has a big effect here but deaf v. hearing isn't. How about eye behavior.
+
+``` r
+model <- lmer(percent ~ hearing * direction + (1|id) + (1|story), data = data.fc)
+summary(model)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: percent ~ hearing * direction + (1 | id) + (1 | story)
+    ##    Data: data.fc
+    ## 
+    ## REML criterion at convergence: -243.8
+    ## 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -5.0551 -0.1666  0.0667  0.4102  1.7136 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance  Std.Dev.
+    ##  id       (Intercept) 0.0110540 0.10514 
+    ##  story    (Intercept) 0.0002168 0.01472 
+    ##  Residual             0.0091071 0.09543 
+    ## Number of obs: 189, groups:  id, 51; story, 4
+    ## 
+    ## Fixed effects:
+    ##                                   Estimate Std. Error        df t value
+    ## (Intercept)                        0.97662    0.02507  47.40000  38.949
+    ## hearingHearing                    -0.05107    0.03557  68.46000  -1.436
+    ## directionreversed                 -0.01437    0.01933 137.54000  -0.743
+    ## hearingHearing:directionreversed  -0.06479    0.02804 136.11000  -2.311
+    ##                                  Pr(>|t|)    
+    ## (Intercept)                        <2e-16 ***
+    ## hearingHearing                     0.1556    
+    ## directionreversed                  0.4586    
+    ## hearingHearing:directionreversed   0.0223 *  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) hrngHr drctnr
+    ## hearingHrng -0.644              
+    ## dirctnrvrsd -0.365  0.255       
+    ## hrngHrng:dr  0.250 -0.388 -0.685
+
+``` r
+model <- lmer(percent ~ hearing * direction + (1|id) + (1|story), data = data.mouth)
+summary(model)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: percent ~ hearing * direction + (1 | id) + (1 | story)
+    ##    Data: data.mouth
+    ## 
+    ## REML criterion at convergence: -27.5
+    ## 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -2.7963 -0.5108  0.0722  0.6108  2.1069 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.044970 0.21206 
+    ##  story    (Intercept) 0.003814 0.06176 
+    ##  Residual             0.026703 0.16341 
+    ## Number of obs: 189, groups:  id, 51; story, 4
+    ## 
+    ## Fixed effects:
+    ##                                   Estimate Std. Error        df t value
+    ## (Intercept)                        0.68440    0.05558  20.04000  12.314
+    ## hearingHearing                    -0.09064    0.06862  61.83000  -1.321
+    ## directionreversed                 -0.05403    0.03319 134.43000  -1.628
+    ## hearingHearing:directionreversed  -0.10324    0.04807 133.54000  -2.148
+    ##                                  Pr(>|t|)    
+    ## (Intercept)                      8.36e-11 ***
+    ## hearingHearing                     0.1914    
+    ## directionreversed                  0.1059    
+    ## hearingHearing:directionreversed   0.0335 *  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) hrngHr drctnr
+    ## hearingHrng -0.560              
+    ## dirctnrvrsd -0.282  0.226       
+    ## hrngHrng:dr  0.193 -0.345 -0.682
+
+``` r
+model <- lmer(percent ~ hearing * direction + (1|id) + (1|story), data = data.eyes)
+summary(model)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: percent ~ hearing * direction + (1 | id) + (1 | story)
+    ##    Data: data.eyes
+    ## 
+    ## REML criterion at convergence: -63.5
+    ## 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -2.9743 -0.4811 -0.0983  0.4110  3.3846 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.03711  0.19264 
+    ##  story    (Intercept) 0.00240  0.04899 
+    ##  Residual             0.02024  0.14225 
+    ## Number of obs: 172, groups:  id, 51; story, 4
+    ## 
+    ## Fixed effects:
+    ##                                   Estimate Std. Error        df t value
+    ## (Intercept)                      1.691e-01  4.868e-02 2.504e+01   3.473
+    ## hearingHearing                   7.725e-02  6.243e-02 6.087e+01   1.237
+    ## directionreversed                1.565e-02  3.084e-02 1.200e+02   0.507
+    ## hearingHearing:directionreversed 4.206e-03  4.432e-02 1.183e+02   0.095
+    ##                                  Pr(>|t|)   
+    ## (Intercept)                       0.00189 **
+    ## hearingHearing                    0.22069   
+    ## directionreversed                 0.61276   
+    ## hearingHearing:directionreversed  0.92455   
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) hrngHr drctnr
+    ## hearingHrng -0.582              
+    ## dirctnrvrsd -0.287  0.221       
+    ## hrngHrng:dr  0.199 -0.334 -0.689
+
+Okay, so we get interactions for FaceChest Ratio and for Mouth...hearing and reversed do "worse". That at least. Of course, I'm worried about the Novice screwing up those results...let's check. Okay I checked all the models again with HearingNovice taken out, and yep, the effects disappeared.
+
+What if we compared DeafLate and HearingLate, using signyrs as a covariate?
+
+``` r
+data.acc.late <- data.acc %>% filter(maingroup=="HearingLateASL" | maingroup=="DeafLateASL")
+model <- lmer(acc ~ hearing * direction * signyrs + (1|id) + (1|story), data = data.acc.late)
+summary(model)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: acc ~ hearing * direction * signyrs + (1 | id) + (1 | story)
+    ##    Data: data.acc.late
+    ## 
+    ## REML criterion at convergence: -73.9
+    ## 
+    ## Scaled residuals: 
+    ##      Min       1Q   Median       3Q      Max 
+    ## -2.00529 -0.56776  0.02437  0.49060  2.42451 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.002091 0.04572 
+    ##  story    (Intercept) 0.002223 0.04715 
+    ##  Residual             0.008697 0.09326 
+    ## Number of obs: 73, groups:  id, 20; story, 4
+    ## 
+    ## Fixed effects:
+    ##                                           Estimate Std. Error        df
+    ## (Intercept)                               0.709832   0.162404 47.210000
+    ## hearingHearing                            0.180327   0.173830 44.590000
+    ## directionreversed                         0.055002   0.199187 47.040000
+    ## signyrs                                   0.006700   0.006706 45.410000
+    ## hearingHearing:directionreversed         -0.300184   0.216218 47.560000
+    ## hearingHearing:signyrs                   -0.009230   0.008529 41.870000
+    ## directionreversed:signyrs                -0.008825   0.008351 47.500000
+    ## hearingHearing:directionreversed:signyrs  0.014511   0.010551 48.180000
+    ##                                          t value Pr(>|t|)    
+    ## (Intercept)                                4.371 6.76e-05 ***
+    ## hearingHearing                             1.037    0.305    
+    ## directionreversed                          0.276    0.784    
+    ## signyrs                                    0.999    0.323    
+    ## hearingHearing:directionreversed          -1.388    0.172    
+    ## hearingHearing:signyrs                    -1.082    0.285    
+    ## directionreversed:signyrs                 -1.057    0.296    
+    ## hearingHearing:directionreversed:signyrs   1.375    0.175    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) hrngHr drctnr sgnyrs hrngHrng:d hrngHrng:s drctn:
+    ## hearingHrng -0.920                                                  
+    ## dirctnrvrsd -0.610  0.579                                           
+    ## signyrs     -0.972  0.914  0.608                                    
+    ## hrngHrng:dr  0.567 -0.615 -0.933 -0.568                             
+    ## hrngHrng:sg  0.770 -0.932 -0.491 -0.794  0.576                      
+    ## drctnrvrsd:  0.599 -0.571 -0.983 -0.618  0.920      0.502           
+    ## hrngHrng:d: -0.481  0.576  0.794  0.499 -0.939     -0.616     -0.811
+
+Weird! Hearing has no effect (reversal does, though). Let's look at eye data.
+
+``` r
+data.fc.late <- data.fc %>% filter(maingroup=="HearingLateASL" | maingroup=="DeafLateASL")
+model <- lmer(percent ~ hearing * direction * signyrs + (1|id) + (1|story), data = data.fc.late)
+summary(model)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: percent ~ hearing * direction * signyrs + (1 | id) + (1 | story)
+    ##    Data: data.fc.late
+    ## 
+    ## REML criterion at convergence: -103.5
+    ## 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -3.3094 -0.1773  0.0360  0.4459  1.7308 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance  Std.Dev.
+    ##  id       (Intercept) 0.0039593 0.06292 
+    ##  story    (Intercept) 0.0002182 0.01477 
+    ##  Residual             0.0051858 0.07201 
+    ## Number of obs: 75, groups:  id, 20; story, 4
+    ## 
+    ## Fixed effects:
+    ##                                            Estimate Std. Error         df
+    ## (Intercept)                               9.799e-01  1.390e-01  2.473e+01
+    ## hearingHearing                           -1.965e-02  1.533e-01  2.479e+01
+    ## directionreversed                        -4.865e-03  1.260e-01  5.140e+01
+    ## signyrs                                   4.074e-04  5.879e-03  2.514e+01
+    ## hearingHearing:directionreversed         -6.917e-02  1.408e-01  5.126e+01
+    ## hearingHearing:signyrs                    2.119e-05  7.836e-03  2.561e+01
+    ## directionreversed:signyrs                -5.631e-04  5.396e-03  5.107e+01
+    ## hearingHearing:directionreversed:signyrs  2.279e-03  7.272e-03  5.119e+01
+    ##                                          t value Pr(>|t|)    
+    ## (Intercept)                                7.048 2.32e-07 ***
+    ## hearingHearing                            -0.128    0.899    
+    ## directionreversed                         -0.039    0.969    
+    ## signyrs                                    0.069    0.945    
+    ## hearingHearing:directionreversed          -0.491    0.625    
+    ## hearingHearing:signyrs                     0.003    0.998    
+    ## directionreversed:signyrs                 -0.104    0.917    
+    ## hearingHearing:directionreversed:signyrs   0.313    0.755    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) hrngHr drctnr sgnyrs hrngHrng:d hrngHrng:s drctn:
+    ## hearingHrng -0.907                                                  
+    ## dirctnrvrsd -0.453  0.416                                           
+    ## signyrs     -0.976  0.888  0.449                                    
+    ## hrngHrng:dr  0.410 -0.455 -0.905 -0.407                             
+    ## hrngHrng:sg  0.736 -0.925 -0.343 -0.754  0.427                      
+    ## drctnrvrsd:  0.443 -0.408 -0.978 -0.459  0.887      0.352           
+    ## hrngHrng:d: -0.334  0.422  0.738  0.347 -0.928     -0.464     -0.757
+
+``` r
+data.mouth.late <- data.fc %>% filter(maingroup=="HearingLateASL" | maingroup=="DeafLateASL")
+model <- lmer(percent ~ hearing * direction * signyrs + (1|id) + (1|story), data = data.mouth.late)
+summary(model)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: percent ~ hearing * direction * signyrs + (1 | id) + (1 | story)
+    ##    Data: data.mouth.late
+    ## 
+    ## REML criterion at convergence: -103.5
+    ## 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -3.3094 -0.1773  0.0360  0.4459  1.7308 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance  Std.Dev.
+    ##  id       (Intercept) 0.0039593 0.06292 
+    ##  story    (Intercept) 0.0002182 0.01477 
+    ##  Residual             0.0051858 0.07201 
+    ## Number of obs: 75, groups:  id, 20; story, 4
+    ## 
+    ## Fixed effects:
+    ##                                            Estimate Std. Error         df
+    ## (Intercept)                               9.799e-01  1.390e-01  2.473e+01
+    ## hearingHearing                           -1.965e-02  1.533e-01  2.479e+01
+    ## directionreversed                        -4.865e-03  1.260e-01  5.140e+01
+    ## signyrs                                   4.074e-04  5.879e-03  2.514e+01
+    ## hearingHearing:directionreversed         -6.917e-02  1.408e-01  5.126e+01
+    ## hearingHearing:signyrs                    2.119e-05  7.836e-03  2.561e+01
+    ## directionreversed:signyrs                -5.631e-04  5.396e-03  5.107e+01
+    ## hearingHearing:directionreversed:signyrs  2.279e-03  7.272e-03  5.119e+01
+    ##                                          t value Pr(>|t|)    
+    ## (Intercept)                                7.048 2.32e-07 ***
+    ## hearingHearing                            -0.128    0.899    
+    ## directionreversed                         -0.039    0.969    
+    ## signyrs                                    0.069    0.945    
+    ## hearingHearing:directionreversed          -0.491    0.625    
+    ## hearingHearing:signyrs                     0.003    0.998    
+    ## directionreversed:signyrs                 -0.104    0.917    
+    ## hearingHearing:directionreversed:signyrs   0.313    0.755    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) hrngHr drctnr sgnyrs hrngHrng:d hrngHrng:s drctn:
+    ## hearingHrng -0.907                                                  
+    ## dirctnrvrsd -0.453  0.416                                           
+    ## signyrs     -0.976  0.888  0.449                                    
+    ## hrngHrng:dr  0.410 -0.455 -0.905 -0.407                             
+    ## hrngHrng:sg  0.736 -0.925 -0.343 -0.754  0.427                      
+    ## drctnrvrsd:  0.443 -0.408 -0.978 -0.459  0.887      0.352           
+    ## hrngHrng:d: -0.334  0.422  0.738  0.347 -0.928     -0.464     -0.757
+
+``` r
+data.eyes.late <- data.fc %>% filter(maingroup=="HearingLateASL" | maingroup=="DeafLateASL")
+model <- lmer(percent ~ hearing * direction * signyrs + (1|id) + (1|story), data = data.eyes.late)
+summary(model)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: percent ~ hearing * direction * signyrs + (1 | id) + (1 | story)
+    ##    Data: data.eyes.late
+    ## 
+    ## REML criterion at convergence: -103.5
+    ## 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -3.3094 -0.1773  0.0360  0.4459  1.7308 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance  Std.Dev.
+    ##  id       (Intercept) 0.0039593 0.06292 
+    ##  story    (Intercept) 0.0002182 0.01477 
+    ##  Residual             0.0051858 0.07201 
+    ## Number of obs: 75, groups:  id, 20; story, 4
+    ## 
+    ## Fixed effects:
+    ##                                            Estimate Std. Error         df
+    ## (Intercept)                               9.799e-01  1.390e-01  2.473e+01
+    ## hearingHearing                           -1.965e-02  1.533e-01  2.479e+01
+    ## directionreversed                        -4.865e-03  1.260e-01  5.140e+01
+    ## signyrs                                   4.074e-04  5.879e-03  2.514e+01
+    ## hearingHearing:directionreversed         -6.917e-02  1.408e-01  5.126e+01
+    ## hearingHearing:signyrs                    2.119e-05  7.836e-03  2.561e+01
+    ## directionreversed:signyrs                -5.631e-04  5.396e-03  5.107e+01
+    ## hearingHearing:directionreversed:signyrs  2.279e-03  7.272e-03  5.119e+01
+    ##                                          t value Pr(>|t|)    
+    ## (Intercept)                                7.048 2.32e-07 ***
+    ## hearingHearing                            -0.128    0.899    
+    ## directionreversed                         -0.039    0.969    
+    ## signyrs                                    0.069    0.945    
+    ## hearingHearing:directionreversed          -0.491    0.625    
+    ## hearingHearing:signyrs                     0.003    0.998    
+    ## directionreversed:signyrs                 -0.104    0.917    
+    ## hearingHearing:directionreversed:signyrs   0.313    0.755    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) hrngHr drctnr sgnyrs hrngHrng:d hrngHrng:s drctn:
+    ## hearingHrng -0.907                                                  
+    ## dirctnrvrsd -0.453  0.416                                           
+    ## signyrs     -0.976  0.888  0.449                                    
+    ## hrngHrng:dr  0.410 -0.455 -0.905 -0.407                             
+    ## hrngHrng:sg  0.736 -0.925 -0.343 -0.754  0.427                      
+    ## drctnrvrsd:  0.443 -0.408 -0.978 -0.459  0.887      0.352           
+    ## hrngHrng:d: -0.334  0.422  0.738  0.347 -0.928     -0.464     -0.757
+
+Ehhhh. Wha tabout using gaze behavior to predict accuracy, would that differ based on deafness?
+
+``` r
+model <- lmer(acc ~ percent * aoasl * direction * hearing + (1|id) + (1|story), data = data.eyes)
+summary(model)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: acc ~ percent * aoasl * direction * hearing + (1 | id) + (1 |  
+    ##     story)
+    ##    Data: data.eyes
+    ## 
+    ## REML criterion at convergence: -196.1
+    ## 
+    ## Scaled residuals: 
+    ##      Min       1Q   Median       3Q      Max 
+    ## -2.41544 -0.55731 -0.00379  0.50682  2.11570 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.003790 0.06157 
+    ##  story    (Intercept) 0.001631 0.04039 
+    ##  Residual             0.008106 0.09004 
+    ## Number of obs: 168, groups:  id, 51; story, 4
+    ## 
+    ## Fixed effects:
+    ##                                                  Estimate Std. Error
+    ## (Intercept)                                      0.841926   0.037370
+    ## percent                                          0.028899   0.140250
+    ## aoasl                                            0.002135   0.003576
+    ## directionreversed                               -0.124853   0.038259
+    ## hearingHearing                                  -0.020810   0.203548
+    ## percent:aoasl                                   -0.007129   0.014259
+    ## percent:directionreversed                        0.035322   0.176257
+    ## aoasl:directionreversed                         -0.001969   0.004080
+    ## percent:hearingHearing                           0.036056   0.466141
+    ## aoasl:hearingHearing                            -0.002307   0.011716
+    ## directionreversed:hearingHearing                -0.428751   0.243773
+    ## percent:aoasl:directionreversed                 -0.005443   0.020166
+    ## percent:aoasl:hearingHearing                     0.002054   0.029257
+    ## percent:directionreversed:hearingHearing         1.016473   0.533013
+    ## aoasl:directionreversed:hearingHearing           0.027009   0.014185
+    ## percent:aoasl:directionreversed:hearingHearing  -0.062635   0.035857
+    ##                                                        df t value Pr(>|t|)
+    ## (Intercept)                                     24.540000  22.529   <2e-16
+    ## percent                                        146.660000   0.206   0.8370
+    ## aoasl                                          115.330000   0.597   0.5516
+    ## directionreversed                              130.810000  -3.263   0.0014
+    ## hearingHearing                                 112.440000  -0.102   0.9188
+    ## percent:aoasl                                  142.040000  -0.500   0.6179
+    ## percent:directionreversed                      136.940000   0.200   0.8415
+    ## aoasl:directionreversed                        122.190000  -0.483   0.6303
+    ## percent:hearingHearing                         132.000000   0.077   0.9385
+    ## aoasl:hearingHearing                           114.610000  -0.197   0.8442
+    ## directionreversed:hearingHearing               122.710000  -1.759   0.0811
+    ## percent:aoasl:directionreversed                130.440000  -0.270   0.7876
+    ## percent:aoasl:hearingHearing                   142.590000   0.070   0.9441
+    ## percent:directionreversed:hearingHearing       124.590000   1.907   0.0588
+    ## aoasl:directionreversed:hearingHearing         123.440000   1.904   0.0592
+    ## percent:aoasl:directionreversed:hearingHearing 126.910000  -1.747   0.0831
+    ##                                                   
+    ## (Intercept)                                    ***
+    ## percent                                           
+    ## aoasl                                             
+    ## directionreversed                              ** 
+    ## hearingHearing                                    
+    ## percent:aoasl                                     
+    ## percent:directionreversed                         
+    ## aoasl:directionreversed                           
+    ## percent:hearingHearing                            
+    ## aoasl:hearingHearing                              
+    ## directionreversed:hearingHearing               .  
+    ## percent:aoasl:directionreversed                   
+    ## percent:aoasl:hearingHearing                      
+    ## percent:directionreversed:hearingHearing       .  
+    ## aoasl:directionreversed:hearingHearing         .  
+    ## percent:aoasl:directionreversed:hearingHearing .  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+    ## 
+    ## Correlation matrix not shown by default, as p = 16 > 12.
+    ## Use print(x, correlation=TRUE)  or
+    ##   vcov(x)     if you need it

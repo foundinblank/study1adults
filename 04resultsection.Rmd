@@ -600,3 +600,98 @@ summary(model)
 # autoplot(model2,which=1:6,data = datafc,colour='direction',label.size=3)
 ```
 
+# Deaf Hearing Analyses
+Let's try running models with deaf/hearing. First, a scatterplot...
+
+```{r}
+data.acc <- dataoriginal %>% filter(aoi=="facechest") 
+ggplot(data.acc, aes(x=signyrs,y=acc,color=direction)) + geom_jitter() + geom_smooth(method="lm") + facet_grid(.~hearing)
+```
+
+So the slopes don't change for direction, but the seem to change for deaf/hearing. In other words, signyears doesn't have a big effect for deaf, but it does for hearing. 
+
+```{r}
+model <- lmer(acc ~ hearing * direction * signyrs + (1|id) + (1|story), data = data.acc)
+summary(model)
+```
+
+Eh, no effect here. How about eye gaze...
+
+```{r}
+data.fc <- dataoriginal %>% filter(aoi=="facechest") 
+ggplot(data.fc, aes(x=signyrs,y=percent,color=direction)) + geom_jitter() + geom_smooth(method="lm") + facet_grid(.~hearing) + ylab("FaceChest Ratio")
+
+data.mouth <- dataoriginal %>% filter(aoi=="mouth") 
+ggplot(data.mouth, aes(x=signyrs,y=percent,color=direction)) + geom_jitter() + geom_smooth(method="lm") + facet_grid(.~hearing) + ylab("Mouth AOI Percent")
+
+data.eyes <- dataoriginal %>% filter(aoi=="eyes") 
+ggplot(data.eyes, aes(x=signyrs,y=percent,color=direction)) + geom_jitter() + geom_smooth(method="lm") + facet_grid(.~hearing) + ylab("Eyes AOI Percent")
+
+```
+
+Looks like we've got different reversal effects for FaceChest Ratio, Mouth AOI, and Eyes AOI...not terribly strong, though. Let's run models. 
+
+```{r}
+model <- lmer(percent ~ hearing * direction * signyrs + (1|id) + (1|story), data = data.fc)
+summary(model)
+
+model <- lmer(percent ~ hearing * direction * signyrs + (1|id) + (1|story), data = data.mouth)
+summary(model)
+
+model <- lmer(percent ~ hearing * direction * signyrs + (1|id) + (1|story), data = data.eyes)
+summary(model)
+```
+
+Let's ask a very simple question. Are deaf and hearing doing differently on the lexical recall test? 
+
+```{r}
+model <- lmer(acc ~ hearing * direction + (1|id) + (1|story), data = data.acc)
+summary(model)
+```
+
+Interestingly they are not. Direction has a big effect here but deaf v. hearing isn't. How about eye behavior.
+
+```{r}
+model <- lmer(percent ~ hearing * direction + (1|id) + (1|story), data = data.fc)
+summary(model)
+
+model <- lmer(percent ~ hearing * direction + (1|id) + (1|story), data = data.mouth)
+summary(model)
+
+model <- lmer(percent ~ hearing * direction + (1|id) + (1|story), data = data.eyes)
+summary(model)
+```
+
+Okay, so we get interactions for FaceChest Ratio and for Mouth...hearing and reversed do "worse". That at least. Of course, I'm worried about the Novice screwing up those results...let's check. Okay I checked all the models again with HearingNovice taken out, and yep, the effects disappeared. 
+
+What if we compared DeafLate and HearingLate, using signyrs as a covariate? 
+```{r}
+data.acc.late <- data.acc %>% filter(maingroup=="HearingLateASL" | maingroup=="DeafLateASL")
+model <- lmer(acc ~ hearing * direction * signyrs + (1|id) + (1|story), data = data.acc.late)
+summary(model)
+```
+
+Weird! Hearing has no effect (reversal does, though). Let's look at eye data. 
+
+```{r}
+data.fc.late <- data.fc %>% filter(maingroup=="HearingLateASL" | maingroup=="DeafLateASL")
+model <- lmer(percent ~ hearing * direction * signyrs + (1|id) + (1|story), data = data.fc.late)
+summary(model)
+
+data.mouth.late <- data.fc %>% filter(maingroup=="HearingLateASL" | maingroup=="DeafLateASL")
+model <- lmer(percent ~ hearing * direction * signyrs + (1|id) + (1|story), data = data.mouth.late)
+summary(model)
+
+data.eyes.late <- data.fc %>% filter(maingroup=="HearingLateASL" | maingroup=="DeafLateASL")
+model <- lmer(percent ~ hearing * direction * signyrs + (1|id) + (1|story), data = data.eyes.late)
+summary(model)
+```
+
+Ehhhh. Wha tabout using gaze behavior to predict accuracy, would that differ based on deafness?
+
+```{r}
+model <- lmer(acc ~ percent * aoasl * direction * hearing + (1|id) + (1|story), data = data.eyes)
+summary(model)
+
+```
+
