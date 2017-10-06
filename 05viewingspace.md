@@ -1,7 +1,7 @@
 Viewing Space (study1adults)
 ================
 Adam Stone, PhD
-10-05-2017
+10-06-2017
 
 -   [Get Data](#get-data)
 -   [Analysis](#analysis)
@@ -132,7 +132,7 @@ ggplot(adam,aes(x=x,y=y,color=media)) + geom_point(size=0.1) + geom_path() + fac
 IQR
 ===
 
-Now let's get the middle 50% (aka the IQR) of x and y for each participant's story. That should also take care of further weird outliers. And we are defining "viewing space" as the IQR of the x and y axis.
+Now let's get the middle 50% (aka the IQR) of x and y for each participant's story (we've already trimmed the first 30 samples). That should also take care of further weird outliers. And we are defining "viewing space" as the IQR of the x and y axis.
 
 ``` r
 iqr <- rawdata %>%
@@ -471,3 +471,42 @@ ggplot(sd.individuals, aes(fill=direction,color=direction)) +
     ## Warning: Removed 7 rows containing missing values (geom_rect).
 
 ![](05viewingspace_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-18-1.png)
+
+Now let's make Outer Limits charts which is IQR +/- 2 SDs.
+
+``` r
+sd.individuals <- select(sd.individuals,participant,media,xsd,ysd)
+iqrsd.individuals <- left_join(iqr.individuals,sd.individuals,by=c("participant","media")) %>%
+  mutate(xmin = xmin-(2*xsd),
+         xmax = xmax+(2*xsd),
+         ymin = ymin-(2*ysd),
+         ymax = ymax+(2*ysd))
+
+ggplot(iqrsd.individuals, aes(fill=direction,color=direction)) +
+  annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
+  geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
+  theme_minimal() + xlim(0,1440) + ylim(-1080,0) + facet_wrap("direction") +
+  ggtitle("with SDs")
+```
+
+    ## Warning: Removed 7 rows containing missing values (geom_rect).
+
+![](05viewingspace_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-19-1.png)
+
+``` r
+iqrsd.individuals <- iqrsd.individuals %>%
+  group_by(direction) %>%
+  dplyr::summarize(x = mean(x,na.rm=TRUE),
+            y = mean(y,na.rm=TRUE),
+            xmin = mean(xmin,na.rm=TRUE),
+            ymin = mean(ymin,na.rm=TRUE),
+            xmax = mean(xmax,na.rm=TRUE),
+            ymax = mean(ymax,na.rm=TRUE))
+ggplot(iqrsd.individuals, aes(fill=direction,color=direction)) +
+  annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
+  geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
+  theme_minimal() + xlim(0,1440) + ylim(-1080,0) + facet_wrap("direction") +
+  ggtitle("Average of above chart (rain's outer limits)")
+```
+
+![](05viewingspace_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-20-1.png)

@@ -18,7 +18,7 @@ output:
 
 # Get Data
 We'll load the raw data from all 8 .xls files. Each file shows the participant's name, group, language, media, and x/y eye gaze coordinates. Here's a quick glimpse of the data and how it's structured after I've processed and cleaned it up. 
-```{r, message=FALSE}
+```{r, message=FALSE, warning=FALSE}
 # Import packages we'll need.
 library(tidyverse)
 library(stringr)
@@ -99,7 +99,7 @@ ggplot(adam,aes(x=x,y=y,color=media)) + geom_point(size=0.1) + geom_path() + fac
 ```
 
 # IQR 
-Now let's get the middle 50% (aka the IQR) of x and y for each participant's story. That should also take care of further weird outliers. And we are defining "viewing space" as the IQR of the x and y axis. 
+Now let's get the middle 50% (aka the IQR) of x and y for each participant's story (we've already trimmed the first 30 samples). That should also take care of further weird outliers. And we are defining "viewing space" as the IQR of the x and y axis. 
 
 ```{r}
 iqr <- rawdata %>%
@@ -316,4 +316,36 @@ ggplot(sd.individuals, aes(fill=direction,color=direction)) +
 
 ```
 
+Now let's make Outer Limits charts which is IQR +/- 2 SDs. 
+```{r fig.height=10, fig.width=26}
+sd.individuals <- select(sd.individuals,participant,media,xsd,ysd)
+iqrsd.individuals <- left_join(iqr.individuals,sd.individuals,by=c("participant","media")) %>%
+  mutate(xmin = xmin-(2*xsd),
+         xmax = xmax+(2*xsd),
+         ymin = ymin-(2*ysd),
+         ymax = ymax+(2*ysd))
+
+ggplot(iqrsd.individuals, aes(fill=direction,color=direction)) +
+  annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
+  geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
+  theme_minimal() + xlim(0,1440) + ylim(-1080,0) + facet_wrap("direction") +
+  ggtitle("with SDs")
+```
+
+```{r fig.height=10, fig.width=26}
+iqrsd.individuals <- iqrsd.individuals %>%
+  group_by(direction) %>%
+  dplyr::summarize(x = mean(x,na.rm=TRUE),
+            y = mean(y,na.rm=TRUE),
+            xmin = mean(xmin,na.rm=TRUE),
+            ymin = mean(ymin,na.rm=TRUE),
+            xmax = mean(xmax,na.rm=TRUE),
+            ymax = mean(ymax,na.rm=TRUE))
+ggplot(iqrsd.individuals, aes(fill=direction,color=direction)) +
+  annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
+  geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
+  theme_minimal() + xlim(0,1440) + ylim(-1080,0) + facet_wrap("direction") +
+  ggtitle("Average of above chart (rain's outer limits)")
+
+```
 
