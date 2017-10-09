@@ -1,7 +1,7 @@
 Lexical Recall Analysis (study1adults)
 ================
 Adam Stone, PhD
-10-06-2017
+10-09-2017
 
 -   [Re-Initializing](#re-initializing)
 -   [ANOVAS](#anovas)
@@ -27,6 +27,8 @@ library(tidyverse)
     ## Loading tidyverse: purrr
     ## Loading tidyverse: dplyr
 
+    ## Warning: package 'dplyr' was built under R version 3.4.2
+
     ## Conflicts with tidy packages ----------------------------------------------
 
     ## filter(): dplyr, stats
@@ -36,6 +38,8 @@ library(tidyverse)
 library(stringr)
 library(lme4)
 ```
+
+    ## Warning: package 'lme4' was built under R version 3.4.2
 
     ## Loading required package: Matrix
 
@@ -157,10 +161,10 @@ anova(acc.anova)
     ## 
     ## Response: acc
     ##                      Df  Sum Sq Mean Sq F value    Pr(>F)    
-    ## maingroup             4 0.23532 0.05883  4.7134  0.001196 ** 
-    ## direction             1 1.03872 1.03872 83.2224 < 2.2e-16 ***
-    ## maingroup:direction   4 0.05973 0.01493  1.1965  0.313765    
-    ## Residuals           190 2.37143 0.01248                      
+    ## maingroup             4 0.25883 0.06471  5.2652 0.0004781 ***
+    ## direction             1 1.03966 1.03966 84.5953 < 2.2e-16 ***
+    ## maingroup:direction   4 0.06437 0.01609  1.3094 0.2678884    
+    ## Residuals           194 2.38421 0.01229                      
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -182,28 +186,28 @@ acc.posthoc
     ## Fit: aov(formula = acc ~ maingroup * direction, data = data)
     ## 
     ## $maingroup
-    ##                                         diff         lwr           upr
-    ## DeafEarlyASL-DeafNative         -0.049484127 -0.11936970  0.0204014447
-    ## DeafLateASL-DeafNative          -0.009205238 -0.08275768  0.0643472032
-    ## HearingLateASL-DeafNative       -0.030178571 -0.09519036  0.0348332161
-    ## HearingNoviceASL-DeafNative     -0.094837662 -0.16121416 -0.0284611608
-    ## DeafLateASL-DeafEarlyASL         0.040278889 -0.03578459  0.1163423716
-    ## HearingLateASL-DeafEarlyASL      0.019305556 -0.04853414  0.0871452511
-    ## HearingNoviceASL-DeafEarlyASL   -0.045353535 -0.11450216  0.0237950853
-    ## HearingLateASL-DeafLateASL      -0.020973333 -0.09258473  0.0506380679
-    ## HearingNoviceASL-DeafLateASL    -0.085632424 -0.15848502 -0.0127798318
-    ## HearingNoviceASL-HearingLateASL -0.064659091 -0.12887802 -0.0004401597
+    ##                                        diff         lwr           upr
+    ## DeafEarlyASL-DeafNative         -0.05435990 -0.12228806  0.0135682502
+    ## DeafLateASL-DeafNative          -0.01408101 -0.08571849  0.0575564659
+    ## HearingLateASL-DeafNative       -0.03505435 -0.09803939  0.0279306969
+    ## HearingNoviceASL-DeafNative     -0.09971344 -0.16408426 -0.0353426175
+    ## DeafLateASL-DeafEarlyASL         0.04027889 -0.03518395  0.1157417278
+    ## HearingLateASL-DeafEarlyASL      0.01930556 -0.04799844  0.0866095474
+    ## HearingNoviceASL-DeafEarlyASL   -0.04535354 -0.11395612  0.0232490455
+    ## HearingLateASL-DeafLateASL      -0.02097333 -0.09201925  0.0500725805
+    ## HearingNoviceASL-DeafLateASL    -0.08563242 -0.15790973 -0.0133551204
+    ## HearingNoviceASL-HearingLateASL -0.06465909 -0.12837091 -0.0009472717
     ##                                     p adj
-    ## DeafEarlyASL-DeafNative         0.2947202
-    ## DeafLateASL-DeafNative          0.9969453
-    ## HearingLateASL-DeafNative       0.7047530
-    ## HearingNoviceASL-DeafNative     0.0010929
-    ## DeafLateASL-DeafEarlyASL        0.5907106
-    ## HearingLateASL-DeafEarlyASL     0.9350638
-    ## HearingNoviceASL-DeafEarlyASL   0.3729068
-    ## HearingLateASL-DeafLateASL      0.9283378
-    ## HearingNoviceASL-DeafLateASL    0.0122676
-    ## HearingNoviceASL-HearingLateASL 0.0475423
+    ## DeafEarlyASL-DeafNative         0.1827414
+    ## DeafLateASL-DeafNative          0.9828866
+    ## HearingLateASL-DeafNative       0.5426520
+    ## HearingNoviceASL-DeafNative     0.0002986
+    ## DeafLateASL-DeafEarlyASL        0.5833527
+    ## HearingLateASL-DeafEarlyASL     0.9333215
+    ## HearingNoviceASL-DeafEarlyASL   0.3648014
+    ## HearingLateASL-DeafLateASL      0.9264324
+    ## HearingNoviceASL-DeafLateASL    0.0112978
+    ## HearingNoviceASL-HearingLateASL 0.0447976
 
 ``` r
 #kable(tidy(acc.posthoc), digits=3) %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
@@ -233,7 +237,7 @@ x
 (Intercept)
 </td>
 <td style="text-align:right;">
-0.848
+0.852
 </td>
 </tr>
 <tr>
@@ -241,7 +245,7 @@ x
 maingroupDeafEarlyASL
 </td>
 <td style="text-align:right;">
--0.012
+-0.016
 </td>
 </tr>
 <tr>
@@ -249,7 +253,7 @@ maingroupDeafEarlyASL
 maingroupDeafLateASL
 </td>
 <td style="text-align:right;">
-0.029
+0.024
 </td>
 </tr>
 <tr>
@@ -257,7 +261,7 @@ maingroupDeafLateASL
 maingroupHearingLateASL
 </td>
 <td style="text-align:right;">
-0.019
+0.014
 </td>
 </tr>
 <tr>
@@ -265,7 +269,7 @@ maingroupHearingLateASL
 maingroupHearingNoviceASL
 </td>
 <td style="text-align:right;">
--0.065
+-0.070
 </td>
 </tr>
 <tr>
@@ -281,7 +285,7 @@ directionreversed
 maingroupDeafEarlyASL:directionreversed
 </td>
 <td style="text-align:right;">
--0.076
+-0.077
 </td>
 </tr>
 <tr>
@@ -297,7 +301,7 @@ maingroupDeafLateASL:directionreversed
 maingroupHearingLateASL:directionreversed
 </td>
 <td style="text-align:right;">
--0.098
+-0.099
 </td>
 </tr>
 <tr>
@@ -305,7 +309,7 @@ maingroupHearingLateASL:directionreversed
 maingroupHearingNoviceASL:directionreversed
 </td>
 <td style="text-align:right;">
--0.059
+-0.060
 </td>
 </tr>
 </tbody>
@@ -336,14 +340,14 @@ anova(acc.ancova)
     ## 
     ## Response: acc
     ##                          Df  Sum Sq Mean Sq F value    Pr(>F)    
-    ## direction                 1 1.03872 1.03872 78.5261 5.344e-16 ***
-    ## aoasl                     1 0.06217 0.06217  4.6999   0.03139 *  
-    ## hearing                   1 0.02675 0.02675  2.0222   0.15663    
-    ## direction:aoasl           1 0.03273 0.03273  2.4747   0.11734    
-    ## direction:hearing         1 0.00132 0.00132  0.1000   0.75222    
-    ## aoasl:hearing             1 0.00112 0.00112  0.0845   0.77162    
-    ## direction:aoasl:hearing   1 0.00268 0.00268  0.2027   0.65305    
-    ## Residuals               192 2.53971 0.01323                      
+    ## direction                 1 1.03966 1.03966 79.5814 3.283e-16 ***
+    ## aoasl                     1 0.07953 0.07953  6.0878   0.01447 *  
+    ## hearing                   1 0.02473 0.02473  1.8933   0.17040    
+    ## direction:aoasl           1 0.03649 0.03649  2.7933   0.09625 .  
+    ## direction:hearing         1 0.00142 0.00142  0.1089   0.74171    
+    ## aoasl:hearing             1 0.00181 0.00181  0.1386   0.71010    
+    ## direction:aoasl:hearing   1 0.00287 0.00287  0.2196   0.63990    
+    ## Residuals               196 2.56055 0.01306                      
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -397,57 +401,57 @@ summary(acc.lm)
     ## Formula: acc ~ maingroup * direction + (direction | id) + (1 | story)
     ##    Data: data
     ## 
-    ## REML criterion at convergence: -293.8
+    ## REML criterion at convergence: -303.4
     ## 
     ## Scaled residuals: 
-    ##     Min      1Q  Median      3Q     Max 
-    ## -2.0587 -0.6302  0.0509  0.5563  2.2869 
+    ##      Min       1Q   Median       3Q      Max 
+    ## -2.06851 -0.62549  0.04674  0.55393  2.30845 
     ## 
     ## Random effects:
     ##  Groups   Name              Variance Std.Dev. Corr
-    ##  id       (Intercept)       0.001770 0.04208      
-    ##           directionreversed 0.002799 0.05290  0.20
-    ##  story    (Intercept)       0.001610 0.04013      
-    ##  Residual                   0.007809 0.08837      
-    ## Number of obs: 200, groups:  id, 51; story, 4
+    ##  id       (Intercept)       0.001767 0.04204      
+    ##           directionreversed 0.002675 0.05172  0.21
+    ##  story    (Intercept)       0.001556 0.03945      
+    ##  Residual                   0.007696 0.08773      
+    ## Number of obs: 204, groups:  id, 52; story, 4
     ## 
     ## Fixed effects:
     ##                                             Estimate Std. Error       df
-    ## (Intercept)                                  0.84844    0.03063 12.31000
-    ## maingroupDeafEarlyASL                       -0.01096    0.03424 45.61000
-    ## maingroupDeafLateASL                         0.02284    0.03586 47.24000
-    ## maingroupHearingLateASL                      0.01754    0.03176 45.54000
-    ## maingroupHearingNoviceASL                   -0.06729    0.03246 45.60000
-    ## directionreversed                           -0.08491    0.03167 46.71000
-    ## maingroupDeafEarlyASL:directionreversed     -0.07616    0.04700 45.64000
-    ## maingroupDeafLateASL:directionreversed      -0.06721    0.04916 47.58000
-    ## maingroupHearingLateASL:directionreversed   -0.09455    0.04346 45.80000
-    ## maingroupHearingNoviceASL:directionreversed -0.05421    0.04445 45.84000
+    ## (Intercept)                                  0.85322    0.02955 11.56000
+    ## maingroupDeafEarlyASL                       -0.01581    0.03334 46.51000
+    ## maingroupDeafLateASL                         0.01819    0.03506 48.54000
+    ## maingroupHearingLateASL                      0.01280    0.03089 46.65000
+    ## maingroupHearingNoviceASL                   -0.07201    0.03161 46.76000
+    ## directionreversed                           -0.08475    0.02993 47.65000
+    ## maingroupDeafEarlyASL:directionreversed     -0.07618    0.04543 46.50000
+    ## maingroupDeafLateASL:directionreversed      -0.06757    0.04784 48.77000
+    ## maingroupHearingLateASL:directionreversed   -0.09478    0.04204 46.78000
+    ## maingroupHearingNoviceASL:directionreversed -0.05448    0.04308 46.85000
     ##                                             t value Pr(>|t|)    
-    ## (Intercept)                                  27.701 1.84e-12 ***
-    ## maingroupDeafEarlyASL                        -0.320   0.7505    
-    ## maingroupDeafLateASL                          0.637   0.5273    
-    ## maingroupHearingLateASL                       0.552   0.5835    
-    ## maingroupHearingNoviceASL                    -2.073   0.0439 *  
-    ## directionreversed                            -2.681   0.0101 *  
-    ## maingroupDeafEarlyASL:directionreversed      -1.621   0.1120    
-    ## maingroupDeafLateASL:directionreversed       -1.367   0.1780    
-    ## maingroupHearingLateASL:directionreversed    -2.175   0.0348 *  
-    ## maingroupHearingNoviceASL:directionreversed  -1.220   0.2289    
+    ## (Intercept)                                  28.873  3.9e-12 ***
+    ## maingroupDeafEarlyASL                        -0.474  0.63762    
+    ## maingroupDeafLateASL                          0.519  0.60620    
+    ## maingroupHearingLateASL                       0.414  0.68053    
+    ## maingroupHearingNoviceASL                    -2.278  0.02732 *  
+    ## directionreversed                            -2.831  0.00677 ** 
+    ## maingroupDeafEarlyASL:directionreversed      -1.677  0.10026    
+    ## maingroupDeafLateASL:directionreversed       -1.412  0.16419    
+    ## maingroupHearingLateASL:directionreversed    -2.254  0.02889 *  
+    ## maingroupHearingNoviceASL:directionreversed  -1.265  0.21223    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr) mnDEASL mnDLASL mnHLASL mnHNASL drctnr mDEASL: mDLASL:
-    ## mngrpDfEASL -0.511                                                       
-    ## mngrpDfLASL -0.487  0.432                                                
-    ## mngrpHrLASL -0.550  0.490   0.471                                        
-    ## mngrpHrNASL -0.538  0.478   0.462   0.520                                
-    ## dirctnrvrsd -0.342  0.308   0.291   0.329   0.322                        
-    ## mngrpDEASL:  0.232 -0.454  -0.191  -0.219  -0.212  -0.676                
-    ## mngrpDLASL:  0.220 -0.192  -0.457  -0.215  -0.212  -0.643  0.426         
-    ## mngrpHLASL:  0.249 -0.220  -0.215  -0.450  -0.237  -0.728  0.487   0.472 
-    ## mngrpHNASL:  0.243 -0.213  -0.212  -0.237  -0.451  -0.711  0.472   0.464 
+    ## mngrpDfEASL -0.491                                                       
+    ## mngrpDfLASL -0.468  0.410                                                
+    ## mngrpHrLASL -0.531  0.467   0.450                                        
+    ## mngrpHrNASL -0.519  0.455   0.442   0.499                                
+    ## dirctnrvrsd -0.335  0.296   0.284   0.321   0.314                        
+    ## mngrpDEASL:  0.220 -0.449  -0.180  -0.207  -0.201  -0.657                
+    ## mngrpDLASL:  0.211 -0.180  -0.456  -0.205  -0.203  -0.628  0.404         
+    ## mngrpHLASL:  0.239 -0.208  -0.206  -0.448  -0.227  -0.713  0.463   0.452 
+    ## mngrpHNASL:  0.234 -0.201  -0.203  -0.227  -0.450  -0.696  0.449   0.445 
     ##             mHLASL:
     ## mngrpDfEASL        
     ## mngrpDfLASL        
@@ -457,7 +461,7 @@ summary(acc.lm)
     ## mngrpDEASL:        
     ## mngrpDLASL:        
     ## mngrpHLASL:        
-    ## mngrpHNASL:  0.521
+    ## mngrpHNASL:  0.501
 
 Here are the coefficients in a nicer format.
 
@@ -493,16 +497,16 @@ Pr(&gt;|t|)
 (Intercept)
 </td>
 <td style="text-align:right;">
-0.848
+0.853
 </td>
 <td style="text-align:right;">
-0.031
+0.030
 </td>
 <td style="text-align:right;">
-12.306
+11.558
 </td>
 <td style="text-align:right;">
-27.701
+28.873
 </td>
 <td style="text-align:right;">
 0.000
@@ -513,19 +517,19 @@ Pr(&gt;|t|)
 maingroupDeafEarlyASL
 </td>
 <td style="text-align:right;">
--0.011
+-0.016
 </td>
 <td style="text-align:right;">
-0.034
+0.033
 </td>
 <td style="text-align:right;">
-45.606
+46.514
 </td>
 <td style="text-align:right;">
--0.320
+-0.474
 </td>
 <td style="text-align:right;">
-0.750
+0.638
 </td>
 </tr>
 <tr>
@@ -533,19 +537,19 @@ maingroupDeafEarlyASL
 maingroupDeafLateASL
 </td>
 <td style="text-align:right;">
-0.023
+0.018
 </td>
 <td style="text-align:right;">
-0.036
+0.035
 </td>
 <td style="text-align:right;">
-47.239
+48.543
 </td>
 <td style="text-align:right;">
-0.637
+0.519
 </td>
 <td style="text-align:right;">
-0.527
+0.606
 </td>
 </tr>
 <tr>
@@ -553,19 +557,19 @@ maingroupDeafLateASL
 maingroupHearingLateASL
 </td>
 <td style="text-align:right;">
-0.018
+0.013
 </td>
 <td style="text-align:right;">
-0.032
+0.031
 </td>
 <td style="text-align:right;">
-45.543
+46.652
 </td>
 <td style="text-align:right;">
-0.552
+0.414
 </td>
 <td style="text-align:right;">
-0.583
+0.681
 </td>
 </tr>
 <tr>
@@ -573,19 +577,19 @@ maingroupHearingLateASL
 maingroupHearingNoviceASL
 </td>
 <td style="text-align:right;">
--0.067
+-0.072
 </td>
 <td style="text-align:right;">
 0.032
 </td>
 <td style="text-align:right;">
-45.600
+46.761
 </td>
 <td style="text-align:right;">
--2.073
+-2.278
 </td>
 <td style="text-align:right;">
-0.044
+0.027
 </td>
 </tr>
 <tr>
@@ -596,16 +600,16 @@ directionreversed
 -0.085
 </td>
 <td style="text-align:right;">
-0.032
+0.030
 </td>
 <td style="text-align:right;">
-46.709
+47.647
 </td>
 <td style="text-align:right;">
--2.681
+-2.831
 </td>
 <td style="text-align:right;">
-0.010
+0.007
 </td>
 </tr>
 <tr>
@@ -616,16 +620,16 @@ maingroupDeafEarlyASL:directionreversed
 -0.076
 </td>
 <td style="text-align:right;">
-0.047
+0.045
 </td>
 <td style="text-align:right;">
-45.644
+46.502
 </td>
 <td style="text-align:right;">
--1.621
+-1.677
 </td>
 <td style="text-align:right;">
-0.112
+0.100
 </td>
 </tr>
 <tr>
@@ -633,19 +637,19 @@ maingroupDeafEarlyASL:directionreversed
 maingroupDeafLateASL:directionreversed
 </td>
 <td style="text-align:right;">
--0.067
+-0.068
 </td>
 <td style="text-align:right;">
-0.049
+0.048
 </td>
 <td style="text-align:right;">
-47.584
+48.765
 </td>
 <td style="text-align:right;">
--1.367
+-1.412
 </td>
 <td style="text-align:right;">
-0.178
+0.164
 </td>
 </tr>
 <tr>
@@ -656,16 +660,16 @@ maingroupHearingLateASL:directionreversed
 -0.095
 </td>
 <td style="text-align:right;">
-0.043
+0.042
 </td>
 <td style="text-align:right;">
-45.798
+46.778
 </td>
 <td style="text-align:right;">
--2.175
+-2.254
 </td>
 <td style="text-align:right;">
-0.035
+0.029
 </td>
 </tr>
 <tr>
@@ -676,16 +680,16 @@ maingroupHearingNoviceASL:directionreversed
 -0.054
 </td>
 <td style="text-align:right;">
-0.044
+0.043
 </td>
 <td style="text-align:right;">
-45.839
+46.849
 </td>
 <td style="text-align:right;">
--1.220
+-1.265
 </td>
 <td style="text-align:right;">
-0.229
+0.212
 </td>
 </tr>
 </tbody>
@@ -726,13 +730,13 @@ p.value
 (Intercept)
 </td>
 <td style="text-align:right;">
-0.7567
+0.7612
 </td>
 <td style="text-align:right;">
-0.0144
+0.0140
 </td>
 <td style="text-align:right;">
-52.6254
+54.2806
 </td>
 <td style="text-align:right;">
 0.0000
@@ -743,16 +747,16 @@ p.value
 videogroupGroup 2
 </td>
 <td style="text-align:right;">
-0.0207
+0.0162
 </td>
 <td style="text-align:right;">
-0.0194
+0.0191
 </td>
 <td style="text-align:right;">
-1.0660
+0.8464
 </td>
 <td style="text-align:right;">
-0.2877
+0.3983
 </td>
 </tr>
 </tbody>

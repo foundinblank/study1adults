@@ -1,7 +1,7 @@
 Eye Gaze Analysis (study1adults)
 ================
 Adam Stone, PhD
-10-06-2017
+10-09-2017
 
 -   [Re-Initializing](#re-initializing)
 -   [AOIs](#aois)
@@ -34,6 +34,8 @@ library(tidyverse)
     ## Loading tidyverse: purrr
     ## Loading tidyverse: dplyr
 
+    ## Warning: package 'dplyr' was built under R version 3.4.2
+
     ## Conflicts with tidy packages ----------------------------------------------
 
     ## filter(): dplyr, stats
@@ -43,6 +45,8 @@ library(tidyverse)
 library(stringr)
 library(lme4)
 ```
+
+    ## Warning: package 'lme4' was built under R version 3.4.2
 
     ## Loading required package: Matrix
 
@@ -177,7 +181,7 @@ ggplot(data.reshape,aes(x=looking)) +
   ggtitle("Looking times of each AOI for each participant for each story")
 ```
 
-    ## Warning: Removed 889 rows containing non-finite values (stat_bin).
+    ## Warning: Removed 906 rows containing non-finite values (stat_bin).
 
 ![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-3-1.png)
 
@@ -217,10 +221,10 @@ lowlooking
     ## # A tibble: 4 x 4
     ##           story lessthan25 lessthan50 total
     ##          <fctr>      <int>      <int> <int>
-    ## 1    Cinderella          4          7    51
-    ## 2    Goldilocks          3          4    51
-    ## 3     KingMidas          4          6    51
-    ## 4 RedRidingHood          4          5    51
+    ## 1    Cinderella          4          7    52
+    ## 2    Goldilocks          3          4    52
+    ## 3     KingMidas          4          6    52
+    ## 4 RedRidingHood          4          5    52
 
 ``` r
 lowlookingid <- filter(data,quarter==FALSE) %>% 
@@ -262,7 +266,7 @@ data <- filter(data,quarter==TRUE)
 difference <- originalrows - nrow(data)
 ```
 
-So 15 stories were dropped from the previous total of 204 stories for a new total of 189 stories.
+So 15 stories were dropped from the previous total of 208 stories for a new total of 193 stories.
 
 Percentage Data and Viz
 -----------------------
@@ -290,7 +294,7 @@ ggplot(data2, aes(x=aoi,y=percent)) +
   geom_boxplot() 
 ```
 
-    ## Warning: Removed 818 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 835 rows containing non-finite values (stat_boxplot).
 
 ![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-1.png)
 
@@ -306,7 +310,7 @@ ggplot(data2,aes(x=percent)) +
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-    ## Warning: Removed 818 rows containing non-finite values (stat_bin).
+    ## Warning: Removed 835 rows containing non-finite values (stat_bin).
 
 ![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-8-1.png)
 
@@ -372,7 +376,7 @@ ggplot(data.big5) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 
-    ## Warning: Removed 128 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 130 rows containing non-finite values (stat_boxplot).
 
 ![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-11-1.png)
 
@@ -433,14 +437,14 @@ anova(group.anova)
     ## 
     ## Response: percent
     ##                          Df Sum Sq Mean Sq  F value    Pr(>F)    
-    ## aoi                       4 37.269  9.3173 275.0786 < 2.2e-16 ***
-    ## direction                 1  0.001  0.0012   0.0341  0.853633    
-    ## maingroup                 4  0.023  0.0058   0.1700  0.953717    
-    ## aoi:direction             4  0.547  0.1369   4.0405  0.002999 ** 
-    ## aoi:maingroup            16  3.134  0.1959   5.7823 5.505e-12 ***
-    ## direction:maingroup       4  0.000  0.0001   0.0031  0.999981    
-    ## aoi:direction:maingroup  16  0.505  0.0315   0.9311  0.532794    
-    ## Residuals               767 25.979  0.0339                       
+    ## aoi                       4 37.650  9.4124 277.8487 < 2.2e-16 ***
+    ## direction                 1  0.001  0.0010   0.0290  0.864801    
+    ## maingroup                 4  0.022  0.0054   0.1598  0.958550    
+    ## aoi:direction             4  0.610  0.1525   4.5009  0.001337 ** 
+    ## aoi:maingroup            16  3.128  0.1955   5.7715 5.653e-12 ***
+    ## direction:maingroup       4  0.001  0.0002   0.0049  0.999951    
+    ## aoi:direction:maingroup  16  0.532  0.0332   0.9810  0.475517    
+    ## Residuals               785 26.593  0.0339                       
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -460,16 +464,16 @@ group.anova.posthoc
     ## 
     ## $aoi
     ##                             diff         lwr          upr     p adj
-    ## upperchest-eyes     -0.182234423 -0.23611908 -0.128349765 0.0000000
-    ## chin-eyes           -0.061924534 -0.11403783 -0.009811235 0.0105843
-    ## mouth-eyes           0.389084353  0.33703948  0.441129229 0.0000000
-    ## forehead-eyes       -0.175476128 -0.24014841 -0.110803848 0.0000000
-    ## chin-upperchest      0.120309889  0.06662829  0.173991482 0.0000000
-    ## mouth-upperchest     0.571318775  0.51770360  0.624933947 0.0000000
-    ## forehead-upperchest  0.006758295 -0.05918427  0.072700856 0.9986497
-    ## mouth-chin           0.451008887  0.39917428  0.502843492 0.0000000
-    ## forehead-chin       -0.113551594 -0.17805478 -0.049048408 0.0000176
-    ## forehead-mouth      -0.564560480 -0.62900840 -0.500112563 0.0000000
+    ## upperchest-eyes     -0.183156836 -0.23643303 -0.129880643 0.0000000
+    ## chin-eyes           -0.059431532 -0.11099557 -0.007867497 0.0145279
+    ## mouth-eyes           0.385833474  0.33433575  0.437331200 0.0000000
+    ## forehead-eyes       -0.176672876 -0.24064552 -0.112700236 0.0000000
+    ## chin-upperchest      0.123725305  0.07064596  0.176804650 0.0000000
+    ## mouth-upperchest     0.568990311  0.51597538  0.622005242 0.0000000
+    ## forehead-upperchest  0.006483961 -0.05871624  0.071684158 0.9988007
+    ## mouth-chin           0.445265006  0.39397095  0.496559060 0.0000000
+    ## forehead-chin       -0.117241344 -0.18105014 -0.053432545 0.0000062
+    ## forehead-mouth      -0.562506350 -0.62626158 -0.498751124 0.0000000
 
 Age of ASL & Hearing Status ANCOVA
 ----------------------------------
@@ -484,9 +488,9 @@ ggplot(data.big5, aes(x=aoasl,y=percent)) +
   facet_wrap("aoi")
 ```
 
-    ## Warning: Removed 128 rows containing non-finite values (stat_smooth).
+    ## Warning: Removed 130 rows containing non-finite values (stat_smooth).
 
-    ## Warning: Removed 128 rows containing missing values (geom_point).
+    ## Warning: Removed 130 rows containing missing values (geom_point).
 
 ![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-17-1.png)
 
@@ -501,22 +505,22 @@ anova(continuous.anova)
     ## 
     ## Response: percent
     ##                              Df Sum Sq Mean Sq  F value    Pr(>F)    
-    ## aoi                           4 37.269  9.3173 276.8708 < 2.2e-16 ***
-    ## direction                     1  0.001  0.0012   0.0343 0.8531613    
-    ## hearing                       1  0.011  0.0113   0.3354 0.5626733    
-    ## aoasl                         1  0.002  0.0016   0.0479 0.8267947    
-    ## aoi:direction                 4  0.547  0.1368   4.0664 0.0028644 ** 
-    ## aoi:hearing                   4  1.705  0.4264  12.6698 5.413e-10 ***
-    ## direction:hearing             1  0.000  0.0001   0.0040 0.9496962    
-    ## aoi:aoasl                     4  0.655  0.1637   4.8636 0.0007052 ***
-    ## direction:aoasl               1  0.000  0.0003   0.0083 0.9276291    
-    ## hearing:aoasl                 1  0.008  0.0075   0.2236 0.6364747    
-    ## aoi:direction:hearing         4  0.146  0.0365   1.0855 0.3625017    
-    ## aoi:direction:aoasl           4  0.036  0.0090   0.2671 0.8991300    
-    ## aoi:hearing:aoasl             4  0.872  0.2179   6.4746 3.974e-05 ***
-    ## direction:hearing:aoasl       1  0.002  0.0017   0.0492 0.8245446    
-    ## aoi:direction:hearing:aoasl   4  0.057  0.0143   0.4249 0.7907154    
-    ## Residuals                   777 26.148  0.0337                       
+    ## aoi                           4 37.650  9.4124 279.4510 < 2.2e-16 ***
+    ## direction                     1  0.001  0.0010   0.0292 0.8644150    
+    ## hearing                       1  0.011  0.0111   0.3287 0.5665660    
+    ## aoasl                         1  0.001  0.0014   0.0405 0.8406232    
+    ## aoi:direction                 4  0.610  0.1524   4.5260 0.0012773 ** 
+    ## aoi:hearing                   4  1.588  0.3970  11.7868 2.634e-09 ***
+    ## direction:hearing             1  0.000  0.0002   0.0058 0.9393747    
+    ## aoi:aoasl                     4  0.779  0.1947   5.7792 0.0001378 ***
+    ## direction:aoasl               1  0.000  0.0002   0.0047 0.9455099    
+    ## hearing:aoasl                 1  0.007  0.0071   0.2104 0.6466018    
+    ## aoi:direction:hearing         4  0.127  0.0318   0.9441 0.4376885    
+    ## aoi:direction:aoasl           4  0.044  0.0111   0.3289 0.8586560    
+    ## aoi:hearing:aoasl             4  0.881  0.2203   6.5394 3.523e-05 ***
+    ## direction:hearing:aoasl       1  0.002  0.0018   0.0547 0.8150637    
+    ## aoi:direction:hearing:aoasl   4  0.057  0.0143   0.4246 0.7909800    
+    ## Residuals                   795 26.777  0.0337                       
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -529,9 +533,9 @@ ggplot(data.big5, aes(x=signyrs,y=percent)) +
   facet_wrap("aoi")
 ```
 
-    ## Warning: Removed 128 rows containing non-finite values (stat_smooth).
+    ## Warning: Removed 130 rows containing non-finite values (stat_smooth).
 
-    ## Warning: Removed 128 rows containing missing values (geom_point).
+    ## Warning: Removed 130 rows containing missing values (geom_point).
 
 ![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-19-1.png)
 
@@ -548,22 +552,22 @@ anova(continuous.anova.sy)
     ## 
     ## Response: percent
     ##                                Df Sum Sq Mean Sq  F value    Pr(>F)    
-    ## aoi                             4 37.269  9.3173 269.5036 < 2.2e-16 ***
-    ## direction                       1  0.001  0.0012   0.0334  0.855106    
-    ## hearing                         1  0.011  0.0113   0.3265  0.567916    
-    ## signyrs                         1  0.000  0.0000   0.0000  0.998253    
-    ## aoi:direction                   4  0.547  0.1368   3.9566  0.003469 ** 
-    ## aoi:hearing                     4  1.706  0.4265  12.3351 9.909e-10 ***
-    ## direction:hearing               1  0.000  0.0001   0.0035  0.953061    
-    ## aoi:signyrs                     4  0.400  0.0999   2.8904  0.021566 *  
-    ## direction:signyrs               1  0.001  0.0007   0.0194  0.889194    
-    ## hearing:signyrs                 1  0.003  0.0026   0.0759  0.783037    
-    ## aoi:direction:hearing           4  0.159  0.0398   1.1504  0.331541    
-    ## aoi:direction:signyrs           4  0.078  0.0194   0.5612  0.690933    
-    ## aoi:hearing:signyrs             4  0.344  0.0861   2.4895  0.042019 *  
-    ## direction:hearing:signyrs       1  0.000  0.0000   0.0000  0.999538    
-    ## aoi:direction:hearing:signyrs   4  0.078  0.0194   0.5620  0.690307    
-    ## Residuals                     777 26.862  0.0346                       
+    ## aoi                             4 37.650  9.4124 270.4292 < 2.2e-16 ***
+    ## direction                       1  0.001  0.0010   0.0282  0.866601    
+    ## hearing                         1  0.011  0.0111   0.3181  0.572896    
+    ## signyrs                         1  0.000  0.0000   0.0000  0.998426    
+    ## aoi:direction                   4  0.609  0.1524   4.3775  0.001659 ** 
+    ## aoi:hearing                     4  1.588  0.3971  11.4084 5.229e-09 ***
+    ## direction:hearing               1  0.000  0.0002   0.0051  0.943132    
+    ## aoi:signyrs                     4  0.360  0.0900   2.5851  0.035864 *  
+    ## direction:signyrs               1  0.001  0.0007   0.0209  0.885031    
+    ## hearing:signyrs                 1  0.003  0.0026   0.0747  0.784714    
+    ## aoi:direction:hearing           4  0.137  0.0342   0.9823  0.416347    
+    ## aoi:direction:signyrs           4  0.049  0.0122   0.3504  0.843838    
+    ## aoi:hearing:signyrs             4  0.352  0.0880   2.5290  0.039347 *  
+    ## direction:hearing:signyrs       1  0.000  0.0000   0.0000  0.996890    
+    ## aoi:direction:hearing:signyrs   4  0.105  0.0262   0.7520  0.556784    
+    ## Residuals                     795 27.670  0.0348                       
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -657,14 +661,14 @@ anova(group.anova.face3)
     ## 
     ## Response: percent
     ##                          Df  Sum Sq Mean Sq  F value    Pr(>F)    
-    ## aoi                       2 22.5162 11.2581 236.2141 < 2.2e-16 ***
-    ## direction                 1  0.0179  0.0179   0.3752  0.540428    
-    ## maingroup                 4  0.0730  0.0182   0.3828  0.821003    
-    ## aoi:direction             2  0.5087  0.2544   5.3370  0.005071 ** 
-    ## aoi:maingroup             8  2.9807  0.3726   7.8176 5.949e-10 ***
-    ## direction:maingroup       4  0.0028  0.0007   0.0144  0.999590    
-    ## aoi:direction:maingroup   8  0.4243  0.0530   1.1127  0.352729    
-    ## Residuals               532 25.3555  0.0477                       
+    ## aoi                       2 22.4829 11.2414 235.4935 < 2.2e-16 ***
+    ## direction                 1  0.0177  0.0177   0.3708  0.542813    
+    ## maingroup                 4  0.0745  0.0186   0.3904  0.815562    
+    ## aoi:direction             2  0.5693  0.2846   5.9626  0.002744 ** 
+    ## aoi:maingroup             8  2.9754  0.3719   7.7914 6.296e-10 ***
+    ## direction:maingroup       4  0.0027  0.0007   0.0142  0.999603    
+    ## aoi:direction:maingroup   8  0.4479  0.0560   1.1728  0.313342    
+    ## Residuals               544 25.9682  0.0477                       
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -682,9 +686,9 @@ group.anova.face3.posthoc
     ## 
     ## $aoi
     ##                   diff        lwr          upr     p adj
-    ## mouth-eyes  0.38908435  0.3360178  0.442150858 0.0000000
-    ## chin-eyes  -0.06192453 -0.1150608 -0.008788263 0.0174817
-    ## chin-mouth -0.45100889 -0.5038610 -0.398156780 0.0000000
+    ## mouth-eyes  0.38583347  0.3332877  0.438379268 0.0000000
+    ## chin-eyes  -0.05943153 -0.1120450 -0.006818079 0.0222245
+    ## chin-mouth -0.44526501 -0.4976030 -0.392927030 0.0000000
 
 And posthoc for aoi:direction.
 
@@ -699,37 +703,37 @@ group.anova.face3.posthoc2
     ## Fit: aov(formula = percent ~ aoi * direction * maingroup, data = data.face3)
     ## 
     ## $`aoi:direction`
-    ##                                     diff           lwr          upr
-    ## mouth:forward-eyes:forward    0.44304506  0.3529198345  0.533170282
-    ## chin:forward-eyes:forward    -0.07644847 -0.1665736963  0.013676751
-    ## eyes:reversed-eyes:forward    0.01588832 -0.0759919368  0.107768585
-    ## mouth:reversed-eyes:forward   0.34891669  0.2580675571  0.439765823
-    ## chin:reversed-eyes:forward   -0.03114965 -0.1222492262  0.059949931
-    ## chin:forward-mouth:forward   -0.51949353 -0.6096187545 -0.429368307
-    ## eyes:reversed-mouth:forward  -0.42715673 -0.5190369950 -0.335276474
-    ## mouth:reversed-mouth:forward -0.09412837 -0.1849775011 -0.003279236
-    ## chin:reversed-mouth:forward  -0.47419471 -0.5652942844 -0.383095127
-    ## eyes:reversed-chin:forward    0.09233680  0.0004565357  0.184217057
-    ## mouth:reversed-chin:forward   0.42536516  0.3345160297  0.516214295
-    ## chin:reversed-chin:forward    0.04529883 -0.0458007537  0.136398404
-    ## mouth:reversed-eyes:reversed  0.33302837  0.2404379168  0.425618815
-    ## chin:reversed-eyes:reversed  -0.04703797 -0.1398741691  0.045798226
-    ## chin:reversed-mouth:reversed -0.38006634 -0.4718821433 -0.288250531
+    ##                                      diff           lwr          upr
+    ## mouth:forward-eyes:forward    0.435352506  0.3460887380  0.524616274
+    ## chin:forward-eyes:forward    -0.084112698 -0.1733764664  0.005151070
+    ## eyes:reversed-eyes:forward    0.005940244 -0.0850239393  0.096904427
+    ## mouth:reversed-eyes:forward   0.340561238  0.2505955158  0.430526960
+    ## chin:reversed-eyes:forward   -0.027858161 -0.1180665454  0.062350223
+    ## chin:forward-mouth:forward   -0.519465204 -0.6087289724 -0.430201436
+    ## eyes:reversed-mouth:forward  -0.429412262 -0.5203764452 -0.338448079
+    ## mouth:reversed-mouth:forward -0.094791268 -0.1847569901 -0.004825546
+    ## chin:reversed-mouth:forward  -0.463210667 -0.5534190513 -0.373002282
+    ## eyes:reversed-chin:forward    0.090052942 -0.0009112408  0.181017125
+    ## mouth:reversed-chin:forward   0.424673936  0.3347082143  0.514639658
+    ## chin:reversed-chin:forward    0.056254537 -0.0339538469  0.146462922
+    ## mouth:reversed-eyes:reversed  0.334620994  0.2429678793  0.426274109
+    ## chin:reversed-eyes:reversed  -0.033798405 -0.1256897260  0.058092917
+    ## chin:reversed-mouth:reversed -0.368419399 -0.4593224430 -0.277516354
     ##                                  p adj
     ## mouth:forward-eyes:forward   0.0000000
-    ## chin:forward-eyes:forward    0.1491032
-    ## eyes:reversed-eyes:forward   0.9963573
+    ## chin:forward-eyes:forward    0.0778777
+    ## eyes:reversed-eyes:forward   0.9999686
     ## mouth:reversed-eyes:forward  0.0000000
-    ## chin:reversed-eyes:forward   0.9248427
+    ## chin:reversed-eyes:forward   0.9504686
     ## chin:forward-mouth:forward   0.0000000
     ## eyes:reversed-mouth:forward  0.0000000
-    ## mouth:reversed-mouth:forward 0.0372745
+    ## mouth:reversed-mouth:forward 0.0321675
     ## chin:reversed-mouth:forward  0.0000000
-    ## eyes:reversed-chin:forward   0.0480547
+    ## eyes:reversed-chin:forward   0.0541257
     ## mouth:reversed-chin:forward  0.0000000
-    ## chin:reversed-chin:forward   0.7135245
+    ## chin:reversed-chin:forward   0.4773258
     ## mouth:reversed-eyes:reversed 0.0000000
-    ## chin:reversed-eyes:reversed  0.6967604
+    ## chin:reversed-eyes:reversed  0.8999180
     ## chin:reversed-mouth:reversed 0.0000000
 
 And posthoc for aoi:maingroup.
@@ -745,218 +749,218 @@ group.anova.face3.posthoc3
     ## Fit: aov(formula = percent ~ aoi * direction * maingroup, data = data.face3)
     ## 
     ## $`aoi:maingroup`
-    ##                                                       diff          lwr
-    ## mouth:DeafNative-eyes:DeafNative              0.4975815540  0.334265869
-    ## chin:DeafNative-eyes:DeafNative               0.0790435693 -0.084272116
-    ## eyes:DeafEarlyASL-eyes:DeafNative             0.0522013056 -0.132166918
-    ## mouth:DeafEarlyASL-eyes:DeafNative            0.5063157924  0.323943429
-    ## chin:DeafEarlyASL-eyes:DeafNative             0.0009453231 -0.183422900
-    ## eyes:DeafLateASL-eyes:DeafNative              0.0431999662 -0.135523691
-    ## mouth:DeafLateASL-eyes:DeafNative             0.6241060179  0.445382361
-    ## chin:DeafLateASL-eyes:DeafNative             -0.0983372981 -0.277060955
-    ## eyes:HearingLateASL-eyes:DeafNative           0.1863604435  0.023985538
-    ## mouth:HearingLateASL-eyes:DeafNative          0.3528236840  0.192219644
-    ## chin:HearingLateASL-eyes:DeafNative          -0.0060655050 -0.166669545
-    ## eyes:HearingNoviceASL-eyes:DeafNative         0.0567544382 -0.104717337
-    ## mouth:HearingNoviceASL-eyes:DeafNative        0.3946207178  0.233148942
-    ## chin:HearingNoviceASL-eyes:DeafNative         0.0378714717 -0.123600304
-    ## chin:DeafNative-mouth:DeafNative             -0.4185379847 -0.580866859
-    ## eyes:DeafEarlyASL-mouth:DeafNative           -0.4453802484 -0.628874914
-    ## mouth:DeafEarlyASL-mouth:DeafNative           0.0087342384 -0.172754960
-    ## chin:DeafEarlyASL-mouth:DeafNative           -0.4966362309 -0.680130896
-    ## eyes:DeafLateASL-mouth:DeafNative            -0.4543815878 -0.632203960
-    ## mouth:DeafLateASL-mouth:DeafNative            0.1265244640 -0.051297908
-    ## chin:DeafLateASL-mouth:DeafNative            -0.5959188520 -0.773741224
-    ## eyes:HearingLateASL-mouth:DeafNative         -0.3112211104 -0.472603453
-    ## mouth:HearingLateASL-mouth:DeafNative        -0.1447578700 -0.304358334
-    ## chin:HearingLateASL-mouth:DeafNative         -0.5036470590 -0.663247523
-    ## eyes:HearingNoviceASL-mouth:DeafNative       -0.4408271158 -0.601300742
-    ## mouth:HearingNoviceASL-mouth:DeafNative      -0.1029608362 -0.263434462
-    ## chin:HearingNoviceASL-mouth:DeafNative       -0.4597100822 -0.620183709
-    ## eyes:DeafEarlyASL-chin:DeafNative            -0.0268422637 -0.210336929
-    ## mouth:DeafEarlyASL-chin:DeafNative            0.4272722231  0.245783024
-    ## chin:DeafEarlyASL-chin:DeafNative            -0.0780982462 -0.261592912
-    ## eyes:DeafLateASL-chin:DeafNative             -0.0358436032 -0.213665976
-    ## mouth:DeafLateASL-chin:DeafNative             0.5450624486  0.367240076
-    ## chin:DeafLateASL-chin:DeafNative             -0.1773808674 -0.355203240
-    ## eyes:HearingLateASL-chin:DeafNative           0.1073168742 -0.054065468
-    ## mouth:HearingLateASL-chin:DeafNative          0.2737801147  0.114179651
-    ## chin:HearingLateASL-chin:DeafNative          -0.0851090744 -0.244709538
-    ## eyes:HearingNoviceASL-chin:DeafNative        -0.0222891311 -0.182762757
-    ## mouth:HearingNoviceASL-chin:DeafNative        0.3155771485  0.155103522
-    ## chin:HearingNoviceASL-chin:DeafNative        -0.0411720976 -0.201645724
-    ## mouth:DeafEarlyASL-eyes:DeafEarlyASL          0.4541144868  0.253470628
-    ## chin:DeafEarlyASL-eyes:DeafEarlyASL          -0.0512559825 -0.253715660
-    ## eyes:DeafLateASL-eyes:DeafEarlyASL           -0.0090013394 -0.206334623
-    ## mouth:DeafLateASL-eyes:DeafEarlyASL           0.5719047123  0.374571429
-    ## chin:DeafLateASL-eyes:DeafEarlyASL           -0.1505386037 -0.347871887
-    ## eyes:HearingLateASL-eyes:DeafEarlyASL         0.1341591380 -0.048498709
-    ## mouth:HearingLateASL-eyes:DeafEarlyASL        0.3006223784  0.119536938
-    ## chin:HearingLateASL-eyes:DeafEarlyASL        -0.0582668106 -0.239352251
-    ## eyes:HearingNoviceASL-eyes:DeafEarlyASL       0.0045531326 -0.177302342
-    ## mouth:HearingNoviceASL-eyes:DeafEarlyASL      0.3424194122  0.160563938
-    ## chin:HearingNoviceASL-eyes:DeafEarlyASL      -0.0143298339 -0.196185308
-    ## chin:DeafEarlyASL-mouth:DeafEarlyASL         -0.5053704693 -0.706014328
-    ## eyes:DeafLateASL-mouth:DeafEarlyASL          -0.4631158263 -0.658585676
-    ## mouth:DeafLateASL-mouth:DeafEarlyASL          0.1177902255 -0.077679624
-    ## chin:DeafLateASL-mouth:DeafEarlyASL          -0.6046530905 -0.800122940
-    ## eyes:HearingLateASL-mouth:DeafEarlyASL       -0.3199553489 -0.500598440
-    ## mouth:HearingLateASL-mouth:DeafEarlyASL      -0.1534921084 -0.332545100
-    ## chin:HearingLateASL-mouth:DeafEarlyASL       -0.5123812975 -0.691434289
-    ## eyes:HearingNoviceASL-mouth:DeafEarlyASL     -0.4495613542 -0.629393083
-    ## mouth:HearingNoviceASL-mouth:DeafEarlyASL    -0.1116950746 -0.291526803
-    ## chin:HearingNoviceASL-mouth:DeafEarlyASL     -0.4684443207 -0.648276049
-    ## eyes:DeafLateASL-chin:DeafEarlyASL            0.0422546431 -0.155078641
-    ## mouth:DeafLateASL-chin:DeafEarlyASL           0.6231606948  0.425827411
-    ## chin:DeafLateASL-chin:DeafEarlyASL           -0.0992826212 -0.296615905
-    ## eyes:HearingLateASL-chin:DeafEarlyASL         0.1854151205  0.002757273
-    ## mouth:HearingLateASL-chin:DeafEarlyASL        0.3518783609  0.170792920
-    ## chin:HearingLateASL-chin:DeafEarlyASL        -0.0070108281 -0.188096269
-    ## eyes:HearingNoviceASL-chin:DeafEarlyASL       0.0558091151 -0.126046359
-    ## mouth:HearingNoviceASL-chin:DeafEarlyASL      0.3936753947  0.211819921
-    ## chin:HearingNoviceASL-chin:DeafEarlyASL       0.0369261486 -0.144929325
-    ## mouth:DeafLateASL-eyes:DeafLateASL            0.5809060518  0.388835937
-    ## chin:DeafLateASL-eyes:DeafLateASL            -0.1415372642 -0.333607379
-    ## eyes:HearingLateASL-eyes:DeafLateASL          0.1431604774 -0.033798255
-    ## mouth:HearingLateASL-eyes:DeafLateASL         0.3096237178  0.134288494
-    ## chin:HearingLateASL-eyes:DeafLateASL         -0.0492654712 -0.224600695
-    ## eyes:HearingNoviceASL-eyes:DeafLateASL        0.0135544720 -0.162575927
-    ## mouth:HearingNoviceASL-eyes:DeafLateASL       0.3514207516  0.175290353
-    ## chin:HearingNoviceASL-eyes:DeafLateASL       -0.0053284944 -0.181458893
-    ## chin:DeafLateASL-mouth:DeafLateASL           -0.7224433160 -0.914513430
-    ## eyes:HearingLateASL-mouth:DeafLateASL        -0.4377455744 -0.614704307
-    ## mouth:HearingLateASL-mouth:DeafLateASL       -0.2712823340 -0.446617558
-    ## chin:HearingLateASL-mouth:DeafLateASL        -0.6301715230 -0.805506747
-    ## eyes:HearingNoviceASL-mouth:DeafLateASL      -0.5673515797 -0.743481979
-    ## mouth:HearingNoviceASL-mouth:DeafLateASL     -0.2294853001 -0.405615699
-    ## chin:HearingNoviceASL-mouth:DeafLateASL      -0.5862345462 -0.762364945
-    ## eyes:HearingLateASL-chin:DeafLateASL          0.2846977416  0.107739009
-    ## mouth:HearingLateASL-chin:DeafLateASL         0.4511609821  0.275825758
-    ## chin:HearingLateASL-chin:DeafLateASL          0.0922717930 -0.083063431
-    ## eyes:HearingNoviceASL-chin:DeafLateASL        0.1550917363 -0.021038663
-    ## mouth:HearingNoviceASL-chin:DeafLateASL       0.4929580159  0.316827617
-    ## chin:HearingNoviceASL-chin:DeafLateASL        0.1362087698 -0.039921629
-    ## mouth:HearingLateASL-eyes:HearingLateASL      0.1664632404  0.007825587
-    ## chin:HearingLateASL-eyes:HearingLateASL      -0.1924259486 -0.351063602
-    ## eyes:HearingNoviceASL-eyes:HearingLateASL    -0.1296060053 -0.289122091
-    ## mouth:HearingNoviceASL-eyes:HearingLateASL    0.2082602742  0.048744188
-    ## chin:HearingNoviceASL-eyes:HearingLateASL    -0.1484889718 -0.308005058
-    ## chin:HearingLateASL-mouth:HearingLateASL     -0.3588891890 -0.515713781
-    ## eyes:HearingNoviceASL-mouth:HearingLateASL   -0.2960692458 -0.453782369
-    ## mouth:HearingNoviceASL-mouth:HearingLateASL   0.0417970338 -0.115916090
-    ## chin:HearingNoviceASL-mouth:HearingLateASL   -0.3149522122 -0.472665336
-    ## eyes:HearingNoviceASL-chin:HearingLateASL     0.0628199432 -0.094893180
-    ## mouth:HearingNoviceASL-chin:HearingLateASL    0.4006862228  0.242973099
-    ## chin:HearingNoviceASL-chin:HearingLateASL     0.0439369768 -0.113776147
-    ## mouth:HearingNoviceASL-eyes:HearingNoviceASL  0.3378662796  0.179269602
-    ## chin:HearingNoviceASL-eyes:HearingNoviceASL  -0.0188829665 -0.177479644
-    ## chin:HearingNoviceASL-mouth:HearingNoviceASL -0.3567492461 -0.515345923
-    ##                                                        upr     p adj
-    ## mouth:DeafNative-eyes:DeafNative              0.6608972391 0.0000000
-    ## chin:DeafNative-eyes:DeafNative               0.2423592544 0.9467489
-    ## eyes:DeafEarlyASL-eyes:DeafNative             0.2365695288 0.9997528
-    ## mouth:DeafEarlyASL-eyes:DeafNative            0.6886881556 0.0000000
-    ## chin:DeafEarlyASL-eyes:DeafNative             0.1853135463 1.0000000
-    ## eyes:DeafLateASL-eyes:DeafNative              0.2219236235 0.9999627
-    ## mouth:DeafLateASL-eyes:DeafNative             0.8028296753 0.0000000
-    ## chin:DeafLateASL-eyes:DeafNative              0.0803863593 0.8647538
-    ## eyes:HearingLateASL-eyes:DeafNative           0.3487353491 0.0088725
-    ## mouth:HearingLateASL-eyes:DeafNative          0.5134277236 0.0000000
-    ## chin:HearingLateASL-eyes:DeafNative           0.1545385346 1.0000000
-    ## eyes:HearingNoviceASL-eyes:DeafNative         0.2182262137 0.9972785
-    ## mouth:HearingNoviceASL-eyes:DeafNative        0.5560924933 0.0000000
-    ## chin:HearingNoviceASL-eyes:DeafNative         0.1993432472 0.9999742
-    ## chin:DeafNative-mouth:DeafNative             -0.2562091103 0.0000000
-    ## eyes:DeafEarlyASL-mouth:DeafNative           -0.2618855831 0.0000000
-    ## mouth:DeafEarlyASL-mouth:DeafNative           0.1902234373 1.0000000
-    ## chin:DeafEarlyASL-mouth:DeafNative           -0.3131415656 0.0000000
-    ## eyes:DeafLateASL-mouth:DeafNative            -0.2765592154 0.0000000
-    ## mouth:DeafLateASL-mouth:DeafNative            0.3043468364 0.4976579
-    ## chin:DeafLateASL-mouth:DeafNative            -0.4180964796 0.0000000
-    ## eyes:HearingLateASL-mouth:DeafNative         -0.1498387682 0.0000000
-    ## mouth:HearingLateASL-mouth:DeafNative         0.0148425937 0.1243274
-    ## chin:HearingLateASL-mouth:DeafNative         -0.3440465953 0.0000000
-    ## eyes:HearingNoviceASL-mouth:DeafNative       -0.2803534895 0.0000000
-    ## mouth:HearingNoviceASL-mouth:DeafNative       0.0575127901 0.6747035
-    ## chin:HearingNoviceASL-mouth:DeafNative       -0.2992364559 0.0000000
-    ## eyes:DeafEarlyASL-chin:DeafNative             0.1566524016 0.9999999
-    ## mouth:DeafEarlyASL-chin:DeafNative            0.6087614220 0.0000000
-    ## chin:DeafEarlyASL-chin:DeafNative             0.1053964191 0.9821854
-    ## eyes:DeafLateASL-chin:DeafNative              0.1419787693 0.9999962
-    ## mouth:DeafLateASL-chin:DeafNative             0.7228848211 0.0000000
-    ## chin:DeafLateASL-chin:DeafNative              0.0004415051 0.0513276
-    ## eyes:HearingLateASL-chin:DeafNative           0.2686992165 0.6164554
-    ## mouth:HearingLateASL-chin:DeafNative          0.4333805783 0.0000009
-    ## chin:HearingLateASL-chin:DeafNative           0.0744913893 0.8905388
-    ## eyes:HearingNoviceASL-chin:DeafNative         0.1381844952 1.0000000
-    ## mouth:HearingNoviceASL-chin:DeafNative        0.4760507748 0.0000000
-    ## chin:HearingNoviceASL-chin:DeafNative         0.1193015287 0.9999230
-    ## mouth:DeafEarlyASL-eyes:DeafEarlyASL          0.6547583456 0.0000000
-    ## chin:DeafEarlyASL-eyes:DeafEarlyASL           0.1512036948 0.9999345
-    ## eyes:DeafLateASL-eyes:DeafEarlyASL            0.1883319443 1.0000000
-    ## mouth:DeafLateASL-eyes:DeafEarlyASL           0.7692379961 0.0000000
-    ## chin:DeafLateASL-eyes:DeafEarlyASL            0.0467946801 0.3725917
-    ## eyes:HearingLateASL-eyes:DeafEarlyASL         0.3168169851 0.4402503
-    ## mouth:HearingLateASL-eyes:DeafEarlyASL        0.4817078188 0.0000026
-    ## chin:HearingLateASL-eyes:DeafEarlyASL         0.1228186298 0.9989471
-    ## eyes:HearingNoviceASL-eyes:DeafEarlyASL       0.1864086067 1.0000000
-    ## mouth:HearingNoviceASL-eyes:DeafEarlyASL      0.5242748863 0.0000000
-    ## chin:HearingNoviceASL-eyes:DeafEarlyASL       0.1675256403 1.0000000
-    ## chin:DeafEarlyASL-mouth:DeafEarlyASL         -0.3047266106 0.0000000
-    ## eyes:DeafLateASL-mouth:DeafEarlyASL          -0.2676459769 0.0000000
-    ## mouth:DeafLateASL-mouth:DeafEarlyASL          0.3132600749 0.7650169
-    ## chin:DeafLateASL-mouth:DeafEarlyASL          -0.4091832411 0.0000000
-    ## eyes:HearingLateASL-mouth:DeafEarlyASL       -0.1393122581 0.0000003
-    ## mouth:HearingLateASL-mouth:DeafEarlyASL       0.0255608833 0.1900496
-    ## chin:HearingLateASL-mouth:DeafEarlyASL       -0.3333283057 0.0000000
-    ## eyes:HearingNoviceASL-mouth:DeafEarlyASL     -0.2697296256 0.0000000
-    ## mouth:HearingNoviceASL-mouth:DeafEarlyASL     0.0681366539 0.7235129
-    ## chin:HearingNoviceASL-mouth:DeafEarlyASL     -0.2886125921 0.0000000
-    ## eyes:DeafLateASL-chin:DeafEarlyASL            0.2395879268 0.9999917
-    ## mouth:DeafLateASL-chin:DeafEarlyASL           0.8204939786 0.0000000
-    ## chin:DeafLateASL-chin:DeafEarlyASL            0.0980506626 0.9281444
-    ## eyes:HearingLateASL-chin:DeafEarlyASL         0.3680729676 0.0425452
-    ## mouth:HearingLateASL-chin:DeafEarlyASL        0.5329638013 0.0000000
-    ## chin:HearingLateASL-chin:DeafEarlyASL         0.1740746123 1.0000000
-    ## eyes:HearingNoviceASL-chin:DeafEarlyASL       0.2376645893 0.9993784
-    ## mouth:HearingNoviceASL-chin:DeafEarlyASL      0.5755308688 0.0000000
-    ## chin:HearingNoviceASL-chin:DeafEarlyASL       0.2187816228 0.9999958
-    ## mouth:DeafLateASL-eyes:DeafLateASL            0.7729761661 0.0000000
-    ## chin:DeafLateASL-eyes:DeafLateASL             0.0505328501 0.4343153
-    ## eyes:HearingLateASL-eyes:DeafLateASL          0.3201192101 0.2741404
-    ## mouth:HearingLateASL-eyes:DeafLateASL         0.4849589416 0.0000003
-    ## chin:HearingLateASL-eyes:DeafLateASL          0.1260697526 0.9997739
-    ## eyes:HearingNoviceASL-eyes:DeafLateASL        0.1896848710 1.0000000
-    ## mouth:HearingNoviceASL-eyes:DeafLateASL       0.5275511506 0.0000000
-    ## chin:HearingNoviceASL-eyes:DeafLateASL        0.1708019045 1.0000000
-    ## chin:DeafLateASL-mouth:DeafLateASL           -0.5303732016 0.0000000
-    ## eyes:HearingLateASL-mouth:DeafLateASL        -0.2607868417 0.0000000
-    ## mouth:HearingLateASL-mouth:DeafLateASL       -0.0959471102 0.0000201
-    ## chin:HearingLateASL-mouth:DeafLateASL        -0.4548362992 0.0000000
-    ## eyes:HearingNoviceASL-mouth:DeafLateASL      -0.3912211808 0.0000000
-    ## mouth:HearingNoviceASL-mouth:DeafLateASL     -0.0533549012 0.0010421
-    ## chin:HearingNoviceASL-mouth:DeafLateASL      -0.4101041473 0.0000000
-    ## eyes:HearingLateASL-chin:DeafLateASL          0.4616564743 0.0000067
-    ## mouth:HearingLateASL-chin:DeafLateASL         0.6264962058 0.0000000
-    ## chin:HearingLateASL-chin:DeafLateASL          0.2676070168 0.9002118
-    ## eyes:HearingNoviceASL-chin:DeafLateASL        0.3312221352 0.1566844
-    ## mouth:HearingNoviceASL-chin:DeafLateASL       0.6690884148 0.0000000
-    ## chin:HearingNoviceASL-chin:DeafLateASL        0.3123391687 0.3488519
-    ## mouth:HearingLateASL-eyes:HearingLateASL      0.3251008934 0.0291099
-    ## chin:HearingLateASL-eyes:HearingLateASL      -0.0337882956 0.0037439
-    ## eyes:HearingNoviceASL-eyes:HearingLateASL     0.0299100806 0.2673809
-    ## mouth:HearingNoviceASL-eyes:HearingLateASL    0.3677763602 0.0010021
-    ## chin:HearingNoviceASL-eyes:HearingLateASL     0.0110271141 0.0998165
-    ## chin:HearingLateASL-mouth:HearingLateASL     -0.2020645973 0.0000000
-    ## eyes:HearingNoviceASL-mouth:HearingLateASL   -0.1383561224 0.0000000
-    ## mouth:HearingNoviceASL-mouth:HearingLateASL   0.1995101572 0.9998865
-    ## chin:HearingNoviceASL-mouth:HearingLateASL   -0.1572390889 0.0000000
-    ## eyes:HearingNoviceASL-chin:HearingLateASL     0.2205330666 0.9904174
-    ## mouth:HearingNoviceASL-chin:HearingLateASL    0.5583993462 0.0000000
-    ## chin:HearingNoviceASL-chin:HearingLateASL     0.2016501002 0.9997954
-    ## mouth:HearingNoviceASL-eyes:HearingNoviceASL  0.4964629568 0.0000000
-    ## chin:HearingNoviceASL-eyes:HearingNoviceASL   0.1397137107 1.0000000
-    ## chin:HearingNoviceASL-mouth:HearingNoviceASL -0.1981525689 0.0000000
+    ##                                                      diff          lwr
+    ## mouth:DeafNative-eyes:DeafNative              0.474574908  0.318498712
+    ## chin:DeafNative-eyes:DeafNative               0.077299413 -0.078776783
+    ## eyes:DeafEarlyASL-eyes:DeafNative             0.043526942 -0.137681847
+    ## mouth:DeafEarlyASL-eyes:DeafNative            0.497969051  0.318794096
+    ## chin:DeafEarlyASL-eyes:DeafNative            -0.006862945 -0.188071734
+    ## eyes:DeafLateASL-eyes:DeafNative              0.035079618 -0.140375037
+    ## mouth:DeafLateASL-eyes:DeafNative             0.615784253  0.440329598
+    ## chin:DeafLateASL-eyes:DeafNative             -0.106752942 -0.282207597
+    ## eyes:HearingLateASL-eyes:DeafNative           0.178202385  0.019456674
+    ## mouth:HearingLateASL-eyes:DeafNative          0.344587247  0.187655832
+    ## chin:HearingLateASL-eyes:DeafNative          -0.014524920 -0.171456334
+    ## eyes:HearingNoviceASL-eyes:DeafNative         0.048634090 -0.109186461
+    ## mouth:HearingNoviceASL-eyes:DeafNative        0.386298953  0.228478401
+    ## chin:HearingNoviceASL-eyes:DeafNative         0.029455828 -0.128364724
+    ## chin:DeafNative-mouth:DeafNative             -0.397275495 -0.552491761
+    ## eyes:DeafEarlyASL-mouth:DeafNative           -0.431047966 -0.611516621
+    ## mouth:DeafEarlyASL-mouth:DeafNative           0.023394143 -0.155032242
+    ## chin:DeafEarlyASL-mouth:DeafNative           -0.481437853 -0.661906508
+    ## eyes:DeafLateASL-mouth:DeafNative            -0.439495290 -0.614185433
+    ## mouth:DeafLateASL-mouth:DeafNative            0.141209345 -0.033480799
+    ## chin:DeafLateASL-mouth:DeafNative            -0.581327850 -0.756017994
+    ## eyes:HearingLateASL-mouth:DeafNative         -0.296372523 -0.454272842
+    ## mouth:HearingLateASL-mouth:DeafNative        -0.129987661 -0.286063857
+    ## chin:HearingLateASL-mouth:DeafNative         -0.489099828 -0.645176024
+    ## eyes:HearingNoviceASL-mouth:DeafNative       -0.425940818 -0.582910995
+    ## mouth:HearingNoviceASL-mouth:DeafNative      -0.088275955 -0.245246133
+    ## chin:HearingNoviceASL-mouth:DeafNative       -0.445119080 -0.602089258
+    ## eyes:DeafEarlyASL-chin:DeafNative            -0.033772471 -0.214241126
+    ## mouth:DeafEarlyASL-chin:DeafNative            0.420669638  0.242243253
+    ## chin:DeafEarlyASL-chin:DeafNative            -0.084162358 -0.264631013
+    ## eyes:DeafLateASL-chin:DeafNative             -0.042219795 -0.216909938
+    ## mouth:DeafLateASL-chin:DeafNative             0.538484840  0.363794696
+    ## chin:DeafLateASL-chin:DeafNative             -0.184052355 -0.358742499
+    ## eyes:HearingLateASL-chin:DeafNative           0.100902972 -0.056997347
+    ## mouth:HearingLateASL-chin:DeafNative          0.267287834  0.111211638
+    ## chin:HearingLateASL-chin:DeafNative          -0.091824333 -0.247900529
+    ## eyes:HearingNoviceASL-chin:DeafNative        -0.028665323 -0.185635500
+    ## mouth:HearingNoviceASL-chin:DeafNative        0.308999540  0.152029362
+    ## chin:HearingNoviceASL-chin:DeafNative        -0.047843585 -0.204813763
+    ## mouth:DeafEarlyASL-eyes:DeafEarlyASL          0.454442109  0.253661580
+    ## chin:DeafEarlyASL-eyes:DeafEarlyASL          -0.050389887 -0.252987472
+    ## eyes:DeafLateASL-eyes:DeafEarlyASL           -0.008447324 -0.205915023
+    ## mouth:DeafLateASL-eyes:DeafEarlyASL           0.572257311  0.374789611
+    ## chin:DeafLateASL-eyes:DeafEarlyASL           -0.150279884 -0.347747584
+    ## eyes:HearingLateASL-eyes:DeafEarlyASL         0.134675443 -0.048106824
+    ## mouth:HearingLateASL-eyes:DeafEarlyASL        0.301060305  0.119851516
+    ## chin:HearingLateASL-eyes:DeafEarlyASL        -0.058051862 -0.239260651
+    ## eyes:HearingNoviceASL-eyes:DeafEarlyASL       0.005107148 -0.176872199
+    ## mouth:HearingNoviceASL-eyes:DeafEarlyASL      0.342772011  0.160792664
+    ## chin:HearingNoviceASL-eyes:DeafEarlyASL      -0.014071114 -0.196050462
+    ## chin:DeafEarlyASL-mouth:DeafEarlyASL         -0.504831996 -0.705612526
+    ## eyes:DeafLateASL-mouth:DeafEarlyASL          -0.462889433 -0.658492429
+    ## mouth:DeafLateASL-mouth:DeafEarlyASL          0.117815202 -0.077787794
+    ## chin:DeafLateASL-mouth:DeafEarlyASL          -0.604721993 -0.800324989
+    ## eyes:HearingLateASL-mouth:DeafEarlyASL       -0.319766666 -0.500532804
+    ## mouth:HearingLateASL-mouth:DeafEarlyASL      -0.153381804 -0.332556760
+    ## chin:HearingLateASL-mouth:DeafEarlyASL       -0.512493971 -0.691668927
+    ## eyes:HearingNoviceASL-mouth:DeafEarlyASL     -0.449334961 -0.629289184
+    ## mouth:HearingNoviceASL-mouth:DeafEarlyASL    -0.111670099 -0.291624322
+    ## chin:HearingNoviceASL-mouth:DeafEarlyASL     -0.468513224 -0.648467447
+    ## eyes:DeafLateASL-chin:DeafEarlyASL            0.041942563 -0.155525136
+    ## mouth:DeafLateASL-chin:DeafEarlyASL           0.622647198  0.425179498
+    ## chin:DeafLateASL-chin:DeafEarlyASL           -0.099889997 -0.297357697
+    ## eyes:HearingLateASL-chin:DeafEarlyASL         0.185065330  0.002283063
+    ## mouth:HearingLateASL-chin:DeafEarlyASL        0.351450192  0.170241403
+    ## chin:HearingLateASL-chin:DeafEarlyASL        -0.007661975 -0.188870764
+    ## eyes:HearingNoviceASL-chin:DeafEarlyASL       0.055497035 -0.126482312
+    ## mouth:HearingNoviceASL-chin:DeafEarlyASL      0.393161898  0.211182551
+    ## chin:HearingNoviceASL-chin:DeafEarlyASL       0.036318773 -0.145660574
+    ## mouth:DeafLateASL-eyes:DeafLateASL            0.580704635  0.388503689
+    ## chin:DeafLateASL-eyes:DeafLateASL            -0.141832560 -0.334033506
+    ## eyes:HearingLateASL-eyes:DeafLateASL          0.143122767 -0.033956504
+    ## mouth:HearingLateASL-eyes:DeafLateASL         0.309507629  0.134052973
+    ## chin:HearingLateASL-eyes:DeafLateASL         -0.049604538 -0.225059193
+    ## eyes:HearingNoviceASL-eyes:DeafLateASL        0.013554472 -0.162695900
+    ## mouth:HearingNoviceASL-eyes:DeafLateASL       0.351219334  0.174968962
+    ## chin:HearingNoviceASL-eyes:DeafLateASL       -0.005623791 -0.181874163
+    ## chin:DeafLateASL-mouth:DeafLateASL           -0.722537195 -0.914738140
+    ## eyes:HearingLateASL-mouth:DeafLateASL        -0.437581868 -0.614661138
+    ## mouth:HearingLateASL-mouth:DeafLateASL       -0.271197006 -0.446651662
+    ## chin:HearingLateASL-mouth:DeafLateASL        -0.630309173 -0.805763828
+    ## eyes:HearingNoviceASL-mouth:DeafLateASL      -0.567150163 -0.743400535
+    ## mouth:HearingNoviceASL-mouth:DeafLateASL     -0.229485300 -0.405735672
+    ## chin:HearingNoviceASL-mouth:DeafLateASL      -0.586328425 -0.762578798
+    ## eyes:HearingLateASL-chin:DeafLateASL          0.284955327  0.107876057
+    ## mouth:HearingLateASL-chin:DeafLateASL         0.451340189  0.275885533
+    ## chin:HearingLateASL-chin:DeafLateASL          0.092228022 -0.083226633
+    ## eyes:HearingNoviceASL-chin:DeafLateASL        0.155387032 -0.020863340
+    ## mouth:HearingNoviceASL-chin:DeafLateASL       0.493051895  0.316801523
+    ## chin:HearingNoviceASL-chin:DeafLateASL        0.136208770 -0.040041602
+    ## mouth:HearingLateASL-eyes:HearingLateASL      0.166384862  0.007639151
+    ## chin:HearingLateASL-eyes:HearingLateASL      -0.192727305 -0.351473016
+    ## eyes:HearingNoviceASL-eyes:HearingLateASL    -0.129568295 -0.289193037
+    ## mouth:HearingNoviceASL-eyes:HearingLateASL    0.208096568  0.048471826
+    ## chin:HearingNoviceASL-eyes:HearingLateASL    -0.148746557 -0.308371300
+    ## chin:HearingLateASL-mouth:HearingLateASL     -0.359112167 -0.516043581
+    ## eyes:HearingNoviceASL-mouth:HearingLateASL   -0.295953157 -0.453773708
+    ## mouth:HearingNoviceASL-mouth:HearingLateASL   0.041711706 -0.116108846
+    ## chin:HearingNoviceASL-mouth:HearingLateASL   -0.315131419 -0.472951971
+    ## eyes:HearingNoviceASL-chin:HearingLateASL     0.063159010 -0.094661542
+    ## mouth:HearingNoviceASL-chin:HearingLateASL    0.400823872  0.243003321
+    ## chin:HearingNoviceASL-chin:HearingLateASL     0.043980747 -0.113839804
+    ## mouth:HearingNoviceASL-eyes:HearingNoviceASL  0.337664862  0.178960155
+    ## chin:HearingNoviceASL-eyes:HearingNoviceASL  -0.019178263 -0.177882970
+    ## chin:HearingNoviceASL-mouth:HearingNoviceASL -0.356843125 -0.515547832
+    ##                                                       upr     p adj
+    ## mouth:DeafNative-eyes:DeafNative              0.630651104 0.0000000
+    ## chin:DeafNative-eyes:DeafNative               0.233375609 0.9363322
+    ## eyes:DeafEarlyASL-eyes:DeafNative             0.224735731 0.9999655
+    ## mouth:DeafEarlyASL-eyes:DeafNative            0.677144007 0.0000000
+    ## chin:DeafEarlyASL-eyes:DeafNative             0.174345844 1.0000000
+    ## eyes:DeafLateASL-eyes:DeafNative              0.210534274 0.9999965
+    ## mouth:DeafLateASL-eyes:DeafNative             0.791238909 0.0000000
+    ## chin:DeafLateASL-eyes:DeafNative              0.068701714 0.7523917
+    ## eyes:HearingLateASL-eyes:DeafNative           0.336948096 0.0121752
+    ## mouth:HearingLateASL-eyes:DeafNative          0.501518662 0.0000000
+    ## chin:HearingLateASL-eyes:DeafNative           0.142406495 1.0000000
+    ## eyes:HearingNoviceASL-eyes:DeafNative         0.206454642 0.9993502
+    ## mouth:HearingNoviceASL-eyes:DeafNative        0.544119505 0.0000000
+    ## chin:HearingNoviceASL-eyes:DeafNative         0.187276379 0.9999986
+    ## chin:DeafNative-mouth:DeafNative             -0.242059229 0.0000000
+    ## eyes:DeafEarlyASL-mouth:DeafNative           -0.250579311 0.0000000
+    ## mouth:DeafEarlyASL-mouth:DeafNative           0.201820529 1.0000000
+    ## chin:DeafEarlyASL-mouth:DeafNative           -0.300969198 0.0000000
+    ## eyes:DeafLateASL-mouth:DeafNative            -0.264805146 0.0000000
+    ## mouth:DeafLateASL-mouth:DeafNative            0.315899488 0.2755293
+    ## chin:DeafLateASL-mouth:DeafNative            -0.406637707 0.0000000
+    ## eyes:HearingLateASL-mouth:DeafNative         -0.138472204 0.0000000
+    ## mouth:HearingLateASL-mouth:DeafNative         0.026088535 0.2301160
+    ## chin:HearingLateASL-mouth:DeafNative         -0.333023631 0.0000000
+    ## eyes:HearingNoviceASL-mouth:DeafNative       -0.268970640 0.0000000
+    ## mouth:HearingNoviceASL-mouth:DeafNative       0.068694222 0.8443631
+    ## chin:HearingNoviceASL-mouth:DeafNative       -0.288148903 0.0000000
+    ## eyes:DeafEarlyASL-chin:DeafNative             0.146696184 0.9999985
+    ## mouth:DeafEarlyASL-chin:DeafNative            0.599096024 0.0000000
+    ## chin:DeafEarlyASL-chin:DeafNative             0.096306297 0.9606310
+    ## eyes:DeafLateASL-chin:DeafNative              0.132470349 0.9999628
+    ## mouth:DeafLateASL-chin:DeafNative             0.713174984 0.0000000
+    ## chin:DeafLateASL-chin:DeafNative             -0.009362211 0.0277255
+    ## eyes:HearingLateASL-chin:DeafNative           0.258803291 0.6811456
+    ## mouth:HearingLateASL-chin:DeafNative          0.423364030 0.0000010
+    ## chin:HearingLateASL-chin:DeafNative           0.064251864 0.7951331
+    ## eyes:HearingNoviceASL-chin:DeafNative         0.128304855 0.9999989
+    ## mouth:HearingNoviceASL-chin:DeafNative        0.465969717 0.0000000
+    ## chin:HearingNoviceASL-chin:DeafNative         0.109126592 0.9994258
+    ## mouth:DeafEarlyASL-eyes:DeafEarlyASL          0.655222639 0.0000000
+    ## chin:DeafEarlyASL-eyes:DeafEarlyASL           0.152207698 0.9999473
+    ## eyes:DeafLateASL-eyes:DeafEarlyASL            0.189020376 1.0000000
+    ## mouth:DeafLateASL-eyes:DeafEarlyASL           0.769725011 0.0000000
+    ## chin:DeafLateASL-eyes:DeafEarlyASL            0.047187816 0.3769409
+    ## eyes:HearingLateASL-eyes:DeafEarlyASL         0.317457710 0.4346954
+    ## mouth:HearingLateASL-eyes:DeafEarlyASL        0.482269094 0.0000025
+    ## chin:HearingLateASL-eyes:DeafEarlyASL         0.123156927 0.9989988
+    ## eyes:HearingNoviceASL-eyes:DeafEarlyASL       0.187086496 1.0000000
+    ## mouth:HearingNoviceASL-eyes:DeafEarlyASL      0.524751358 0.0000000
+    ## chin:HearingNoviceASL-eyes:DeafEarlyASL       0.167908233 1.0000000
+    ## chin:DeafEarlyASL-mouth:DeafEarlyASL         -0.304051467 0.0000000
+    ## eyes:DeafLateASL-mouth:DeafEarlyASL          -0.267286437 0.0000000
+    ## mouth:DeafLateASL-mouth:DeafEarlyASL          0.313418198 0.7657850
+    ## chin:DeafLateASL-mouth:DeafEarlyASL          -0.409118997 0.0000000
+    ## eyes:HearingLateASL-mouth:DeafEarlyASL       -0.139000528 0.0000003
+    ## mouth:HearingLateASL-mouth:DeafEarlyASL       0.025793151 0.1919518
+    ## chin:HearingLateASL-mouth:DeafEarlyASL       -0.333319015 0.0000000
+    ## eyes:HearingNoviceASL-mouth:DeafEarlyASL     -0.269380738 0.0000000
+    ## mouth:HearingNoviceASL-mouth:DeafEarlyASL     0.068284125 0.7249762
+    ## chin:HearingNoviceASL-mouth:DeafEarlyASL     -0.288559000 0.0000000
+    ## eyes:DeafLateASL-chin:DeafEarlyASL            0.239410263 0.9999926
+    ## mouth:DeafLateASL-chin:DeafEarlyASL           0.820114898 0.0000000
+    ## chin:DeafLateASL-chin:DeafEarlyASL            0.097577703 0.9252436
+    ## eyes:HearingLateASL-chin:DeafEarlyASL         0.367847597 0.0437567
+    ## mouth:HearingLateASL-chin:DeafEarlyASL        0.532658981 0.0000000
+    ## chin:HearingLateASL-chin:DeafEarlyASL         0.173546814 1.0000000
+    ## eyes:HearingNoviceASL-chin:DeafEarlyASL       0.237476383 0.9994222
+    ## mouth:HearingNoviceASL-chin:DeafEarlyASL      0.575141245 0.0000000
+    ## chin:HearingNoviceASL-chin:DeafEarlyASL       0.218298120 0.9999966
+    ## mouth:DeafLateASL-eyes:DeafLateASL            0.772905580 0.0000000
+    ## chin:DeafLateASL-eyes:DeafLateASL             0.050368385 0.4319309
+    ## eyes:HearingLateASL-eyes:DeafLateASL          0.320202037 0.2757263
+    ## mouth:HearingLateASL-eyes:DeafLateASL         0.484962284 0.0000004
+    ## chin:HearingLateASL-eyes:DeafLateASL          0.125850117 0.9997576
+    ## eyes:HearingNoviceASL-eyes:DeafLateASL        0.189804844 1.0000000
+    ## mouth:HearingNoviceASL-eyes:DeafLateASL       0.527469707 0.0000000
+    ## chin:HearingNoviceASL-eyes:DeafLateASL        0.170626582 1.0000000
+    ## chin:DeafLateASL-mouth:DeafLateASL           -0.530336250 0.0000000
+    ## eyes:HearingLateASL-mouth:DeafLateASL        -0.260502598 0.0000000
+    ## mouth:HearingLateASL-mouth:DeafLateASL       -0.095742351 0.0000205
+    ## chin:HearingLateASL-mouth:DeafLateASL        -0.454854517 0.0000000
+    ## eyes:HearingNoviceASL-mouth:DeafLateASL      -0.390899790 0.0000000
+    ## mouth:HearingNoviceASL-mouth:DeafLateASL     -0.053234928 0.0010539
+    ## chin:HearingNoviceASL-mouth:DeafLateASL      -0.410078053 0.0000000
+    ## eyes:HearingLateASL-chin:DeafLateASL          0.462034597 0.0000066
+    ## mouth:HearingLateASL-chin:DeafLateASL         0.626794844 0.0000000
+    ## chin:HearingLateASL-chin:DeafLateASL          0.267682678 0.9011236
+    ## eyes:HearingNoviceASL-chin:DeafLateASL        0.331637405 0.1552984
+    ## mouth:HearingNoviceASL-chin:DeafLateASL       0.669302267 0.0000000
+    ## chin:HearingNoviceASL-chin:DeafLateASL        0.312459142 0.3501470
+    ## mouth:HearingLateASL-eyes:HearingLateASL      0.325130573 0.0295062
+    ## chin:HearingLateASL-eyes:HearingLateASL      -0.033981594 0.0036853
+    ## eyes:HearingNoviceASL-eyes:HearingLateASL     0.030056448 0.2689911
+    ## mouth:HearingNoviceASL-eyes:HearingLateASL    0.367721310 0.0010289
+    ## chin:HearingNoviceASL-eyes:HearingLateASL     0.010878185 0.0989176
+    ## chin:HearingLateASL-mouth:HearingLateASL     -0.202180752 0.0000000
+    ## eyes:HearingNoviceASL-mouth:HearingLateASL   -0.138132605 0.0000000
+    ## mouth:HearingNoviceASL-mouth:HearingLateASL   0.199532258 0.9998904
+    ## chin:HearingNoviceASL-mouth:HearingLateASL   -0.157310868 0.0000000
+    ## eyes:HearingNoviceASL-chin:HearingLateASL     0.220979562 0.9899918
+    ## mouth:HearingNoviceASL-chin:HearingLateASL    0.558644424 0.0000000
+    ## chin:HearingNoviceASL-chin:HearingLateASL     0.201801299 0.9997951
+    ## mouth:HearingNoviceASL-eyes:HearingNoviceASL  0.496369570 0.0000000
+    ## chin:HearingNoviceASL-eyes:HearingNoviceASL   0.139526445 1.0000000
+    ## chin:HearingNoviceASL-mouth:HearingNoviceASL -0.198138418 0.0000000
 
 Age of ASL & Hearing Status ANCOVA
 ----------------------------------
@@ -986,22 +990,22 @@ anova(continuous.anova.face3)
     ## 
     ## Response: percent
     ##                              Df  Sum Sq Mean Sq  F value    Pr(>F)    
-    ## aoi                           2 22.5162 11.2581 238.1007 < 2.2e-16 ***
-    ## direction                     1  0.0179  0.0179   0.3782 0.5388128    
-    ## hearing                       1  0.0603  0.0603   1.2745 0.2594306    
-    ## aoasl                         1  0.0005  0.0005   0.0096 0.9218057    
-    ## aoi:direction                 2  0.5086  0.2543   5.3782 0.0048677 ** 
-    ## aoi:hearing                   2  1.6221  0.8111  17.1534 6.001e-08 ***
-    ## direction:hearing             1  0.0012  0.0012   0.0251 0.8741720    
-    ## aoi:aoasl                     2  0.6330  0.3165   6.6941 0.0013439 ** 
-    ## direction:aoasl               1  0.0021  0.0021   0.0451 0.8318093    
-    ## hearing:aoasl                 1  0.0147  0.0147   0.3116 0.5769187    
-    ## aoi:direction:hearing         2  0.1385  0.0693   1.4650 0.2319880    
-    ## aoi:direction:aoasl           2  0.0203  0.0101   0.2145 0.8070181    
-    ## aoi:hearing:aoasl             2  0.8639  0.4319   9.1351 0.0001255 ***
-    ## direction:hearing:aoasl       1  0.0000  0.0000   0.0000 0.9982782    
-    ## aoi:direction:hearing:aoasl   2  0.0414  0.0207   0.4379 0.6455974    
-    ## Residuals                   538 25.4383  0.0473                       
+    ## aoi                           2 22.4829 11.2414 237.1858 < 2.2e-16 ***
+    ## direction                     1  0.0177  0.0177   0.3735 0.5413648    
+    ## hearing                       1  0.0618  0.0618   1.3046 0.2538754    
+    ## aoasl                         1  0.0004  0.0004   0.0086 0.9262453    
+    ## aoi:direction                 2  0.5693  0.2846   6.0057 0.0026293 ** 
+    ## aoi:hearing                   2  1.5014  0.7507  15.8390 2.051e-07 ***
+    ## direction:hearing             1  0.0013  0.0013   0.0280 0.8672355    
+    ## aoi:aoasl                     2  0.7587  0.3793   8.0035 0.0003748 ***
+    ## direction:aoasl               1  0.0019  0.0019   0.0408 0.8400208    
+    ## hearing:aoasl                 1  0.0145  0.0145   0.3070 0.5797585    
+    ## aoi:direction:hearing         2  0.1192  0.0596   1.2577 0.2851267    
+    ## aoi:direction:aoasl           2  0.0277  0.0138   0.2921 0.7468383    
+    ## aoi:hearing:aoasl             2  0.8731  0.4365   9.2105 0.0001163 ***
+    ## direction:hearing:aoasl       1  0.0000  0.0000   0.0000 0.9952022    
+    ## aoi:direction:hearing:aoasl   2  0.0414  0.0207   0.4368 0.6463417    
+    ## Residuals                   550 26.0673  0.0474                       
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -1020,66 +1024,66 @@ summary(lm.face3)
     ## 
     ## Residuals:
     ##      Min       1Q   Median       3Q      Max 
-    ## -0.59995 -0.13886 -0.04123  0.11828  0.69537 
+    ## -0.59227 -0.14324 -0.04125  0.11932  0.66925 
     ## 
     ## Coefficients:
-    ##                                                  Estimate Std. Error
-    ## (Intercept)                                      0.150564   0.040972
-    ## aoimouth                                         0.511763   0.057943
-    ## aoichin                                          0.037960   0.057943
-    ## directionreversed                                0.024749   0.059773
-    ## aoasl                                            0.001983   0.004857
-    ## hearingHearing                                   0.617478   0.226428
-    ## aoimouth:directionreversed                      -0.106240   0.084063
-    ## aoichin:directionreversed                       -0.002355   0.084219
-    ## aoimouth:aoasl                                   0.004335   0.006868
-    ## aoichin:aoasl                                   -0.011781   0.006868
-    ## directionreversed:aoasl                         -0.003286   0.006967
-    ## aoimouth:hearingHearing                         -0.988190   0.320218
-    ## aoichin:hearingHearing                          -1.027949   0.320218
-    ## directionreversed:hearingHearing                -0.130779   0.326226
-    ## aoasl:hearingHearing                            -0.031636   0.013445
-    ## aoimouth:directionreversed:aoasl                 0.009222   0.009825
-    ## aoichin:directionreversed:aoasl                  0.002548   0.009825
-    ## aoimouth:directionreversed:hearingHearing        0.215226   0.454673
-    ## aoichin:directionreversed:hearingHearing         0.123007   0.454702
-    ## aoimouth:aoasl:hearingHearing                    0.041707   0.019015
-    ## aoichin:aoasl:hearingHearing                     0.060608   0.019015
-    ## directionreversed:aoasl:hearingHearing           0.010213   0.019505
-    ## aoimouth:directionreversed:aoasl:hearingHearing -0.024191   0.027140
-    ## aoichin:directionreversed:aoasl:hearingHearing  -0.005865   0.027140
+    ##                                                   Estimate Std. Error
+    ## (Intercept)                                      0.1710373  0.0396375
+    ## aoimouth                                         0.4822345  0.0560559
+    ## aoichin                                          0.0054908  0.0560559
+    ## directionreversed                               -0.0083965  0.0576969
+    ## aoasl                                            0.0003404  0.0047879
+    ## hearingHearing                                   0.5970053  0.2264499
+    ## aoimouth:directionreversed                      -0.0766807  0.0811766
+    ## aoichin:directionreversed                        0.0689111  0.0813165
+    ## aoimouth:aoasl                                   0.0067044  0.0067711
+    ## aoichin:aoasl                                   -0.0091754  0.0067711
+    ## directionreversed:aoasl                         -0.0006589  0.0068624
+    ## aoimouth:hearingHearing                         -0.9586619  0.3202485
+    ## aoichin:hearingHearing                          -0.9954796  0.3202485
+    ## directionreversed:hearingHearing                -0.0976334  0.3262254
+    ## aoasl:hearingHearing                            -0.0299928  0.0134346
+    ## aoimouth:directionreversed:aoasl                 0.0068601  0.0096782
+    ## aoichin:directionreversed:aoasl                 -0.0030665  0.0096784
+    ## aoimouth:directionreversed:hearingHearing        0.1856661  0.4546684
+    ## aoichin:directionreversed:hearingHearing         0.0517414  0.4546933
+    ## aoimouth:aoasl:hearingHearing                    0.0393376  0.0189995
+    ## aoichin:aoasl:hearingHearing                     0.0580025  0.0189995
+    ## directionreversed:aoasl:hearingHearing           0.0075864  0.0194878
+    ## aoimouth:directionreversed:aoasl:hearingHearing -0.0218282  0.0271149
+    ## aoichin:directionreversed:aoasl:hearingHearing  -0.0002505  0.0271150
     ##                                                 t value Pr(>|t|)    
-    ## (Intercept)                                       3.675 0.000262 ***
-    ## aoimouth                                          8.832  < 2e-16 ***
-    ## aoichin                                           0.655 0.512670    
-    ## directionreversed                                 0.414 0.679004    
-    ## aoasl                                             0.408 0.683158    
-    ## hearingHearing                                    2.727 0.006599 ** 
-    ## aoimouth:directionreversed                       -1.264 0.206842    
-    ## aoichin:directionreversed                        -0.028 0.977705    
-    ## aoimouth:aoasl                                    0.631 0.528217    
-    ## aoichin:aoasl                                    -1.715 0.086869 .  
-    ## directionreversed:aoasl                          -0.472 0.637433    
-    ## aoimouth:hearingHearing                          -3.086 0.002133 ** 
-    ## aoichin:hearingHearing                           -3.210 0.001406 ** 
-    ## directionreversed:hearingHearing                 -0.401 0.688664    
-    ## aoasl:hearingHearing                             -2.353 0.018987 *  
-    ## aoimouth:directionreversed:aoasl                  0.939 0.348294    
-    ## aoichin:directionreversed:aoasl                   0.259 0.795450    
-    ## aoimouth:directionreversed:hearingHearing         0.473 0.636146    
-    ## aoichin:directionreversed:hearingHearing          0.271 0.786862    
-    ## aoimouth:aoasl:hearingHearing                     2.193 0.028705 *  
-    ## aoichin:aoasl:hearingHearing                      3.187 0.001519 ** 
-    ## directionreversed:aoasl:hearingHearing            0.524 0.600761    
-    ## aoimouth:directionreversed:aoasl:hearingHearing  -0.891 0.373144    
-    ## aoichin:directionreversed:aoasl:hearingHearing   -0.216 0.828980    
+    ## (Intercept)                                       4.315 1.89e-05 ***
+    ## aoimouth                                          8.603  < 2e-16 ***
+    ## aoichin                                           0.098  0.92201    
+    ## directionreversed                                -0.146  0.88435    
+    ## aoasl                                             0.071  0.94335    
+    ## hearingHearing                                    2.636  0.00862 ** 
+    ## aoimouth:directionreversed                       -0.945  0.34527    
+    ## aoichin:directionreversed                         0.847  0.39712    
+    ## aoimouth:aoasl                                    0.990  0.32253    
+    ## aoichin:aoasl                                    -1.355  0.17595    
+    ## directionreversed:aoasl                          -0.096  0.92355    
+    ## aoimouth:hearingHearing                          -2.993  0.00288 ** 
+    ## aoichin:hearingHearing                           -3.108  0.00198 ** 
+    ## directionreversed:hearingHearing                 -0.299  0.76484    
+    ## aoasl:hearingHearing                             -2.232  0.02598 *  
+    ## aoimouth:directionreversed:aoasl                  0.709  0.47874    
+    ## aoichin:directionreversed:aoasl                  -0.317  0.75149    
+    ## aoimouth:directionreversed:hearingHearing         0.408  0.68317    
+    ## aoichin:directionreversed:hearingHearing          0.114  0.90944    
+    ## aoimouth:aoasl:hearingHearing                     2.070  0.03888 *  
+    ## aoichin:aoasl:hearingHearing                      3.053  0.00238 ** 
+    ## directionreversed:aoasl:hearingHearing            0.389  0.69721    
+    ## aoimouth:directionreversed:aoasl:hearingHearing  -0.805  0.42115    
+    ## aoichin:directionreversed:aoasl:hearingHearing   -0.009  0.99263    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 0.2174 on 538 degrees of freedom
+    ## Residual standard error: 0.2177 on 550 degrees of freedom
     ##   (5 observations deleted due to missingness)
-    ## Multiple R-squared:  0.5097, Adjusted R-squared:  0.4887 
-    ## F-statistic: 24.31 on 23 and 538 DF,  p-value: < 2.2e-16
+    ## Multiple R-squared:  0.5038, Adjusted R-squared:  0.4831 
+    ## F-statistic: 24.28 on 23 and 550 DF,  p-value: < 2.2e-16
 
 Left/Right Analysis
 ===================
@@ -1119,7 +1123,7 @@ data.lr[data.lr=="NaN"] <- NA
 data.lr <- left_join(data.lr,data.lr.subjectinfo, by=c("participant","direction"))
 ```
 
-Problem is, I can already tell this dataset is rather sparse. There are 231 empty cells out of 378. Soooo. Let's give this a shot anyway but probably not a good idea? The graph below, I changed the colors so they map on left/right AOI, and each facet is direction. So we can directly compare L/R biases.
+Problem is, I can already tell this dataset is rather sparse. There are 239 empty cells out of 386. Soooo. Let's give this a shot anyway but probably not a good idea? The graph below, I changed the colors so they map on left/right AOI, and each facet is direction. So we can directly compare L/R biases.
 
 ``` r
 ggplot(data.lr) + 
@@ -1128,7 +1132,7 @@ ggplot(data.lr) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 
-    ## Warning: Removed 231 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 239 rows containing non-finite values (stat_boxplot).
 
 ![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-33-1.png)
 
@@ -1193,9 +1197,9 @@ ggplot(data.lr, aes(x=aoasl,y=percent)) +
   facet_wrap("direction")
 ```
 
-    ## Warning: Removed 231 rows containing non-finite values (stat_smooth).
+    ## Warning: Removed 239 rows containing non-finite values (stat_smooth).
 
-    ## Warning: Removed 231 rows containing missing values (geom_point).
+    ## Warning: Removed 239 rows containing missing values (geom_point).
 
 ![](03eyegaze_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-36-1.png)
 

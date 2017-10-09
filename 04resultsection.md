@@ -1,7 +1,7 @@
 Results Section (study1adults)
 ================
 Adam Stone, PhD
-10-06-2017
+10-09-2017
 
 -   [Refreshing Ourselves](#refreshing-ourselves)
 -   [Participant Characteristics](#participant-characteristics)
@@ -34,7 +34,7 @@ Now let's load in the dataset called `cleanpercentdata.csv`. It contains item-le
 
 ``` r
 #library(corrplot)
-library(Hmisc)
+#library(Hmisc)
 library(tidyverse)
 library(stringr)
 library(lme4)
@@ -94,8 +94,8 @@ dataoriginal <- data # Save item-level data just in case
 corstarsl <- function(x){ 
 require(Hmisc) 
 x <- as.matrix(x) 
-R <- rcorr(x)$r 
-p <- rcorr(x)$P 
+R <- Hmisc::rcorr(x)$r 
+p <- Hmisc::rcorr(x)$P 
 ## define notions for significance levels; spacing is important.
 mystars <- ifelse(p < .001, "***", ifelse(p < .01, "** ", ifelse(p < .05, "* ", " ")))
 ## trunctuate the matrix that holds the correlations to two decimal
@@ -238,13 +238,13 @@ aoasl.sd
 DeafNative
 </td>
 <td style="text-align:right;">
-11
+12
 </td>
 <td style="text-align:right;">
-32.9
+33.0
 </td>
 <td style="text-align:right;">
-9.7
+9.2
 </td>
 <td style="text-align:right;">
 5.0
@@ -253,13 +253,13 @@ DeafNative
 0.0
 </td>
 <td style="text-align:right;">
-32.5
+32.6
 </td>
 <td style="text-align:right;">
-9.8
+9.4
 </td>
 <td style="text-align:right;">
-0.3
+0.2
 </td>
 <td style="text-align:right;">
 0.5
@@ -462,7 +462,7 @@ reversed.sd
 DeafNative
 </td>
 <td style="text-align:right;">
-11
+12
 </td>
 <td style="text-align:right;">
 0.85
@@ -605,7 +605,7 @@ ggplot(data.aoionly,aes(aoi,percent,fill=direction)) +
   theme(axis.text.x=element_text(angle=45,hjust=1))
 ```
 
-    ## Warning: Removed 338 rows containing non-finite values (stat_boxplot).
+    ## Warning: Removed 346 rows containing non-finite values (stat_boxplot).
 
 ![](04resultsection_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-6-1.png)
 
@@ -696,18 +696,18 @@ data.acc <- data %>%
   distinct() %>%
   select(aoasl,signyrs,selfrate,age,acc.forward,acc.reversed,acc.effect)
 
-#data.acc.results <- rcorr(as.matrix(data.acc))
+#data.acc.results <- Hmisc::rcorr(as.matrix(data.acc))
 corstarsl(data.acc) # Use the awesome function!
 ```
 
     ##                 aoasl  signyrs selfrate      age acc.forward acc.reversed
     ## aoasl                                                                    
-    ## signyrs      -0.78***                                                    
-    ## selfrate     -0.50***  0.71***                                           
+    ## signyrs      -0.79***                                                    
+    ## selfrate     -0.51***  0.71***                                           
     ## age           -0.31*   0.83***  0.63***                                  
-    ## acc.forward    -0.07    0.29*   0.45***  0.36**                          
-    ## acc.reversed  -0.31*    0.29*   0.39**     0.17      0.38**              
-    ## acc.effect      0.25    -0.06    -0.03     0.12      0.41**      -0.69***
+    ## acc.forward    -0.08    0.30*   0.46***  0.36**                          
+    ## acc.reversed  -0.33*    0.31*   0.40**     0.17      0.39**              
+    ## acc.effect      0.26    -0.07    -0.04     0.12      0.39**      -0.69***
 
 ``` r
 # Gather the AOIs we want
@@ -748,22 +748,22 @@ Here's the Pearson's correlation matrix for forward stories.
 So. For forward stories it's a crapshoot.
 
 ``` r
-#rcorr(as.matrix(data.fw))
+#Hmisc::rcorr(as.matrix(data.fw))
 corstarsl(data.fw)
 ```
 
     ##                acc    aoasl  signyrs selfrate      age     eyes    mouth
     ## acc                                                                     
-    ## aoasl       -0.07                                                       
-    ## signyrs     0.29*  -0.78***                                             
-    ## selfrate   0.45*** -0.50***  0.71***                                    
+    ## aoasl       -0.08                                                       
+    ## signyrs     0.30*  -0.79***                                             
+    ## selfrate   0.46*** -0.51***  0.71***                                    
     ## age        0.36**   -0.31*   0.83***  0.63***                           
-    ## eyes        -0.19     0.11    -0.12    -0.12    -0.08                   
-    ## mouth        0.19    -0.08     0.23     0.13     0.26  -0.65***         
-    ## chin         0.02    -0.15    -0.03     0.10    -0.15  -0.38**  -0.41** 
-    ## face         0.11    -0.23   0.38**    0.31*   0.37**    -0.13   0.47***
+    ## eyes        -0.17     0.07    -0.09    -0.10    -0.07                   
+    ## mouth        0.18    -0.06     0.22     0.12     0.25  -0.65***         
+    ## chin         0.01    -0.12    -0.04     0.10    -0.16  -0.39**  -0.40** 
+    ## face         0.12    -0.24   0.38**    0.31*   0.37**    -0.11   0.46***
     ## chest       -0.05     0.15   -0.31*   -0.30*   -0.34*    -0.11   -0.29* 
-    ## facechest    0.05    -0.15    0.31*    0.30*    0.34*     0.11    0.29* 
+    ## facechest    0.06    -0.16    0.31*    0.30*    0.34*     0.11    0.29* 
     ##              chin     face    chest
     ## acc                                
     ## aoasl                              
@@ -774,8 +774,8 @@ corstarsl(data.fw)
     ## mouth                              
     ## chin                               
     ## face       -0.19                   
-    ## chest      0.28*  -0.92***         
-    ## facechest -0.28*   0.93*** -1.00***
+    ## chest      0.29*  -0.92***         
+    ## facechest -0.28*   0.92*** -1.00***
 
 Reversed Correlations
 ---------------------
@@ -790,22 +790,22 @@ Here's the Pearson's correlation matrix for reversed stories.
 So.
 
 ``` r
-#rcorr(as.matrix(data.rv))
+#Hmisc::rcorr(as.matrix(data.rv))
 corstarsl(data.rv)
 ```
 
     ##                acc    aoasl  signyrs selfrate      age     eyes    mouth
     ## acc                                                                     
-    ## aoasl      -0.31*                                                       
-    ## signyrs     0.29*  -0.78***                                             
-    ## selfrate   0.39**  -0.50***  0.71***                                    
-    ## age          0.17   -0.30*   0.83***  0.62***                           
-    ## eyes        -0.14     0.07     0.00     0.04     0.08                   
-    ## mouth        0.16    -0.10     0.27     0.14    0.29*  -0.64***         
-    ## chin         0.02    -0.06    -0.15    -0.08    -0.28  -0.46**  -0.43** 
-    ## face         0.26    -0.24   0.38**     0.28    0.36*    -0.17   0.60***
-    ## chest       -0.20    0.29*  -0.44**  -0.40**  -0.41**    -0.14  -0.38** 
-    ## facechest    0.22   -0.30*   0.44**   0.39**   0.40**     0.13   0.39** 
+    ## aoasl      -0.33*                                                       
+    ## signyrs     0.31*  -0.78***                                             
+    ## selfrate   0.40**  -0.51***  0.71***                                    
+    ## age          0.17   -0.31*   0.83***  0.63***                           
+    ## eyes        -0.16     0.09    -0.02     0.02     0.08                   
+    ## mouth        0.14    -0.09     0.25     0.14    0.29*  -0.62***         
+    ## chin         0.07    -0.11    -0.10    -0.06    -0.25  -0.47*** -0.43** 
+    ## face         0.27    -0.25   0.38**    0.28*   0.36**    -0.18   0.59***
+    ## chest       -0.21    0.30*  -0.44**  -0.41**  -0.41**    -0.13  -0.37** 
+    ## facechest    0.23   -0.30*   0.44**   0.39**   0.40**     0.12   0.38** 
     ##             chin     face    chest
     ## acc                               
     ## aoasl                             
@@ -815,9 +815,9 @@ corstarsl(data.rv)
     ## eyes                              
     ## mouth                             
     ## chin                              
-    ## face      -0.12                   
-    ## chest      0.28  -0.79***         
-    ## facechest -0.26   0.82*** -1.00***
+    ## face      -0.10                   
+    ## chest      0.26  -0.79***         
+    ## facechest -0.24   0.82*** -1.00***
 
 Summary
 -------
@@ -887,9 +887,9 @@ left_join(aov.lex.all.tidy,aov.gaze.all.tidy,by="term") %>%
 ```
 
     ##                  term  F.acc P.acc F.facechest P.facechest
-    ## 1           maingroup  4.194 0.004       5.523       0.001
-    ## 2           direction 74.458 0.000       3.358       0.070
-    ## 3 maingroup:direction  1.205 0.314       0.801       0.528
+    ## 1           maingroup  4.672 0.002       5.700       0.000
+    ## 2           direction 75.504 0.000       3.443       0.067
+    ## 3 maingroup:direction  1.306 0.273       0.804       0.525
     ## 4           Residuals     NA    NA          NA          NA
 
 ``` r
@@ -933,7 +933,7 @@ left_join(aov.lex.fw.tidy,aov.gaze.fw.tidy,by="term") %>%
 ```
 
     ##        term F.acc P.acc F.facechest P.facechest
-    ## 1 maingroup   2.4 0.064       2.009       0.109
+    ## 1 maingroup 2.478 0.057        2.06       0.101
     ## 2 Residuals    NA    NA          NA          NA
 
 ``` r
@@ -977,7 +977,7 @@ left_join(aov.lex.rv.tidy,aov.gaze.rv.tidy,by="term") %>%
 ```
 
     ##        term F.acc P.acc F.facechest P.facechest
-    ## 1 maingroup 2.949  0.03       3.759        0.01
+    ## 1 maingroup 3.384 0.017       3.872       0.009
     ## 2 Residuals    NA    NA          NA          NA
 
 ``` r
@@ -1080,33 +1080,33 @@ summary(model)
     ## Formula: acc ~ percent * signyrs + (1 | id) + (1 | story)
     ##    Data: filter(datafc, aoi == "mouth" & direction == "forward")
     ## 
-    ## REML criterion at convergence: -167.4
+    ## REML criterion at convergence: -172.9
     ## 
     ## Scaled residuals: 
     ##      Min       1Q   Median       3Q      Max 
-    ## -1.66734 -0.54815  0.01603  0.56072  1.55159 
+    ## -1.70047 -0.54813  0.02755  0.56490  1.57075 
     ## 
     ## Random effects:
     ##  Groups   Name        Variance Std.Dev.
-    ##  id       (Intercept) 0.004614 0.06792 
-    ##  story    (Intercept) 0.001302 0.03609 
-    ##  Residual             0.003475 0.05895 
-    ## Number of obs: 94, groups:  id, 51; story, 4
+    ##  id       (Intercept) 0.004572 0.06762 
+    ##  story    (Intercept) 0.001253 0.03540 
+    ##  Residual             0.003407 0.05837 
+    ## Number of obs: 96, groups:  id, 52; story, 4
     ## 
     ## Fixed effects:
     ##                  Estimate Std. Error        df t value Pr(>|t|)    
-    ## (Intercept)      0.870054   0.047191 53.600000  18.437   <2e-16 ***
-    ## percent         -0.112785   0.064080 87.370000  -1.760   0.0819 .  
-    ## signyrs         -0.002162   0.002236 88.350000  -0.967   0.3362    
-    ## percent:signyrs  0.006244   0.003058 84.560000   2.042   0.0443 *  
+    ## (Intercept)      0.869297   0.046222 54.510000  18.807   <2e-16 ***
+    ## percent         -0.112457   0.062870 89.260000  -1.789   0.0771 .  
+    ## signyrs         -0.002043   0.002048 89.010000  -0.998   0.3211    
+    ## percent:signyrs  0.006208   0.002805 82.090000   2.213   0.0297 *  
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr) percnt sgnyrs
-    ## percent     -0.818              
-    ## signyrs     -0.745  0.702       
-    ## prcnt:sgnyr  0.699 -0.815 -0.918
+    ## percent     -0.815              
+    ## signyrs     -0.754  0.707       
+    ## prcnt:sgnyr  0.704 -0.830 -0.905
 
 ``` r
 model <- lmer(percent ~ direction + (1|id), data = filter(datafc,aoi=="mouth"))
@@ -1118,28 +1118,28 @@ summary(model)
     ## Formula: percent ~ direction + (1 | id)
     ##    Data: filter(datafc, aoi == "mouth")
     ## 
-    ## REML criterion at convergence: -14.9
+    ## REML criterion at convergence: -8.5
     ## 
     ## Scaled residuals: 
     ##      Min       1Q   Median       3Q      Max 
-    ## -2.67237 -0.45071  0.07741  0.61139  2.39776 
+    ## -2.60785 -0.47492  0.08233  0.61375  2.32278 
     ## 
     ## Random effects:
     ##  Groups   Name        Variance Std.Dev.
-    ##  id       (Intercept) 0.04848  0.2202  
-    ##  Residual             0.03096  0.1760  
-    ## Number of obs: 189, groups:  id, 51
+    ##  id       (Intercept) 0.04720  0.2173  
+    ##  Residual             0.03269  0.1808  
+    ## Number of obs: 193, groups:  id, 52
     ## 
     ## Fixed effects:
     ##                    Estimate Std. Error        df t value Pr(>|t|)    
-    ## (Intercept)         0.63786    0.03576  64.75000  17.836  < 2e-16 ***
-    ## directionreversed  -0.09058    0.02580 138.25000  -3.511 0.000603 ***
+    ## (Intercept)         0.63581    0.03532  67.13000  18.004  < 2e-16 ***
+    ## directionreversed  -0.09134    0.02622 141.33000  -3.483 0.000661 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr)
-    ## dirctnrvrsd -0.352
+    ## dirctnrvrsd -0.363
 
 ``` r
 # plot(model)
@@ -1176,50 +1176,50 @@ summary(model)
     ## Formula: acc ~ hearing * direction * signyrs + (1 | id) + (1 | story)
     ##    Data: data.acc
     ## 
-    ## REML criterion at convergence: -248.6
+    ## REML criterion at convergence: -257.2
     ## 
     ## Scaled residuals: 
     ##      Min       1Q   Median       3Q      Max 
-    ## -2.04733 -0.60227 -0.01045  0.52495  2.40592 
+    ## -2.06050 -0.61191 -0.01016  0.52982  2.41102 
     ## 
     ## Random effects:
     ##  Groups   Name        Variance Std.Dev.
-    ##  id       (Intercept) 0.002858 0.05346 
-    ##  story    (Intercept) 0.001473 0.03838 
-    ##  Residual             0.008685 0.09319 
-    ## Number of obs: 185, groups:  id, 51; story, 4
+    ##  id       (Intercept) 0.002876 0.05363 
+    ##  story    (Intercept) 0.001423 0.03772 
+    ##  Residual             0.008566 0.09256 
+    ## Number of obs: 189, groups:  id, 52; story, 4
     ## 
     ## Fixed effects:
     ##                                            Estimate Std. Error         df
-    ## (Intercept)                               7.930e-01  6.248e-02  7.951e+01
-    ## hearingHearing                           -9.419e-03  6.608e-02  9.335e+01
-    ## directionreversed                        -7.002e-02  6.654e-02  1.293e+02
-    ## signyrs                                   2.014e-03  1.974e-03  9.515e+01
-    ## hearingHearing:directionreversed         -7.788e-02  7.386e-02  1.294e+02
-    ## hearingHearing:signyrs                    3.443e-03  3.755e-03  9.512e+01
-    ## directionreversed:signyrs                -2.221e-03  2.207e-03  1.290e+02
-    ## hearingHearing:directionreversed:signyrs  5.103e-04  4.140e-03  1.306e+02
+    ## (Intercept)                               7.917e-01  6.211e-02  8.122e+01
+    ## hearingHearing                           -8.394e-03  6.578e-02  9.474e+01
+    ## directionreversed                        -7.270e-02  6.599e-02  1.322e+02
+    ## signyrs                                   2.107e-03  1.955e-03  9.649e+01
+    ## hearingHearing:directionreversed         -7.468e-02  7.322e-02  1.323e+02
+    ## hearingHearing:signyrs                    3.361e-03  3.736e-03  9.651e+01
+    ## directionreversed:signyrs                -2.025e-03  2.176e-03  1.319e+02
+    ## hearingHearing:directionreversed:signyrs  2.881e-04  4.099e-03  1.334e+02
     ##                                          t value Pr(>|t|)    
-    ## (Intercept)                               12.692   <2e-16 ***
-    ## hearingHearing                            -0.143    0.887    
-    ## directionreversed                         -1.052    0.295    
-    ## signyrs                                    1.020    0.310    
-    ## hearingHearing:directionreversed          -1.055    0.294    
-    ## hearingHearing:signyrs                     0.917    0.361    
-    ## directionreversed:signyrs                 -1.006    0.316    
-    ## hearingHearing:directionreversed:signyrs   0.123    0.902    
+    ## (Intercept)                               12.746   <2e-16 ***
+    ## hearingHearing                            -0.128    0.899    
+    ## directionreversed                         -1.102    0.273    
+    ## signyrs                                    1.078    0.284    
+    ## hearingHearing:directionreversed          -1.020    0.310    
+    ## hearingHearing:signyrs                     0.900    0.370    
+    ## directionreversed:signyrs                 -0.930    0.354    
+    ## hearingHearing:directionreversed:signyrs   0.070    0.944    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr) hrngHr drctnr sgnyrs hrngHrng:d hrngHrng:s drctn:
-    ## hearingHrng -0.856                                                  
-    ## dirctnrvrsd -0.531  0.502                                           
-    ## signyrs     -0.913  0.864  0.535                                    
-    ## hrngHrng:dr  0.478 -0.557 -0.901 -0.483                             
-    ## hrngHrng:sg  0.480 -0.743 -0.281 -0.526  0.416                      
-    ## drctnrvrsd:  0.510 -0.483 -0.957 -0.559  0.864      0.295           
-    ## hrngHrng:d: -0.272  0.422  0.510  0.299 -0.747     -0.575     -0.535
+    ## hearingHrng -0.857                                                  
+    ## dirctnrvrsd -0.529  0.499                                           
+    ## signyrs     -0.916  0.865  0.534                                    
+    ## hrngHrng:dr  0.477 -0.555 -0.901 -0.481                             
+    ## hrngHrng:sg  0.479 -0.742 -0.279 -0.524  0.413                      
+    ## drctnrvrsd:  0.509 -0.481 -0.959 -0.557  0.865      0.291           
+    ## hrngHrng:d: -0.270  0.419  0.508  0.296 -0.746     -0.573     -0.531
 
 Eh, no effect here. How about eye gaze...
 
@@ -1260,38 +1260,38 @@ summary(model)
     ## Formula: percent ~ hearing * direction * signyrs + (1 | id) + (1 | story)
     ##    Data: data.fc
     ## 
-    ## REML criterion at convergence: -212
+    ## REML criterion at convergence: -221.5
     ## 
     ## Scaled residuals: 
     ##     Min      1Q  Median      3Q     Max 
-    ## -4.8494 -0.1080  0.0599  0.3248  1.7385 
+    ## -4.9054 -0.1062  0.0588  0.3202  1.7591 
     ## 
     ## Random effects:
     ##  Groups   Name        Variance  Std.Dev.
-    ##  id       (Intercept) 0.0101497 0.10075 
-    ##  story    (Intercept) 0.0002464 0.01570 
-    ##  Residual             0.0090914 0.09535 
-    ## Number of obs: 189, groups:  id, 51; story, 4
+    ##  id       (Intercept) 0.0099310 0.09965 
+    ##  story    (Intercept) 0.0002315 0.01522 
+    ##  Residual             0.0089095 0.09439 
+    ## Number of obs: 193, groups:  id, 52; story, 4
     ## 
     ## Fixed effects:
     ##                                            Estimate Std. Error         df
-    ## (Intercept)                                0.945317   0.082384  66.730000
-    ## hearingHearing                            -0.068765   0.091686  65.830000
-    ## directionreversed                         -0.044191   0.065293 132.890000
-    ## signyrs                                    0.001083   0.002727  66.700000
-    ## hearingHearing:directionreversed          -0.069729   0.073098 133.940000
-    ## hearingHearing:signyrs                     0.005594   0.005245  68.740000
-    ## directionreversed:signyrs                  0.001034   0.002181 133.180000
-    ## hearingHearing:directionreversed:signyrs   0.003706   0.004197 134.720000
+    ## (Intercept)                                0.945368   0.081369  68.110000
+    ## hearingHearing                            -0.068859   0.090593  67.210000
+    ## directionreversed                         -0.043905   0.064525 135.840000
+    ## signyrs                                    0.001081   0.002681  68.030000
+    ## hearingHearing:directionreversed          -0.069944   0.072232 136.800000
+    ## hearingHearing:signyrs                     0.005604   0.005180  70.190000
+    ## directionreversed:signyrs                  0.001016   0.002142 135.930000
+    ## hearingHearing:directionreversed:signyrs   0.003715   0.004144 137.530000
     ##                                          t value Pr(>|t|)    
-    ## (Intercept)                               11.475   <2e-16 ***
-    ## hearingHearing                            -0.750    0.456    
-    ## directionreversed                         -0.677    0.500    
-    ## signyrs                                    0.397    0.692    
-    ## hearingHearing:directionreversed          -0.954    0.342    
-    ## hearingHearing:signyrs                     1.067    0.290    
+    ## (Intercept)                               11.618   <2e-16 ***
+    ## hearingHearing                            -0.760    0.450    
+    ## directionreversed                         -0.680    0.497    
+    ## signyrs                                    0.403    0.688    
+    ## hearingHearing:directionreversed          -0.968    0.335    
+    ## hearingHearing:signyrs                     1.082    0.283    
     ## directionreversed:signyrs                  0.474    0.636    
-    ## hearingHearing:directionreversed:signyrs   0.883    0.379    
+    ## hearingHearing:directionreversed:signyrs   0.897    0.372    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
@@ -1299,11 +1299,11 @@ summary(model)
     ##             (Intr) hrngHr drctnr sgnyrs hrngHrng:d hrngHrng:s drctn:
     ## hearingHrng -0.891                                                  
     ## dirctnrvrsd -0.395  0.355                                           
-    ## signyrs     -0.955  0.858  0.382                                    
-    ## hrngHrng:dr  0.353 -0.397 -0.895 -0.342                             
-    ## hrngHrng:sg  0.497 -0.745 -0.199 -0.521  0.301                      
-    ## drctnrvrsd:  0.379 -0.341 -0.955 -0.400  0.856      0.209           
-    ## hrngHrng:d: -0.198  0.300  0.498  0.209 -0.743     -0.419     -0.522
+    ## signyrs     -0.956  0.859  0.382                                    
+    ## hrngHrng:dr  0.353 -0.397 -0.894 -0.342                             
+    ## hrngHrng:sg  0.495 -0.744 -0.198 -0.518  0.300                      
+    ## drctnrvrsd:  0.380 -0.342 -0.957 -0.399  0.857      0.207           
+    ## hrngHrng:d: -0.197  0.299  0.496  0.208 -0.742     -0.419     -0.519
 
 ``` r
 model <- lmer(percent ~ hearing * direction * signyrs + (1|id) + (1|story), data = data.mouth)
@@ -1315,50 +1315,50 @@ summary(model)
     ## Formula: percent ~ hearing * direction * signyrs + (1 | id) + (1 | story)
     ##    Data: data.mouth
     ## 
-    ## REML criterion at convergence: 6
+    ## REML criterion at convergence: 15.2
     ## 
     ## Scaled residuals: 
     ##     Min      1Q  Median      3Q     Max 
-    ## -2.7936 -0.5085  0.1167  0.6300  2.0897 
+    ## -2.6678 -0.4859  0.1212  0.5886  2.0450 
     ## 
     ## Random effects:
     ##  Groups   Name        Variance Std.Dev.
-    ##  id       (Intercept) 0.046762 0.21624 
-    ##  story    (Intercept) 0.003873 0.06223 
-    ##  Residual             0.027039 0.16444 
-    ## Number of obs: 189, groups:  id, 51; story, 4
+    ##  id       (Intercept) 0.045749 0.21389 
+    ##  story    (Intercept) 0.003448 0.05872 
+    ##  Residual             0.029281 0.17112 
+    ## Number of obs: 193, groups:  id, 52; story, 4
     ## 
     ## Fixed effects:
     ##                                            Estimate Std. Error         df
-    ## (Intercept)                               5.948e-01  1.687e-01  6.038e+01
-    ## hearingHearing                           -2.002e-02  1.854e-01  5.810e+01
-    ## directionreversed                         5.647e-03  1.126e-01  1.307e+02
-    ## signyrs                                   3.108e-03  5.510e-03  5.870e+01
-    ## hearingHearing:directionreversed         -1.679e-01  1.263e-01  1.310e+02
-    ## hearingHearing:signyrs                   -4.888e-04  1.057e-02  6.014e+01
-    ## directionreversed:signyrs                -2.089e-03  3.764e-03  1.308e+02
-    ## hearingHearing:directionreversed:signyrs  2.740e-03  7.257e-03  1.315e+02
+    ## (Intercept)                               6.028e-01  1.683e-01  6.273e+01
+    ## hearingHearing                           -2.853e-02  1.854e-01  6.052e+01
+    ## directionreversed                         4.764e-03  1.170e-01  1.338e+02
+    ## signyrs                                   2.601e-03  5.482e-03  6.111e+01
+    ## hearingHearing:directionreversed         -1.663e-01  1.311e-01  1.342e+02
+    ## hearingHearing:signyrs                    3.866e-05  1.058e-02  6.278e+01
+    ## directionreversed:signyrs                -2.038e-03  3.885e-03  1.338e+02
+    ## hearingHearing:directionreversed:signyrs  2.651e-03  7.527e-03  1.347e+02
     ##                                          t value Pr(>|t|)    
-    ## (Intercept)                                3.526 0.000813 ***
-    ## hearingHearing                            -0.108 0.914405    
-    ## directionreversed                          0.050 0.960088    
-    ## signyrs                                    0.564 0.574890    
-    ## hearingHearing:directionreversed          -1.330 0.185916    
-    ## hearingHearing:signyrs                    -0.046 0.963281    
-    ## directionreversed:signyrs                 -0.555 0.579897    
-    ## hearingHearing:directionreversed:signyrs   0.377 0.706424    
+    ## (Intercept)                                3.581 0.000669 ***
+    ## hearingHearing                            -0.154 0.878231    
+    ## directionreversed                          0.041 0.967583    
+    ## signyrs                                    0.474 0.636852    
+    ## hearingHearing:directionreversed          -1.268 0.206873    
+    ## hearingHearing:signyrs                     0.004 0.997095    
+    ## directionreversed:signyrs                 -0.525 0.600756    
+    ## hearingHearing:directionreversed:signyrs   0.352 0.725261    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr) hrngHr drctnr sgnyrs hrngHrng:d hrngHrng:s drctn:
-    ## hearingHrng -0.879                                                  
-    ## dirctnrvrsd -0.332  0.303                                           
-    ## signyrs     -0.943  0.858  0.326                                    
-    ## hrngHrng:dr  0.297 -0.340 -0.894 -0.292                             
-    ## hrngHrng:sg  0.492 -0.746 -0.171 -0.522  0.258                      
-    ## drctnrvrsd:  0.319 -0.292 -0.955 -0.341  0.856      0.179           
-    ## hrngHrng:d: -0.167  0.257  0.497  0.179 -0.744     -0.360     -0.523
+    ## hearingHrng -0.881                                                  
+    ## dirctnrvrsd -0.346  0.315                                           
+    ## signyrs     -0.946  0.859  0.339                                    
+    ## hrngHrng:dr  0.309 -0.353 -0.894 -0.303                             
+    ## hrngHrng:sg  0.491 -0.745 -0.176 -0.519  0.267                      
+    ## drctnrvrsd:  0.333 -0.303 -0.957 -0.354  0.856      0.185           
+    ## hrngHrng:d: -0.173  0.266  0.495  0.184 -0.743     -0.373     -0.519
 
 ``` r
 model <- lmer(percent ~ hearing * direction * signyrs + (1|id) + (1|story), data = data.eyes)
@@ -1370,48 +1370,48 @@ summary(model)
     ## Formula: percent ~ hearing * direction * signyrs + (1 | id) + (1 | story)
     ##    Data: data.eyes
     ## 
-    ## REML criterion at convergence: -33.9
+    ## REML criterion at convergence: -17.7
     ## 
     ## Scaled residuals: 
     ##     Min      1Q  Median      3Q     Max 
-    ## -2.6831 -0.4912 -0.0854  0.4018  3.3478 
+    ## -2.4992 -0.4637 -0.1208  0.3070  3.7205 
     ## 
     ## Random effects:
     ##  Groups   Name        Variance Std.Dev.
-    ##  id       (Intercept) 0.036832 0.19192 
-    ##  story    (Intercept) 0.002119 0.04603 
-    ##  Residual             0.020111 0.14181 
-    ## Number of obs: 172, groups:  id, 51; story, 4
+    ##  id       (Intercept) 0.034767 0.18646 
+    ##  story    (Intercept) 0.001375 0.03709 
+    ##  Residual             0.023858 0.15446 
+    ## Number of obs: 176, groups:  id, 52; story, 4
     ## 
     ## Fixed effects:
     ##                                            Estimate Std. Error         df
-    ## (Intercept)                               1.677e-01  1.492e-01  5.850e+01
-    ## hearingHearing                            3.732e-02  1.648e-01  5.660e+01
-    ## directionreversed                        -6.009e-02  9.962e-02  1.141e+02
-    ## signyrs                                   4.978e-05  4.887e-03  5.677e+01
-    ## hearingHearing:directionreversed          1.484e-02  1.118e-01  1.144e+02
-    ## hearingHearing:signyrs                    5.592e-03  9.374e-03  5.802e+01
-    ## directionreversed:signyrs                 2.608e-03  3.308e-03  1.140e+02
-    ## hearingHearing:directionreversed:signyrs  6.614e-03  6.466e-03  1.153e+02
+    ## (Intercept)                               1.544e-01  1.484e-01  6.152e+01
+    ## hearingHearing                            5.430e-02  1.646e-01  6.001e+01
+    ## directionreversed                        -3.957e-02  1.083e-01  1.173e+02
+    ## signyrs                                   9.223e-04  4.858e-03  6.016e+01
+    ## hearingHearing:directionreversed         -1.261e-02  1.215e-01  1.177e+02
+    ## hearingHearing:signyrs                    4.575e-03  9.369e-03  6.174e+01
+    ## directionreversed:signyrs                 1.036e-03  3.574e-03  1.170e+02
+    ## hearingHearing:directionreversed:signyrs  8.837e-03  7.010e-03  1.187e+02
     ##                                          t value Pr(>|t|)
-    ## (Intercept)                                1.124    0.266
-    ## hearingHearing                             0.226    0.822
-    ## directionreversed                         -0.603    0.548
-    ## signyrs                                    0.010    0.992
-    ## hearingHearing:directionreversed           0.133    0.895
-    ## hearingHearing:signyrs                     0.597    0.553
-    ## directionreversed:signyrs                  0.789    0.432
-    ## hearingHearing:directionreversed:signyrs   1.023    0.308
+    ## (Intercept)                                1.041    0.302
+    ## hearingHearing                             0.330    0.743
+    ## directionreversed                         -0.365    0.716
+    ## signyrs                                    0.190    0.850
+    ## hearingHearing:directionreversed          -0.104    0.917
+    ## hearingHearing:signyrs                     0.488    0.627
+    ## directionreversed:signyrs                  0.290    0.772
+    ## hearingHearing:directionreversed:signyrs   1.261    0.210
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr) hrngHr drctnr sgnyrs hrngHrng:d hrngHrng:s drctn:
-    ## hearingHrng -0.884                                                  
-    ## dirctnrvrsd -0.335  0.304                                           
-    ## signyrs     -0.947  0.858  0.325                                    
-    ## hrngHrng:dr  0.300 -0.341 -0.892 -0.291                             
-    ## hrngHrng:sg  0.494 -0.746 -0.170 -0.522  0.257                      
-    ## drctnrvrsd:  0.321 -0.292 -0.951 -0.341  0.851      0.179           
-    ## hrngHrng:d: -0.166  0.254  0.488  0.176 -0.735     -0.350     -0.517
+    ## hearingHrng -0.887                                                  
+    ## dirctnrvrsd -0.367  0.330                                           
+    ## signyrs     -0.952  0.858  0.354                                    
+    ## hrngHrng:dr  0.328 -0.371 -0.892 -0.317                             
+    ## hrngHrng:sg  0.494 -0.744 -0.184 -0.519  0.278                      
+    ## drctnrvrsd:  0.352 -0.318 -0.954 -0.370  0.852      0.193           
+    ## hrngHrng:d: -0.180  0.276  0.486  0.190 -0.734     -0.380     -0.512
 
 Let's ask a very simple question. Are deaf and hearing doing differently on the lexical recall test?
 
@@ -1425,38 +1425,38 @@ summary(model)
     ## Formula: acc ~ hearing * direction + (1 | id) + (1 | story)
     ##    Data: data.acc
     ## 
-    ## REML criterion at convergence: -284.9
+    ## REML criterion at convergence: -293.6
     ## 
     ## Scaled residuals: 
     ##      Min       1Q   Median       3Q      Max 
-    ## -2.08679 -0.66279  0.02155  0.57598  2.44153 
+    ## -2.09522 -0.64935  0.02551  0.57563  2.44869 
     ## 
     ## Random effects:
     ##  Groups   Name        Variance Std.Dev.
-    ##  id       (Intercept) 0.003033 0.05507 
-    ##  story    (Intercept) 0.001467 0.03830 
-    ##  Residual             0.008629 0.09289 
-    ## Number of obs: 185, groups:  id, 51; story, 4
+    ##  id       (Intercept) 0.003066 0.05537 
+    ##  story    (Intercept) 0.001417 0.03764 
+    ##  Residual             0.008504 0.09221 
+    ## Number of obs: 189, groups:  id, 52; story, 4
     ## 
     ## Fixed effects:
     ##                                   Estimate Std. Error        df t value
-    ## (Intercept)                        0.85115    0.02554   7.30000  33.321
-    ## hearingHearing                    -0.02902    0.02483  94.20000  -1.169
-    ## directionreversed                 -0.13422    0.01918 134.77000  -6.999
-    ## hearingHearing:directionreversed  -0.02484    0.02751 133.26000  -0.903
+    ## (Intercept)                        0.85293    0.02505   7.25000  34.044
+    ## hearingHearing                    -0.03096    0.02457  95.42000  -1.260
+    ## directionreversed                 -0.13166    0.01861 137.32000  -7.075
+    ## hearingHearing:directionreversed  -0.02712    0.02708 136.14000  -1.002
     ##                                  Pr(>|t|)    
-    ## (Intercept)                      3.01e-09 ***
-    ## hearingHearing                      0.245    
-    ## directionreversed                1.10e-10 ***
-    ## hearingHearing:directionreversed    0.368    
+    ## (Intercept)                      2.86e-09 ***
+    ## hearingHearing                      0.211    
+    ## directionreversed                6.96e-11 ***
+    ## hearingHearing:directionreversed    0.318    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr) hrngHr drctnr
-    ## hearingHrng -0.450              
-    ## dirctnrvrsd -0.357  0.363       
-    ## hrngHrng:dr  0.247 -0.546 -0.689
+    ## hearingHrng -0.444              
+    ## dirctnrvrsd -0.354  0.359       
+    ## hrngHrng:dr  0.242 -0.544 -0.682
 
 Interestingly they are not. Direction has a big effect here but deaf v. hearing isn't. How about eye behavior.
 
@@ -1470,38 +1470,38 @@ summary(model)
     ## Formula: percent ~ hearing * direction + (1 | id) + (1 | story)
     ##    Data: data.fc
     ## 
-    ## REML criterion at convergence: -243.8
+    ## REML criterion at convergence: -253.2
     ## 
     ## Scaled residuals: 
     ##     Min      1Q  Median      3Q     Max 
-    ## -5.0551 -0.1666  0.0667  0.4102  1.7136 
+    ## -5.1127 -0.1637  0.0656  0.4088  1.7340 
     ## 
     ## Random effects:
     ##  Groups   Name        Variance  Std.Dev.
-    ##  id       (Intercept) 0.0110540 0.10514 
-    ##  story    (Intercept) 0.0002168 0.01472 
-    ##  Residual             0.0091071 0.09543 
-    ## Number of obs: 189, groups:  id, 51; story, 4
+    ##  id       (Intercept) 0.0108277 0.10406 
+    ##  story    (Intercept) 0.0002018 0.01420 
+    ##  Residual             0.0089273 0.09448 
+    ## Number of obs: 193, groups:  id, 52; story, 4
     ## 
     ## Fixed effects:
     ##                                   Estimate Std. Error        df t value
-    ## (Intercept)                        0.97662    0.02507  47.40000  38.949
-    ## hearingHearing                    -0.05107    0.03557  68.46000  -1.436
-    ## directionreversed                 -0.01437    0.01933 137.54000  -0.743
-    ## hearingHearing:directionreversed  -0.06479    0.02804 136.11000  -2.311
+    ## (Intercept)                        0.97680    0.02436  47.87000  40.106
+    ## hearingHearing                    -0.05126    0.03493  69.85000  -1.468
+    ## directionreversed                 -0.01444    0.01874 140.00000  -0.771
+    ## hearingHearing:directionreversed  -0.06470    0.02752 139.39000  -2.351
     ##                                  Pr(>|t|)    
     ## (Intercept)                        <2e-16 ***
-    ## hearingHearing                     0.1556    
-    ## directionreversed                  0.4586    
-    ## hearingHearing:directionreversed   0.0223 *  
+    ## hearingHearing                     0.1467    
+    ## directionreversed                  0.4422    
+    ## hearingHearing:directionreversed   0.0201 *  
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr) hrngHr drctnr
-    ## hearingHrng -0.644              
-    ## dirctnrvrsd -0.365  0.255       
-    ## hrngHrng:dr  0.250 -0.388 -0.685
+    ## hearingHrng -0.638              
+    ## dirctnrvrsd -0.365  0.253       
+    ## hrngHrng:dr  0.248 -0.388 -0.678
 
 ``` r
 model <- lmer(percent ~ hearing * direction + (1|id) + (1|story), data = data.mouth)
@@ -1513,38 +1513,38 @@ summary(model)
     ## Formula: percent ~ hearing * direction + (1 | id) + (1 | story)
     ##    Data: data.mouth
     ## 
-    ## REML criterion at convergence: -27.5
+    ## REML criterion at convergence: -18.3
     ## 
     ## Scaled residuals: 
-    ##     Min      1Q  Median      3Q     Max 
-    ## -2.7963 -0.5108  0.0722  0.6108  2.1069 
+    ##      Min       1Q   Median       3Q      Max 
+    ## -2.66774 -0.47980  0.08954  0.60212  2.06463 
     ## 
     ## Random effects:
     ##  Groups   Name        Variance Std.Dev.
-    ##  id       (Intercept) 0.044970 0.21206 
-    ##  story    (Intercept) 0.003814 0.06176 
-    ##  Residual             0.026703 0.16341 
-    ## Number of obs: 189, groups:  id, 51; story, 4
+    ##  id       (Intercept) 0.043936 0.20961 
+    ##  story    (Intercept) 0.003408 0.05838 
+    ##  Residual             0.028918 0.17005 
+    ## Number of obs: 193, groups:  id, 52; story, 4
     ## 
     ## Fixed effects:
     ##                                   Estimate Std. Error        df t value
-    ## (Intercept)                        0.68440    0.05558  20.04000  12.314
-    ## hearingHearing                    -0.09064    0.06862  61.83000  -1.321
-    ## directionreversed                 -0.05403    0.03319 134.43000  -1.628
-    ## hearingHearing:directionreversed  -0.10324    0.04807 133.54000  -2.148
+    ## (Intercept)                        0.67822    0.05401  21.13000  12.556
+    ## hearingHearing                    -0.08487    0.06817  64.45000  -1.245
+    ## directionreversed                 -0.05396    0.03378 137.42000  -1.597
+    ## hearingHearing:directionreversed  -0.10290    0.04960 136.78000  -2.075
     ##                                  Pr(>|t|)    
-    ## (Intercept)                      8.36e-11 ***
-    ## hearingHearing                     0.1914    
-    ## directionreversed                  0.1059    
-    ## hearingHearing:directionreversed   0.0335 *  
+    ## (Intercept)                      2.89e-11 ***
+    ## hearingHearing                     0.2176    
+    ## directionreversed                  0.1125    
+    ## hearingHearing:directionreversed   0.0399 *  
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr) hrngHr drctnr
-    ## hearingHrng -0.560              
-    ## dirctnrvrsd -0.282  0.226       
-    ## hrngHrng:dr  0.193 -0.345 -0.682
+    ## hearingHrng -0.561              
+    ## dirctnrvrsd -0.296  0.233       
+    ## hrngHrng:dr  0.201 -0.359 -0.676
 
 ``` r
 model <- lmer(percent ~ hearing * direction + (1|id) + (1|story), data = data.eyes)
@@ -1556,38 +1556,38 @@ summary(model)
     ## Formula: percent ~ hearing * direction + (1 | id) + (1 | story)
     ##    Data: data.eyes
     ## 
-    ## REML criterion at convergence: -63.5
+    ## REML criterion at convergence: -47.6
     ## 
     ## Scaled residuals: 
     ##     Min      1Q  Median      3Q     Max 
-    ## -2.9743 -0.4811 -0.0983  0.4110  3.3846 
+    ## -2.7796 -0.4861 -0.1210  0.3115  3.7233 
     ## 
     ## Random effects:
     ##  Groups   Name        Variance Std.Dev.
-    ##  id       (Intercept) 0.03711  0.19264 
-    ##  story    (Intercept) 0.00240  0.04899 
-    ##  Residual             0.02024  0.14225 
-    ## Number of obs: 172, groups:  id, 51; story, 4
+    ##  id       (Intercept) 0.035204 0.18763 
+    ##  story    (Intercept) 0.001676 0.04094 
+    ##  Residual             0.023844 0.15442 
+    ## Number of obs: 176, groups:  id, 52; story, 4
     ## 
     ## Fixed effects:
-    ##                                   Estimate Std. Error        df t value
-    ## (Intercept)                      1.691e-01  4.868e-02 2.504e+01   3.473
-    ## hearingHearing                   7.725e-02  6.243e-02 6.087e+01   1.237
-    ## directionreversed                1.565e-02  3.084e-02 1.200e+02   0.507
-    ## hearingHearing:directionreversed 4.206e-03  4.432e-02 1.183e+02   0.095
-    ##                                  Pr(>|t|)   
-    ## (Intercept)                       0.00189 **
-    ## hearingHearing                    0.22069   
-    ## directionreversed                 0.61276   
-    ## hearingHearing:directionreversed  0.92455   
+    ##                                    Estimate Std. Error         df t value
+    ## (Intercept)                        0.181117   0.046191  30.790000   3.921
+    ## hearingHearing                     0.067607   0.062051  64.540000   1.090
+    ## directionreversed                 -0.008796   0.032577 123.350000  -0.270
+    ## hearingHearing:directionreversed   0.026508   0.047558 121.730000   0.557
+    ##                                  Pr(>|t|)    
+    ## (Intercept)                      0.000459 ***
+    ## hearingHearing                   0.279965    
+    ## directionreversed                0.787598    
+    ## hearingHearing:directionreversed 0.578289    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr) hrngHr drctnr
-    ## hearingHrng -0.582              
-    ## dirctnrvrsd -0.287  0.221       
-    ## hrngHrng:dr  0.199 -0.334 -0.689
+    ## hearingHrng -0.598              
+    ## dirctnrvrsd -0.322  0.238       
+    ## hrngHrng:dr  0.220 -0.362 -0.681
 
 Okay, so we get interactions for FaceChest Ratio and for Mouth...hearing and reversed do "worse". That at least. Of course, I'm worried about the Novice screwing up those results...let's check. Okay I checked all the models again with HearingNovice taken out, and yep, the effects disappeared.
 
@@ -1832,59 +1832,59 @@ summary(model)
     ##     story)
     ##    Data: data.eyes
     ## 
-    ## REML criterion at convergence: -196.1
+    ## REML criterion at convergence: -204.4
     ## 
     ## Scaled residuals: 
     ##      Min       1Q   Median       3Q      Max 
-    ## -2.41544 -0.55731 -0.00379  0.50682  2.11570 
+    ## -2.44320 -0.53124  0.01888  0.52296  2.15330 
     ## 
     ## Random effects:
     ##  Groups   Name        Variance Std.Dev.
-    ##  id       (Intercept) 0.003790 0.06157 
-    ##  story    (Intercept) 0.001631 0.04039 
-    ##  Residual             0.008106 0.09004 
-    ## Number of obs: 168, groups:  id, 51; story, 4
+    ##  id       (Intercept) 0.003829 0.06188 
+    ##  story    (Intercept) 0.001612 0.04015 
+    ##  Residual             0.007943 0.08912 
+    ## Number of obs: 172, groups:  id, 52; story, 4
     ## 
     ## Fixed effects:
     ##                                                  Estimate Std. Error
-    ## (Intercept)                                      0.841926   0.037370
-    ## percent                                          0.028899   0.140250
-    ## aoasl                                            0.002135   0.003576
-    ## directionreversed                               -0.124853   0.038259
-    ## hearingHearing                                  -0.020810   0.203548
-    ## percent:aoasl                                   -0.007129   0.014259
-    ## percent:directionreversed                        0.035322   0.176257
-    ## aoasl:directionreversed                         -0.001969   0.004080
-    ## percent:hearingHearing                           0.036056   0.466141
-    ## aoasl:hearingHearing                            -0.002307   0.011716
-    ## directionreversed:hearingHearing                -0.428751   0.243773
-    ## percent:aoasl:directionreversed                 -0.005443   0.020166
-    ## percent:aoasl:hearingHearing                     0.002054   0.029257
-    ## percent:directionreversed:hearingHearing         1.016473   0.533013
-    ## aoasl:directionreversed:hearingHearing           0.027009   0.014185
-    ## percent:aoasl:directionreversed:hearingHearing  -0.062635   0.035857
+    ## (Intercept)                                      0.852542   0.035269
+    ## percent                                         -0.015586   0.102953
+    ## aoasl                                            0.001309   0.003449
+    ## directionreversed                               -0.124240   0.035335
+    ## hearingHearing                                  -0.031431   0.202203
+    ## percent:aoasl                                   -0.003674   0.012099
+    ## percent:directionreversed                        0.055902   0.151347
+    ## aoasl:directionreversed                         -0.001915   0.003913
+    ## percent:hearingHearing                           0.082488   0.453610
+    ## aoasl:hearingHearing                            -0.001501   0.011626
+    ## directionreversed:hearingHearing                -0.432235   0.240891
+    ## percent:aoasl:directionreversed                 -0.007179   0.018674
+    ## percent:aoasl:hearingHearing                    -0.001482   0.028120
+    ## percent:directionreversed:hearingHearing         1.000858   0.520702
+    ## aoasl:directionreversed:hearingHearing           0.027178   0.014003
+    ## percent:aoasl:directionreversed:hearingHearing  -0.061338   0.034818
     ##                                                        df t value Pr(>|t|)
-    ## (Intercept)                                     24.540000  22.529   <2e-16
-    ## percent                                        146.660000   0.206   0.8370
-    ## aoasl                                          115.330000   0.597   0.5516
-    ## directionreversed                              130.810000  -3.263   0.0014
-    ## hearingHearing                                 112.440000  -0.102   0.9188
-    ## percent:aoasl                                  142.040000  -0.500   0.6179
-    ## percent:directionreversed                      136.940000   0.200   0.8415
-    ## aoasl:directionreversed                        122.190000  -0.483   0.6303
-    ## percent:hearingHearing                         132.000000   0.077   0.9385
-    ## aoasl:hearingHearing                           114.610000  -0.197   0.8442
-    ## directionreversed:hearingHearing               122.710000  -1.759   0.0811
-    ## percent:aoasl:directionreversed                130.440000  -0.270   0.7876
-    ## percent:aoasl:hearingHearing                   142.590000   0.070   0.9441
-    ## percent:directionreversed:hearingHearing       124.590000   1.907   0.0588
-    ## aoasl:directionreversed:hearingHearing         123.440000   1.904   0.0592
-    ## percent:aoasl:directionreversed:hearingHearing 126.910000  -1.747   0.0831
+    ## (Intercept)                                     20.660000  24.173  < 2e-16
+    ## percent                                        144.450000  -0.151 0.879880
+    ## aoasl                                          116.300000   0.379 0.705038
+    ## directionreversed                              133.900000  -3.516 0.000598
+    ## hearingHearing                                 114.810000  -0.155 0.876747
+    ## percent:aoasl                                  143.980000  -0.304 0.761796
+    ## percent:directionreversed                      142.730000   0.369 0.712403
+    ## aoasl:directionreversed                        124.110000  -0.489 0.625498
+    ## percent:hearingHearing                         134.030000   0.182 0.855977
+    ## aoasl:hearingHearing                           116.940000  -0.129 0.897526
+    ## directionreversed:hearingHearing               125.620000  -1.794 0.075167
+    ## percent:aoasl:directionreversed                133.390000  -0.384 0.701265
+    ## percent:aoasl:hearingHearing                   144.910000  -0.053 0.958051
+    ## percent:directionreversed:hearingHearing       127.550000   1.922 0.056819
+    ## aoasl:directionreversed:hearingHearing         126.350000   1.941 0.054497
+    ## percent:aoasl:directionreversed:hearingHearing 129.920000  -1.762 0.080477
     ##                                                   
     ## (Intercept)                                    ***
     ## percent                                           
     ## aoasl                                             
-    ## directionreversed                              ** 
+    ## directionreversed                              ***
     ## hearingHearing                                    
     ## percent:aoasl                                     
     ## percent:directionreversed                         

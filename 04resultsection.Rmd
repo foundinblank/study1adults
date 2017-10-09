@@ -27,7 +27,7 @@ Now let's load in the dataset called `cleanpercentdata.csv`. It contains item-le
 
 ```{r, message=FALSE, warning=FALSE}
 #library(corrplot)
-library(Hmisc)
+#library(Hmisc)
 library(tidyverse)
 library(stringr)
 library(lme4)
@@ -87,8 +87,8 @@ dataoriginal <- data # Save item-level data just in case
 corstarsl <- function(x){ 
 require(Hmisc) 
 x <- as.matrix(x) 
-R <- rcorr(x)$r 
-p <- rcorr(x)$P 
+R <- Hmisc::rcorr(x)$r 
+p <- Hmisc::rcorr(x)$P 
 ## define notions for significance levels; spacing is important.
 mystars <- ifelse(p < .001, "***", ifelse(p < .01, "** ", ifelse(p < .05, "* ", " ")))
 ## trunctuate the matrix that holds the correlations to two decimal
@@ -335,7 +335,7 @@ data.acc <- data %>%
   distinct() %>%
   select(aoasl,signyrs,selfrate,age,acc.forward,acc.reversed,acc.effect)
 
-#data.acc.results <- rcorr(as.matrix(data.acc))
+#data.acc.results <- Hmisc::rcorr(as.matrix(data.acc))
 corstarsl(data.acc) # Use the awesome function!
 ```
 
@@ -377,7 +377,7 @@ Here's the Pearson's correlation matrix for forward stories.
 
 So. For forward stories it's a crapshoot. 
 ```{r rows.print=11}
-#rcorr(as.matrix(data.fw))
+#Hmisc::rcorr(as.matrix(data.fw))
 corstarsl(data.fw)
 ```
 
@@ -391,7 +391,7 @@ Here's the Pearson's correlation matrix for reversed stories.
 
 So. 
 ```{r rows.print=11}
-#rcorr(as.matrix(data.rv))
+#Hmisc::rcorr(as.matrix(data.rv))
 corstarsl(data.rv)
 ```
 

@@ -1,7 +1,7 @@
 Data Import & Cleaning (study1adults)
 ================
 Adam Stone, PhD
-10-06-2017
+10-09-2017
 
 -   [Importing and Reshaping Data](#importing-and-reshaping-data)
 -   [Participant Demographics](#participant-demographics)
@@ -12,7 +12,7 @@ Importing and Reshaping Data
 
 Here we're going to import the data, remove dropped participants, and reshape the data so story and direction are grouping variables (and the dataset will be more tall than wide). Let's see ALL of our data first (scroll horizontally).
 
-    ## # A tibble: 57 x 54
+    ## # A tibble: 58 x 54
     ##       id hearing videogroup aoagroup languagegroup    maingroup selfrate
     ##    <int>   <chr>      <chr>    <chr>         <chr>        <chr>    <dbl>
     ##  1     1    Deaf    Group 1    Early      EarlyASL DeafEarlyASL        5
@@ -25,7 +25,7 @@ Here we're going to import the data, remove dropped participants, and reshape th
     ##  8     8    Deaf    Group 2    Early      EarlyASL DeafEarlyASL        5
     ##  9     9    Deaf    Group 2    Early       LateASL  DeafLateASL        5
     ## 10    10    Deaf    Group 1    Early       LateASL  DeafLateASL        5
-    ## # ... with 47 more rows, and 47 more variables: age <dbl>, signyrs <dbl>,
+    ## # ... with 48 more rows, and 47 more variables: age <dbl>, signyrs <dbl>,
     ## #   aoasl <int>, acc.fw1 <dbl>, acc.rv2 <dbl>, acc.fw3 <dbl>,
     ## #   acc.rv4 <dbl>, forehead.fw1 <dbl>, forehead.fw3 <dbl>,
     ## #   forehead.rv2 <dbl>, forehead.rv4 <dbl>, eyes.fw1 <dbl>,
@@ -210,7 +210,7 @@ Here's the final, "cleaned-up" dataset that we're going to use for all further a
 select(data,-participant)
 ```
 
-    ## # A tibble: 204 x 25
+    ## # A tibble: 208 x 25
     ##       id hearing videogroup aoagroup languagegroup    maingroup  video
     ##    <int>  <fctr>     <fctr>   <fctr>        <fctr>       <fctr> <fctr>
     ##  1     1    Deaf    Group 1    Early      EarlyASL DeafEarlyASL    fw1
@@ -223,7 +223,7 @@ select(data,-participant)
     ##  8     2    Deaf    Group 1    Early      EarlyASL DeafEarlyASL    rv4
     ##  9     3    Deaf    Group 2    Early      EarlyASL DeafEarlyASL    fw1
     ## 10     3    Deaf    Group 2    Early      EarlyASL DeafEarlyASL    fw3
-    ## # ... with 194 more rows, and 18 more variables: story <fctr>,
+    ## # ... with 198 more rows, and 18 more variables: story <fctr>,
     ## #   direction <fctr>, age <dbl>, selfrate <dbl>, signyrs <dbl>,
     ## #   aoasl <int>, acc <dbl>, forehead <dbl>, eyes <dbl>, mouth <dbl>,
     ## #   chin <dbl>, upperchest <dbl>, midchest <dbl>, lowerchest <dbl>,
@@ -314,19 +314,19 @@ DeafLateASL
 DeafNative
 </td>
 <td style="text-align:right;">
-11
+12
 </td>
 <td style="text-align:right;">
-32.9
+33.0
 </td>
 <td style="text-align:right;">
 5.0
 </td>
 <td style="text-align:right;">
-32.5
+32.6
 </td>
 <td style="text-align:right;">
-0.3
+0.2
 </td>
 </tr>
 <tr>
