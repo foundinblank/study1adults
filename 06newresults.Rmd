@@ -1,0 +1,798 @@
+---
+title: "New Results #2 Section (study1adults)"
+author: "Adam Stone, PhD" 
+date: '`r format(Sys.Date(), "%m-%d-%Y")`'
+output:
+  github_document:
+    toc: yes
+    toc_depth: 2
+  html_notebook:
+    code_folding: hide
+    theme: paper
+    highlight: tango
+    toc: yes
+    toc_depth: 2
+    toc_float: yes
+    df_print: paged
+---
+
+# Introduction
+So this is a new attempt at sorting out the data analyses for this project. We'll go in this order: 
+
+1. *Deaf Signers.* Let's set up the gold standard. 
+1. *Hearing Late Signers.* Now compare DeafLate & HearingLate for an effect of hearing.
+1. *Hearing Novice Signers.* Maybe.
+
+# Participants
+```{r warning=FALSE}
+# Load libraries
+library(tidyverse)
+library(stringr)
+library(lme4)
+library(lmerTest)
+library(prettydoc)
+library(broom)
+library(knitr)
+library(xtable)
+library(kableExtra)
+library(viridis)
+library(cowplot)
+options(knitr.table.format = "html") 
+
+# Import data!
+data <- read_csv('cleanpercentdata.csv',col_types = 
+                   cols(
+                     id = col_integer(),
+                     participant = col_character(),
+                     hearing = col_character(),
+                     videogroup = col_character(),
+                     aoagroup = col_character(),
+                     languagegroup = col_character(),
+                     maingroup = col_character(),
+                     video = col_character(),
+                     story = col_character(),
+                     direction = col_character(),
+                     age = col_double(),
+                     selfrate = col_double(),
+                     signyrs = col_double(),
+                     aoasl = col_integer(),
+                     acc = col_double(),
+                     aoi = col_character(),
+                     percent = col_double()
+                   ))
+
+# And factorize
+data <- data %>%
+  mutate(participant = as.factor(participant)) %>%
+  mutate(id = as.factor(id)) %>%
+  mutate(hearing = as.factor(hearing)) %>%
+  mutate(videogroup = as.factor(videogroup)) %>%
+  mutate(aoagroup = as.factor(aoagroup)) %>%
+  mutate(languagegroup = as.factor(languagegroup)) %>%
+  mutate(maingroup = as.factor(maingroup)) %>%
+  mutate(video = as.factor(video)) %>%
+  mutate(story = as.factor(story)) %>%
+  mutate(direction = as.factor(direction)) %>%
+  mutate(aoi = as.factor(aoi))
+
+# Remove ASL from the end of MainGroup names
+data <- data %>%
+  mutate(maingroup = case_when(
+    str_detect(maingroup,"DeafNative") ~ "DeafNative",
+    str_detect(maingroup,"DeafEarlyASL") ~ "DeafEarly",
+    str_detect(maingroup,"DeafLateASL") ~ "DeafLate",
+    str_detect(maingroup,"HearingLateASL") ~ "HearingLate",
+    str_detect(maingroup,"HearingNoviceASL") ~ "HearingNovice"
+  )) %>%
+  mutate(maingroup = as.factor(maingroup))
+
+# Set reference levels for maingroup
+data$maingroup <- relevel(data$maingroup, ref="DeafNative")
+
+dataoriginal <- data # Save item-level data just in case
+
+# Take out HearingNoviceASL
+# data <- data %>%
+#   filter(maingroup!="HearingNoviceASL")
+
+# Load awesome function to make correlation tables with stars for significance
+# From: https://myowelt.blogspot.co.uk/2008/04/beautiful-correlation-tables-in-r.html
+corstarsl <- function(x){ 
+require(Hmisc) 
+x <- as.matrix(x) 
+R <- Hmisc::rcorr(x)$r 
+p <- Hmisc::rcorr(x)$P 
+## define notions for significance levels; spacing is important.
+mystars <- ifelse(p < .001, "***", ifelse(p < .01, "** ", ifelse(p < .05, "* ", " ")))
+## trunctuate the matrix that holds the correlations to two decimal
+R <- format(round(cbind(rep(-1.11, ncol(x)), R), 2))[,-1] 
+## build a new matrix that includes the correlations with their apropriate stars 
+Rnew <- matrix(paste(R, mystars, sep=""), ncol=ncol(x)) 
+diag(Rnew) <- paste(diag(R), " ", sep="") 
+rownames(Rnew) <- colnames(x) 
+colnames(Rnew) <- paste(colnames(x), "", sep="") 
+## remove upper triangle
+Rnew <- as.matrix(Rnew)
+Rnew[upper.tri(Rnew, diag = TRUE)] <- ""
+Rnew <- as.data.frame(Rnew) 
+## remove last column and return the matrix (which is now a data frame)
+Rnew <- cbind(Rnew[1:length(Rnew)-1])
+return(Rnew) 
+}
+
+
+# # Now collapse eye gaze data to subject-level 
+# data <- data %>%
+#   group_by(participant,direction,aoi) %>%
+#   dplyr::summarize(percent = mean(percent,na.rm=TRUE))
+# data[data=="NaN"] <- NA
+# 
+# # Join subject info with data that's now subject-level
+# data <- left_join(data,data.subjectinfo, by=c("participant","direction"))
+
+
+# But now we need to go back and add in a complete lexical recall dataset, even including those trials that got thrown out in 03eyegaze.nb.html. Because the lexical accuracy data is still good. So let's work on that. 
+cleanlexdata <- read_csv('cleandata.csv',col_types = 
+                   cols(
+                     id = col_integer(),
+                     participant = col_character(),
+                     hearing = col_character(),
+                     videogroup = col_character(),
+                     aoagroup = col_character(),
+                     languagegroup = col_character(),
+                     maingroup = col_character(),
+                     video = col_character(),
+                     story = col_character(),
+                     direction = col_character(),
+                     age = col_double(),
+                     selfrate = col_double(),
+                     signyrs = col_double(),
+                     aoasl = col_integer(),
+                     acc = col_double(),
+                     forehead = col_double(),
+                     eyes = col_double(),
+                     mouth = col_double(),
+                     chin = col_double(),
+                     upperchest = col_double(),
+                     midchest = col_double(),
+                     lowerchest = col_double(),
+                     belly = col_double(),
+                     left = col_double(),
+                     right = col_double(),
+                     total = col_double()
+                   )) %>%
+  mutate(maingroup = case_when(
+    str_detect(maingroup,"DeafNative") ~ "DeafNative",
+    str_detect(maingroup,"DeafEarlyASL") ~ "DeafEarly",
+    str_detect(maingroup,"DeafLateASL") ~ "DeafLate",
+    str_detect(maingroup,"HearingLateASL") ~ "HearingLate",
+    str_detect(maingroup,"HearingNoviceASL") ~ "HearingNovice"
+  )) %>%
+  mutate(maingroup = as.factor(maingroup))
+
+# Pull out subject info for later in summary tables
+subjectinfo <- data %>%
+  select(-aoi,-percent,-video,-story,-direction,-acc) %>%
+  distinct()
+
+# Participant Characteristics Table (using cleanlexdata because it's more complete)
+groupmeans <- cleanlexdata %>%
+  ungroup() %>%
+  select(id,participant,maingroup,age,selfrate,signyrs,aoasl) %>%
+  distinct() %>%
+  group_by(maingroup) %>%
+  dplyr::summarize(n = n(),
+            age.m = mean(age),
+            age.sd = sd(age),
+            selfrate.m = mean(selfrate),
+            selfrate.sd = sd(selfrate),
+            signyrs.m = mean(signyrs),
+            signyrs.sd = sd(signyrs),
+            aoasl.m = mean(aoasl),
+            aoasl.sd = sd(aoasl)) %>%
+  mutate(maingroup =  factor(maingroup, levels = c("DeafNative","DeafEarly","DeafLate",
+                                                   "HearingLate","HearingNovice"))) %>%
+  arrange(maingroup)    
+kable(groupmeans, digits=1) %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+
+# Deaf (All) Signers
+What does deaf eye gaze behavior look like, and how can it change based on AoASL? Like you said...set up the gold standard for each group. So first we look at lexical accuracy, then eye gaze differences. All that is an easy AoASL analysis too. We also can show lots of boxplots, share our data, to show how % looking changes on different regions.
+
+## Lexical Recall
+First, we show what Deaf participants' accuracy on the lexical recall task was. 
+```{r warning=FALSE}
+# Let's get the Deaf participants only
+lex_deaf <- cleanlexdata %>%
+  filter(hearing == "Deaf") %>%
+  mutate(maingroup = factor(maingroup, levels = c("DeafNative","DeafEarly","DeafLate")))
+
+lex_deaf_subjects <- lex_deaf %>%
+  group_by(participant,direction) %>%
+  dplyr::summarize(acc = mean(acc, na.rm=TRUE)) %>%
+  left_join(subjectinfo, by = "participant")
+
+ggplot(lex_deaf_subjects, aes(x = aoasl, y = acc, color = direction)) +
+  geom_point(alpha=.5) +
+  geom_smooth(method = "lm") +
+  scale_y_continuous(limits = c(0,1), labels = scales::percent) +
+  xlab("Age of ASL Acquisition") + ylab("Accuracy") + ggtitle("Deaf Signers' Lexical Recall")
+
+
+# All code below is for group analysis. 
+# # Get means and SDs
+# lex_deaf_mean <- lex_deaf %>%
+#   group_by(maingroup, participant, direction) %>%
+#   dplyr::summarize(acc = mean(acc,na.rm=TRUE)) %>%
+#   group_by(maingroup, direction) %>%
+#   dplyr::summarize(count = n(),
+#                    mean = mean(acc),
+#                    sd = sd(acc),
+#                    se = sd/(sqrt(count))) %>%
+#   ungroup() %>%
+#   mutate(maingroup = factor(maingroup, levels = c("DeafNative","DeafEarly","DeafLate")))
+# 
+# ggplot(lex_deaf_mean, aes(x = maingroup, y = mean, color = direction)) +
+#   geom_point(position = position_dodge(0.5)) +
+#   geom_errorbar(aes(ymin = mean-se, ymax = mean+se), 
+#                 width = 0.25, size = 1, position = position_dodge(0.5)) +
+#   scale_y_continuous(limits = c(0,1), labels = scales::percent) +
+#   xlab("") + ylab("Accuracy") + ggtitle("Deaf Signers' Lexical Recall")
+# 
+# lex_deaf_mean <- lex_deaf_mean %>%
+#   select(maingroup, direction, mean, sd) %>%
+#   gather(temp, score, mean:sd) %>%
+#   unite(temp1, direction, temp, sep = ".") %>%
+#   spread(temp1, score)
+# 
+# kable(lex_deaf_mean, digits=2) %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+
+Now is there a reversal effect, and are there AoASL differences? We'll do a LMM. The output below tells us:
+
+1. Strong reversal effect 
+1. No AoASL effect or interactions
+
+Moreover, this model is significantly better than a null random effects model, chi-sq = 51.846. 
+
+```{r warning=FALSE}
+lex_deaf_m <- lmer(acc ~ direction * aoasl + (1|id) + (1|story), data = lex_deaf)
+summary(lex_deaf_m)
+
+lex_deaf_null <- lmer(acc ~ 1 + (1|id) + (1|story), data = lex_deaf)
+anova(lex_deaf_null,lex_deaf_m)
+```
+
+Next, we look at the "recovery" of the reversal effect, and how that recovery may differ based on AOA.
+
+```{r warning=FALSE}
+lex_deaf_recovery <- lex_deaf %>%
+  select(participant, video, acc) %>%
+  filter(video == "rv2" | video == "rv4") %>%
+  spread(video, acc) %>%
+  mutate(recov = rv4-rv2) %>%
+  select(participant,recov) %>%
+  left_join(subjectinfo, by="participant")
+
+ggplot(lex_deaf_recovery, aes(x = aoasl, y = recov)) + 
+  geom_point(alpha = 0.5, color = "#00BFC4") + 
+  geom_smooth(method = "lm", color = "#00BFC4") +
+  geom_hline(aes(yintercept = 0)) + 
+  scale_y_continuous(labels = scales::percent) +
+  ylab("Recovery") + xlab("Age of ASL Acquisition") +
+  ggtitle("Recovery for Lexical Recall Task in Reversed Stories")
+  
+```
+
+Is this significant? The simple regression below tells us no. 
+```{r warning=FALSE}
+lex_deaf_recovery_m <- lm(recov ~ aoasl, data = lex_deaf_recovery)
+summary(lex_deaf_recovery_m)
+```
+
+### Summary 
+There was a strong reversal effect; across all Deaf signers, they showed considerably worse lexical recall scores when viewing reversed stories compared to forward stories. This effect did not change based on when the signers first acquired ASL. While there were trends suggesting that AoASL had an effect on how impacted by the reversal our Deaf signers were, these were not significant (p = 0.095).
+
+## Eye Gaze Behavior
+Now, what did their eye gaze behavior look like? The boxplot below suggests that three AOIs saw the widest range of variation: eyes, mouth, and chin. All other AOIs did not get high looking times and were not included in statistical analyses. 
+
+```{r warning=FALSE}
+eyegaze_deaf <- data %>%
+  filter(hearing == "Deaf") %>%
+  filter(aoi != "mouthchin" & aoi != "moutheyes")
+
+eyegaze_deaf %>%
+# gg_deaf_aoi <- eyegaze_deaf %>%
+  filter(aoi != "facechest" & aoi != "face" & aoi != "chest") %>%
+  distinct() %>%
+  ggplot(aes(x = aoi, y = percent, fill = direction)) + 
+  geom_boxplot() +
+  scale_y_continuous(limits = c(0,1), labels = scales::percent) +
+  theme(axis.text.x = element_text(angle = 45,hjust = 1)) + 
+  ylab("Percent Looking") + xlab("") + ggtitle("Deaf Signers' Eye Gaze")
+
+# gg_deaf_fcr <- eyegaze_deaf %>%
+#   filter(aoi == "facechest") %>%
+#   ggplot(aes(x = direction, y = percent, fill = direction)) + 
+#   geom_boxplot() +
+#   scale_y_continuous(limits = c(0,1)) +
+#   theme(axis.text.x = element_text(angle = 45,hjust = 1)) + 
+#   ylab("FCR") + xlab("") + ggtitle("Deaf Signers' Face-Chest Ratio")
+
+#plot_grid(gg_deaf_aoi, gg_deaf_fc, labels = c("A", "B"))
+```
+
+Do we see AoA differences for eye gaze and reversal? Let's visualize and then run 3 models (eyes, mouth, chin). The charts and models tell us nothing was significant, and that eye gaze among deaf signers were not impacted by reversal, even when controlling for AoA. 
+
+
+```{r warning=FALSE}
+eyegaze_deaf %>%
+  filter(aoi == "eyes" | aoi == "mouth" | aoi == "chin") %>%
+  mutate(aoi = factor(aoi, levels = c("forehead","eyes","mouth","chin"))) %>%
+  ggplot(aes(x = aoasl, y = percent, color = direction)) +
+  geom_point(alpha=.5) + geom_smooth(method="lm", se = FALSE) +
+  facet_wrap("aoi") + ylab("Percent Looking") + xlab("Age of ASL Acquisition") +
+  scale_y_continuous(labels = scales::percent)
+```
+
+Then we can show a nice heat map of where Deaf signers tend to look at. 
+
+```{r warning=FALSE}
+# eye_deaf_heat <- eyegaze_deaf %>%
+#   ungroup() %>%
+#   filter(aoi != "left" & aoi != "right" & aoi != "facechest" & aoi != "face" & aoi != "chest") %>%
+#   group_by(participant,direction,aoi) %>%
+#   dplyr::summarize(percent = mean(percent, na.rm=TRUE)) %>%
+#   group_by(direction,aoi) %>%
+#   dplyr::summarize(percent = mean(percent, na.rm=TRUE)) %>%
+#   ungroup() %>%
+#   filter(!is.na(aoi)) %>%
+#   mutate(aoi = factor(aoi,levels=c("belly","lowerchest","midchest",
+#                                    "upperchest","chin","mouth","eyes","forehead")))
+
+eye_deaf_heat <- eyegaze_deaf %>%
+  ungroup() %>%
+  filter(aoi != "left" & aoi != "right" & aoi != "facechest" & aoi != "face" & aoi != "chest") %>%
+  group_by(maingroup,participant,direction,aoi) %>%
+  dplyr::summarize(percent = mean(percent, na.rm=TRUE)) %>%
+  group_by(maingroup,direction,aoi) %>%
+  dplyr::summarize(percent = mean(percent, na.rm=TRUE)) %>%
+  ungroup() %>%
+  filter(!is.na(aoi)) %>%
+  mutate(aoi = factor(aoi,levels=c("belly","lowerchest","midchest",
+                                   "upperchest","chin","mouth","eyes","forehead")))
+
+ggplot(eye_deaf_heat, aes(x = direction, y = aoi)) +
+  geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
+#  scale_fill_gradient(low = "lightblue",high = "steelblue") +
+#  scale_fill_distiller(type="div", palette = "RdYlBu") +
+  scale_fill_viridis(option = "viridis", direction=-1) +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) + facet_wrap("maingroup") +
+  ylab("") + xlab("") + ggtitle("Deaf Signers' Eye Gaze Heat Map")
+
+```
+
+Models here. The LMMs tell us there was no significant effect of reversal or AOA on eye gaze, although there were trends for mouth and chin, as can be seen in the charts above. 
+
+```{r warning=FALSE}
+eye_deaf_aoi <- eyegaze_deaf %>%
+  spread(aoi,percent)
+
+eye_deaf_eyes <- lmer(eyes ~ direction * aoasl + (1|id) + (1|story), data = eye_deaf_aoi)
+eye_deaf_mouth <- lmer(mouth ~ direction * aoasl + (1|id) + (1|story), data = eye_deaf_aoi)
+eye_deaf_chin <- lmer(chin ~ direction * aoasl + (1|id) + (1|story), data = eye_deaf_aoi)
+
+summary(eye_deaf_eyes)
+summary(eye_deaf_mouth)
+summary(eye_deaf_chin)
+```
+
+### Summary
+Generally, Deaf signers focus most on the mouth. There is a trend (but not significant) towards greater focus on the mouth and less on the chin in reversed stories for signers with late AoASL. 
+
+## Bivariate Correlations; Eye Gaze Effect on Accuracy
+Correlations below. They tell us there is no correlation between AoASL and accuracy, or between AoASL and any eye gaze behavior, or between eye gaze behavior and accuracy. This may also be something we **should not even report** because we failed to show any effect of AoASL or reversal on eye behavior, so why bother doing this, from a stats perspective. 
+
+```{r warning=FALSE}
+lexeye_deaf <- data %>%
+  filter(hearing == "Deaf") %>%
+  group_by(participant, direction, aoi) %>%
+  dplyr::summarize(acc = mean(acc, na.rm = TRUE),
+                   percent = mean(percent, na.rm = TRUE)) %>%
+  ungroup() %>%
+  spread(aoi, percent) %>%
+  left_join(subjectinfo, by = "participant")
+
+lexeye_deaf_fw <- lexeye_deaf %>%
+  filter(direction == "forward") %>%
+  select(aoasl, signyrs, acc, eyes, mouth, chin)
+
+lexeye_deaf_rv <- lexeye_deaf %>%
+  filter(direction == "reversed") %>%
+  select(aoasl, signyrs, acc, eyes, mouth, chin)
+
+corstarsl(lexeye_deaf_fw)
+corstarsl(lexeye_deaf_rv)
+```
+
+I could run models here - the code is below, but commented out - I think we have enough at this point. 
+```{r, include=FALSE}
+lexeye_deaf_item <- data %>%
+  filter(hearing == "Deaf") %>%
+  spread(aoi,percent)
+
+lexeye_deaf_eye <- lmer(acc ~ direction * eyes * aoasl * (1|id) * (1|story), data = lexeye_deaf_item)
+lexeye_deaf_mouth <- lmer(acc ~ direction * mouth * aoasl * (1|id) * (1|story), data = lexeye_deaf_item)
+lexeye_deaf_chin <- lmer(acc ~ direction * chin * aoasl * (1|id) * (1|story), data = lexeye_deaf_item)
+
+summary(lexeye_deaf_eye)
+summary(lexeye_deaf_mouth)
+summary(lexeye_deaf_chin)
+```
+
+## Deaf Signers Summary
+
+1. There is a reversal effect on accuracy, yes. 
+1. There appears to be no effect of reversal on eye gaze behavior, though. 
+1. There appears to be no correlation between eye gaze and accuracy, for either forward or reversed stories.
+1. Visualizations do repeatedly suggest subtle AoASL effects. Later signers appear to focus more on the mouth, and this effect is pronounced during reversed stories. 
+
+# Late (Deaf & Hearing) Signers
+Then we add HearingLate as a comparison group with DeafLate, to answer the "deaf/hearing" question. Now we have a little problem here, signyears and age are both different so we'll need to add those as covariates (or maybe not). But we're not using AoASL anyway, and now we can add the deaf/hearing factor. 
+
+## Participants
+We need to do t-tests on all their characteristics to see which are different, since we're sort of "matching" the deaf and hearing late signers. 
+
+```{r warning=FALSE}
+groupmeans %>%
+  filter(maingroup != "DeafNative" & maingroup != "DeafEarly" & maingroup != "HearingNovice") %>%
+  kable(digits=1) %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+
+The t-test results tell us: 
+
+1. Age is significantly different (HearingLate are 9 yrs younger, p = 0.004)
+1. AoASL is the same, just barely (HearingLate tend to acquire 3 years older, p = 0.058)
+1. Self-Rating is different, just barely (HearingLate tend to rate 0.38 lower, p = 0.043)
+1. Signing Yrs is significantly different (HearingLate 11 yrs less signing, p < 0.001)
+```{r warning=FALSE}
+lex_late <- cleanlexdata %>%
+  filter(aoagroup == "Late") %>%
+  select(id:acc) %>%
+  distinct()
+
+lex_late_subjects <- lex_late %>%
+  select(participant, hearing, age, aoasl, selfrate, signyrs) %>%
+  distinct()
+
+summary(lm(age ~ hearing, data = lex_late_subjects))
+summary(lm(aoasl ~ hearing, data = lex_late_subjects))
+summary(lm(selfrate ~ hearing, data = lex_late_subjects))
+summary(lm(signyrs ~ hearing, data = lex_late_subjects))
+```
+
+## Lexical Recall
+How do deaf and hearing late signers compare on the lexical recall task? Let's visualize first.
+```{r warning=FALSE}
+lex_late %>%
+  ggplot(aes(x = hearing, y = acc, fill = direction)) + 
+  geom_boxplot() +
+  scale_y_continuous(limits = c(0,1), labels = scales::percent) +
+  ylab("Accuracy") + xlab("") + ggtitle("Late Signers' Lexical Accuracy")
+```
+
+And now the LMM. It tells us that while there's a reversal effect, it's not significantly different for deaf or hearing late signers. 
+
+```{r warning=FALSE}
+lex_late_m <- lmer(acc ~ direction * hearing + (1|id) + (1|story), data = lex_late)
+summary(lex_late_m)
+```
+
+### Summary
+There is a reversal effect, but it doesn't change whether the signer is deaf or hearing. Reversal effects on lexical accuracy seems to be about proficiency - all Deaf signers and all Hearing Late signers are proficient so they were similar.
+
+## Eye Gaze Behavior
+Now let's compare eye gaze behavior in this population. Let's go ahead and noarrow down the AOIs. I can just write that we observed higher percentage looking for the forehead AOI in this group, so we included this AOI. First let's see how deaf and hearing late signers' AOI compared. 
+
+```{r warning=FALSE}
+eye_late <- data %>%
+  filter(aoagroup == "Late")
+
+eye_late %>%
+  filter(aoi == "forehead" | aoi == "eyes" | aoi == "mouth" | aoi == "chin") %>%
+  mutate(aoi = factor(aoi, levels = c("forehead","eyes","mouth","chin"))) %>%
+  ggplot(aes(x = hearing, y = percent, fill = direction)) +
+  geom_boxplot() +
+  facet_grid(.~aoi) + ylab("Percent Looking") + xlab("") +
+  scale_y_continuous(labels = scales::percent) + ggtitle("Late Signers' Eye Gaze")
+
+# eye_late %>%
+#   filter(aoi != "facechest" & aoi != "face" & aoi != "chest") %>%
+#   distinct() %>%
+#   ggplot(aes(x = aoi, y = percent, fill = direction)) + 
+#   geom_boxplot() +
+#   scale_y_continuous(limits = c(0,1), labels = scales::percent) +
+#   theme(axis.text.x = element_text(angle = 45,hjust = 1)) + 
+#   ylab("Percent Looking") + xlab("") + ggtitle("Deaf Signers' Eye Gaze") + 
+#   facet_grid(.~hearing)
+
+```
+
+Let's visualize this as a heat map too, before we start running models. It looks like hearing signers are pretty different, right? 
+
+```{r warning=FALSE}
+eye_late_heat <- eye_late %>%
+  ungroup() %>%
+  filter(aoi != "left" & aoi != "right" & aoi != "facechest" & aoi != "face" & aoi != "chest") %>%
+  group_by(hearing,participant,direction,aoi) %>%
+  dplyr::summarize(percent = mean(percent, na.rm=TRUE)) %>%
+  group_by(hearing,direction,aoi) %>%
+  dplyr::summarize(percent = mean(percent, na.rm=TRUE)) %>%
+  ungroup() %>%
+  filter(!is.na(aoi)) %>%
+  mutate(aoi = factor(aoi,levels=c("belly","lowerchest","midchest",
+                                   "upperchest","chin","mouth","eyes","forehead")))
+
+ggplot(eye_late_heat, aes(x = direction, y = aoi)) +
+  geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
+#  scale_fill_gradient(low = "lightblue",high = "steelblue") +
+#  scale_fill_distiller(type="div", palette = "RdYlBu") +
+  scale_fill_viridis(option = "viridis", direction=-1) +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) + facet_wrap("hearing") +
+  ylab("") + xlab("") + ggtitle("Late Signers' Eye Gaze Heat Map")
+```
+
+Let's run models to see if there were significant differences based on hearing. And the answer is, nope! Except a significant Direction X Hearing interaction for mouth AOI (p = 0.01). 
+```{r warning=FALSE}
+eye_late_aoi <- eye_late %>%
+  spread(aoi,percent) 
+
+eye_late_forehead <- lmer(forehead ~ direction * hearing + (1|id) + (1|story), data = eye_late_aoi)
+eye_late_eyes <- lmer(eyes ~ direction * hearing + (1|id) + (1|story), data = eye_late_aoi)
+eye_late_mouth <- lmer(mouth ~ direction * hearing + (1|id) + (1|story), data = eye_late_aoi)
+eye_late_chin <- lmer(chin ~ direction * hearing + (1|id) + (1|story), data = eye_late_aoi)
+
+summary(eye_late_forehead)
+summary(eye_late_eyes)
+summary(eye_late_mouth)
+summary(eye_late_chin)
+```
+
+### Summary
+Eye gaze data shows there is no significant effect of reversal on either deaf or hearing people's eye gaze behavior, with the exception of the Mouth AOI, where we observed a significant direction x hearing interaction. Late deaf signers, which we already know have a propensity to fixate more strongly on the mouth during reversed stories, are different from late hearing signers, which show more scattered patterns as evidenced by the heat map.
+
+## Eye Gaze Predicting Accuracy
+Next we asked...do eye gaze behavior predict accuracy? We can't really do correlations because we're comparing groups, so we'll just skip to the LMMs. Again, there should be no point in doing this because we've shown that eye gaze behavior doesn't change based on reversal or based on deaf/hearing. So the code below shouldn't run. But if it did, it would tell us the only AOI that MAY have an effect is the chin, p = 0.09 such that increased chin % translates into better accuracy, which doesn't really make sense. 
+
+```{r include=FALSE}
+lexeye_late_item <- data %>%
+  filter(aoagroup == "Late") %>%
+  spread(aoi,percent)
+
+lexeye_late_eye <- lmer(acc ~ direction * eyes * hearing * (1|id) * (1|story), data = lexeye_late_item)
+lexeye_late_mouth <- lmer(acc ~ direction * mouth * hearing * (1|id) * (1|story), data = lexeye_late_item)
+lexeye_late_chin <- lmer(acc ~ direction * chin * hearing * (1|id) * (1|story), data = lexeye_late_item)
+
+summary(lexeye_late_eye)
+summary(lexeye_late_mouth)
+summary(lexeye_late_chin)
+```
+
+## Late Signers Summary
+
+1. There is a reversal effect on accuracy, yes. 
+1. There appears to be no effect of reversal on eye gaze behavior, though. 
+1. There appears to be no relationship between eye gaze and accuracy, for either forward or reversed stories.
+1. Visualizations do repeatedly suggest subtle AoASL effects. Hearing late signers show more scattered looking in reversed stories compared to deaf late signers who appear to focus more on the mouth.
+
+# Hearing (Late & Novice) Signers
+Now to directly compare HearingLate and HearingNovice - for proficiency effects. 
+
+## Participants
+Novice signers, on average, have been signing for 2-3 years. Let's repeat the participants table here: 
+
+```{r warning=FALSE}
+groupmeans %>%
+  filter(maingroup != "DeafNative" & maingroup != "DeafEarly" & maingroup != "DeafLate") %>%
+  kable(digits=1) %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+
+The t-test results tell us: 
+
+1. Age is significantly different (HearingNovice are 8 yrs younger, p < 0.001)
+1. AoASL is the same. 
+1. Self-Rating is significantly different (HearingNovice tend to rate 1.6 lower, p < 0.001)
+1. Signing Yrs is significantly different (HearingLate 9 yrs less signing, p < 0.001)
+```{r warning=FALSE}
+lex_hearing <- cleanlexdata %>%
+  filter(hearing == "Hearing") %>%
+  select(id:acc) %>%
+  distinct()
+
+lex_hearing_subjects <- lex_hearing %>%
+  select(participant, aoagroup, age, aoasl, selfrate, signyrs) %>%
+  distinct()
+
+summary(lm(age ~ aoagroup, data = lex_hearing_subjects))
+summary(lm(aoasl ~ aoagroup, data = lex_hearing_subjects))
+summary(lm(selfrate ~ aoagroup, data = lex_hearing_subjects))
+summary(lm(signyrs ~ aoagroup, data = lex_hearing_subjects))
+```
+
+## Lexical Recall
+How do hearing late and novice signers compare on the lexical recall task? Let's visualize first.
+```{r warning=FALSE}
+lex_hearing %>%
+  ggplot(aes(x = aoagroup, y = acc, fill = direction)) + 
+  geom_boxplot() +
+  scale_y_continuous(limits = c(0,1), labels = scales::percent) +
+  ylab("Accuracy") + xlab("") + ggtitle("Hearing Signers' Lexical Accuracy")
+```
+
+And now the LMM. It tells us that while there's a reversal effect, there is also a significant (p = 0.043) effect of Novice (they, on average, score 8% lower)
+```{r warning=FALSE}
+lex_hearing_m <- lmer(acc ~ direction * aoagroup + (1|id) + (1|story), data = lex_hearing)
+summary(lex_hearing_m)
+```
+
+### Summary
+So there is an effect of reversal on lexical accuracy (a drop of 18%), but Novice signers furthermore tend to score overall 8% lower. 
+
+## Eye Gaze Behavior
+Now let's compare eye gaze behavior among hearing signers.
+
+Let's go ahead and narrow down the AOIs. I can also write that we observed higher percentage looking for the upperchest AOI in this group, so we included this AOI. Let's see how deaf and hearing late signers' AOI compared. 
+
+```{r warning=FALSE}
+eye_hearing <- data %>%
+  filter(hearing == "Hearing") %>%
+  filter(aoi != "mouthchin" & aoi != "moutheyes")
+
+eye_hearing %>%
+  filter(aoi == "forehead" | aoi == "eyes" | aoi == "mouth" | aoi == "chin" | aoi == "upperchest") %>%
+  mutate(aoi = factor(aoi, levels = c("forehead","eyes","mouth","chin","upperchest"))) %>%
+  ggplot(aes(x = aoagroup, y = percent, fill = direction)) +
+  geom_boxplot() +
+  facet_grid(.~aoi) + ylab("Percent Looking") + xlab("") +
+  scale_y_continuous(labels = scales::percent) + ggtitle("Late Signers' Eye Gaze")
+```
+
+And next, the heat map. 
+
+```{r warning=FALSE}
+eye_hearing_heat <- eye_hearing %>%
+  ungroup() %>%
+  filter(aoi != "left" & aoi != "right" & aoi != "facechest" & aoi != "face" & aoi != "chest") %>%
+  group_by(aoagroup,participant,direction,aoi) %>%
+  dplyr::summarize(percent = mean(percent, na.rm=TRUE)) %>%
+  group_by(aoagroup,direction,aoi) %>%
+  dplyr::summarize(percent = mean(percent, na.rm=TRUE)) %>%
+  ungroup() %>%
+  filter(!is.na(aoi)) %>%
+  mutate(aoi = factor(aoi,levels=c("belly","lowerchest","midchest",
+                                   "upperchest","chin","mouth","eyes","forehead")))
+
+ggplot(eye_hearing_heat, aes(x = direction, y = aoi)) +
+  geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
+#  scale_fill_gradient(low = "lightblue",high = "steelblue") +
+#  scale_fill_distiller(type="div", palette = "RdYlBu") +
+  scale_fill_viridis(option = "viridis", direction=-1) +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) + facet_wrap("aoagroup") +
+  ylab("") + xlab("") + ggtitle("Hearing Signers' Eye Gaze Heat Map")
+```
+
+Let's run models to see if there were significant differences based on late/novice. The only significant AOI is mouth, where we observed a strong reversal effect (p = 0.004) as a main effect. No differences based on Late/Novice. 
+
+```{r warning=FALSE}
+eye_hearing_aoi <- eye_hearing %>%
+  spread(aoi,percent) 
+
+eye_hearing_forehead <- lmer(forehead ~ direction * aoagroup + (1|id) + (1|story), data = eye_hearing_aoi)
+eye_hearing_eyes <- lmer(eyes ~ direction * aoagroup + (1|id) + (1|story), data = eye_hearing_aoi)
+eye_hearing_mouth <- lmer(mouth ~ direction * aoagroup + (1|id) + (1|story), data = eye_hearing_aoi)
+eye_hearing_chin <- lmer(chin ~ direction * aoagroup + (1|id) + (1|story), data = eye_hearing_aoi)
+eye_hearing_upperchest <- lmer(upperchest ~ direction * aoagroup + (1|id) + (1|story), data = eye_hearing_aoi)
+
+
+summary(eye_hearing_forehead)
+summary(eye_hearing_eyes)
+summary(eye_hearing_mouth)
+summary(eye_hearing_chin)
+summary(eye_hearing_upperchest)
+```
+### Summary
+While the heat maps show that reversed stories appear to lead to more dispersed eye gaze patterns, statistical analyses showed only mouth AOI was significantly affected by reversal, and there was no effect of group (Late vs. Novice). 
+
+## Eye Gaze Predicting Accuracy
+Would any eye gaze metric/AOI predict accuracy on the lexical recall task? like above, since we didn't see any strong effects (except mouth AOI), we probably shouldn't be running this. But if we did, it would, in fact, tell us some things:
+
+1. With the Eye AOI in the model (it may not even be okay to run this, because eye AOI didn't significantly change based on group): 
+    i. there was a main effect of direction (reversal = less accurate, p < 0.001)
+    i. a nonsignificant effect of group (novice = less accuate, p = 0.07)
+    i. a significant interaction of direction and group (reversal in novice = less accurate, p = 0.025)
+    i. a significant interaction of direction, eyes, and group (more eye % = much less accurate, p = 0.01)
+1. With the Mouth AOI in the model: main effect of direction (reversal = less accurate, p = 0.02)
+1. With the Chin AOI in the model:
+    i. main effect of direction (reversal = less accurate, p < 0.001)
+    i. nonsignificant effect of group (novice = less accurate, p = 0.07)
+1. With the Upper Chest AOI in the model:
+    i. main effect of direction (reversal = less accurate, p = 0.001)
+    i. nonsignificant effect of group (novice = less accurate, p = 0.08)
+
+```{r include=FALSE}
+lexeye_hearing_item <- data %>%
+  filter(hearing == "Hearing") %>%
+  spread(aoi,percent)
+
+lexeye_hearing_eye <- lmer(acc ~ direction * eyes * aoagroup * (1|id) * (1|story), data = lexeye_hearing_item)
+lexeye_hearing_mouth <- lmer(acc ~ direction * mouth * aoagroup * (1|id) * (1|story), data = lexeye_hearing_item)
+lexeye_hearing_chin <- lmer(acc ~ direction * chin * aoagroup * (1|id) * (1|story), data = lexeye_hearing_item)
+lexeye_hearing_upperchest <- lmer(acc ~ direction * upperchest * aoagroup * (1|id) * (1|story), data = lexeye_hearing_item)
+
+summary(lexeye_hearing_eye)
+summary(lexeye_hearing_mouth)
+summary(lexeye_hearing_chin)
+summary(lexeye_hearing_upperchest)
+```
+
+## Hearing Signers Summary
+In sum, lexical recall is significantly impacted by *both* direction and group - Novice signers do worse than Late signers. There were no group effects on eye gaze behavior. In addition, eyes AOI looking percentage apeared to influence lexical accuracy scores but this was hard to interpret. 
+
+# FaceChest Ratio
+Now I want to try and see if FaceChest Ratio is different among the five groups we've just tested. And whether it influences lexical recall. Maybe this is an easier way to compare groups. We'll give it a shot. 
+
+## FCR in Deaf Signers
+Looking only at deaf signers, we find that there was no effect of AoASL or reversal on FCR. 
+```{r warning=FALSE}
+eyegaze_deaf %>%
+  filter(aoi == "facechest") %>%
+  ggplot(aes(x = aoasl, y = percent, color = direction)) +
+  geom_point(alpha=.5) + geom_smooth(method="lm", se = FALSE) +
+  ylab("FCR") + xlab("Age of ASL Acquisition") +
+  scale_y_continuous(limits = c(0,1)) +
+  ggtitle("FaceChest Ratio Among Deaf Signers")
+
+eye_deaf_fcr <- lmer(facechest ~ direction * aoasl + (1|id) + (1|story), data = eye_deaf_aoi)
+summary(eye_deaf_fcr)
+```
+
+## FCR in Late Signers
+Looking only at hearing and deaf LATE signers, we find that there was no effect of AoASL or reversal on FCR. 
+```{r warning=FALSE}
+eye_late %>%
+  filter(aoi == "facechest") %>%
+  ggplot(aes(x = hearing, y = percent, fill = direction)) +
+  geom_boxplot() +
+  ylab("FCR") + xlab("") +
+  scale_y_continuous(limits = c(0,1)) + ggtitle("Late Signers' FaceChest Ratio")
+
+eye_late_fcr <- lmer(facechest ~ direction * hearing + (1|id) + (1|story), data = eye_late_aoi)
+summary(eye_late_fcr)
+```
+
+## FCR in Hearing Signers
+Looking only at late and novice hearing signers, we find that there was no effect of AoASL or reversal on FCR. 
+```{r warning=FALSE}
+eye_hearing %>%
+  filter(aoi == "facechest") %>%
+  ggplot(aes(x = aoagroup, y = percent, fill = direction)) +
+  geom_boxplot() +
+  ylab("FCR") + xlab("") +
+  scale_y_continuous(limits = c(0,1)) + ggtitle("Hearing Signers' FaceChest Ratio")
+
+eye_hearing_fcr <- lmer(facechest ~ direction * aoagroup + (1|id) + (1|story), data = eye_hearing_aoi)
+summary(eye_hearing_fcr)
+```
+
+## FCR as a Predictor of Accuracy?
+Does FCR predict anything? Results below say no. 
+```{r warning=FALSE}
+lexeye_deaf_fcr <- lmer(acc ~ direction * facechest * aoasl * (1|id) * (1|story), data = lexeye_deaf_item)
+lexeye_late_fcr <- lmer(acc ~ direction * facechest * hearing * (1|id) * (1|story), data = lexeye_late_item)
+lexeye_hearing_fcr <- lmer(acc ~ direction * facechest * aoagroup * (1|id) * (1|story), data = lexeye_hearing_item)
+
+summary(lexeye_deaf_fcr)
+summary(lexeye_late_fcr)
+summary(lexeye_hearing_fcr)
+```
+
