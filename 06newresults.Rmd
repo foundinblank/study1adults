@@ -1,5 +1,5 @@
 ---
-title: "New Results #2 Section (study1adults)"
+title: "New Results #2 (study1adults)"
 author: "Adam Stone, PhD" 
 date: '`r format(Sys.Date(), "%m-%d-%Y")`'
 output:
@@ -16,7 +16,7 @@ output:
     df_print: paged
 ---
 
-# Introduction
+# Introduction 
 So this is a new attempt at sorting out the data analyses for this project. We'll go in this order: 
 
 1. *Deaf Signers.* Let's set up the gold standard. 

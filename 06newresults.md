@@ -1,4 +1,4 @@
-New Results \#2 Section (study1adults)
+New Results \#2 (study1adults)
 ================
 Adam Stone, PhD
 10-11-2017
