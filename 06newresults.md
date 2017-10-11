@@ -2072,7 +2072,20 @@ In sum, lexical recall is significantly impacted by *both* direction and group -
 FaceChest Ratio
 ===============
 
-Now I want to try and see if FaceChest Ratio is different among the five groups we've just tested. And whether it influences lexical recall. Maybe this is an easier way to compare groups. We'll give it a shot.
+Now I want to try and see if FaceChest Ratio is different among the five groups we've just tested. And whether it influences lexical recall. Maybe this is an easier way to compare groups. We'll give it a shot. But first remember I made a cool chart before that showed an AoASL effect on FaceChest Ratio across all participants? But we know there were problems here...deaf/hearing, late/early, new signers, etc. And when we plot these separately we see what we thought was an effect was due to these other factors. And it's really the novice group that drove all this.
+
+``` r
+data %>%
+  filter(aoi=="facechest") %>%
+  ggplot(aes(x=aoasl,y=percent,color=direction)) + 
+  geom_point() + 
+  geom_smooth(method="lm") +
+  ylab("Face-Chest Ratio") +
+  facet_grid(maingroup~.) + 
+  scale_y_continuous(limits=c(0,1))
+```
+
+![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-28-1.png)
 
 FCR in Deaf Signers
 -------------------
@@ -2089,7 +2102,7 @@ eyegaze_deaf %>%
   ggtitle("FaceChest Ratio Among Deaf Signers")
 ```
 
-![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-28-1.png)
+![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-29-1.png)
 
 ``` r
 eye_deaf_fcr <- lmer(facechest ~ direction * aoasl + (1|id) + (1|story), data = eye_deaf_aoi)
@@ -2148,7 +2161,7 @@ eye_late %>%
   scale_y_continuous(limits = c(0,1)) + ggtitle("Late Signers' FaceChest Ratio")
 ```
 
-![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-29-1.png)
+![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-30-1.png)
 
 ``` r
 eye_late_fcr <- lmer(facechest ~ direction * hearing + (1|id) + (1|story), data = eye_late_aoi)
@@ -2207,7 +2220,7 @@ eye_hearing %>%
   scale_y_continuous(limits = c(0,1)) + ggtitle("Hearing Signers' FaceChest Ratio")
 ```
 
-![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-30-1.png)
+![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-31-1.png)
 
 ``` r
 eye_hearing_fcr <- lmer(facechest ~ direction * aoagroup + (1|id) + (1|story), data = eye_hearing_aoi)

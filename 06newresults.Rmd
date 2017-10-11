@@ -739,7 +739,19 @@ summary(lexeye_hearing_upperchest)
 In sum, lexical recall is significantly impacted by *both* direction and group - Novice signers do worse than Late signers. There were no group effects on eye gaze behavior. In addition, eyes AOI looking percentage apeared to influence lexical accuracy scores but this was hard to interpret. 
 
 # FaceChest Ratio
-Now I want to try and see if FaceChest Ratio is different among the five groups we've just tested. And whether it influences lexical recall. Maybe this is an easier way to compare groups. We'll give it a shot. 
+Now I want to try and see if FaceChest Ratio is different among the five groups we've just tested. And whether it influences lexical recall. Maybe this is an easier way to compare groups. We'll give it a shot. But first remember I made a cool chart before that showed an AoASL effect on FaceChest Ratio across all participants? But we know there were problems here...deaf/hearing, late/early, new signers, etc. And when we plot these separately we see what we thought was an effect was due to these other factors. And it's really the novice group that drove all this. 
+
+```{r warning=FALSE}
+data %>%
+  filter(aoi=="facechest") %>%
+  ggplot(aes(x=aoasl,y=percent,color=direction)) + 
+  geom_point() + 
+  geom_smooth(method="lm") +
+  ylab("Face-Chest Ratio") +
+  facet_grid(maingroup~.) + 
+  scale_y_continuous(limits=c(0,1))
+```
+
 
 ## FCR in Deaf Signers
 Looking only at deaf signers, we find that there was no effect of AoASL or reversal on FCR. 
