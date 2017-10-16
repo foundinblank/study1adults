@@ -1,7 +1,7 @@
 Eye Gaze Analysis (study1adults)
 ================
 Adam Stone, PhD
-10-09-2017
+10-16-2017
 
 -   [Re-Initializing](#re-initializing)
 -   [AOIs](#aois)
@@ -242,8 +242,8 @@ select(lowlookingid,-participant)
     ##  2    10    Deaf    Group 1     KingMidas   forward  2.67
     ##  3    32 Hearing    Group 2    Goldilocks  reversed  4.08
     ##  4    31 Hearing    Group 2    Cinderella   forward  4.73
-    ##  5    54    Deaf    Group 1     KingMidas   forward  7.17
-    ##  6    54    Deaf    Group 1 RedRidingHood  reversed  0.56
+    ##  5    55    Deaf    Group 1     KingMidas   forward  7.17
+    ##  6    55    Deaf    Group 1 RedRidingHood  reversed  0.56
     ##  7     6    Deaf    Group 1    Cinderella  reversed  4.43
     ##  8     6    Deaf    Group 1 RedRidingHood  reversed  3.80
     ##  9     5    Deaf    Group 1     KingMidas   forward  2.91

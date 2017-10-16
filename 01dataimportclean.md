@@ -1,7 +1,7 @@
 Data Import & Cleaning (study1adults)
 ================
 Adam Stone, PhD
-10-09-2017
+10-16-2017
 
 -   [Importing and Reshaping Data](#importing-and-reshaping-data)
 -   [Participant Demographics](#participant-demographics)
@@ -23,8 +23,8 @@ Here we're going to import the data, remove dropped participants, and reshape th
     ##  6     6    Deaf    Group 1    Early      EarlyASL DeafEarlyASL        5
     ##  7     7    Deaf    Group 1    Early      EarlyASL DeafEarlyASL        5
     ##  8     8    Deaf    Group 2    Early      EarlyASL DeafEarlyASL        5
-    ##  9     9    Deaf    Group 2    Early       LateASL  DeafLateASL        5
-    ## 10    10    Deaf    Group 1    Early       LateASL  DeafLateASL        5
+    ##  9     9    Deaf    Group 2     Late       LateASL  DeafLateASL        5
+    ## 10    10    Deaf    Group 1     Late       LateASL  DeafLateASL        5
     ## # ... with 48 more rows, and 47 more variables: age <dbl>, signyrs <dbl>,
     ## #   aoasl <int>, acc.fw1 <dbl>, acc.rv2 <dbl>, acc.fw3 <dbl>,
     ## #   acc.rv4 <dbl>, forehead.fw1 <dbl>, forehead.fw3 <dbl>,

@@ -327,7 +327,7 @@ ggplot(eyegaze_heat, aes(x = maingroup, y = aoi)) +
   geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
 #  scale_fill_gradient(low = "lightblue",high = "steelblue") +
 #  scale_fill_distiller(type="div", palette = "RdYlBu") +
-  scale_fill_viridis(option = "viridis", direction=-1) +
+  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,1)) +
   theme(axis.text.x=element_text(angle=45,hjust=1)) + facet_grid(. ~ direction) +
   ylab("") + xlab("") + ggtitle("Eye Gaze Heat Map, by Direction")
 
@@ -335,7 +335,7 @@ ggplot(eyegaze_heat_all, aes(x = maingroup, y = aoi)) +
   geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
 #  scale_fill_gradient(low = "lightblue",high = "steelblue") +
 #  scale_fill_distiller(type="div", palette = "RdYlBu") +
-  scale_fill_viridis(option = "viridis", direction=-1) +
+  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,1)) +
   theme(axis.text.x=element_text(angle=45,hjust=1)) +
   ylab("") + xlab("") + ggtitle("Eye Gaze Heat Map (Direction Collapsed)")
 ```

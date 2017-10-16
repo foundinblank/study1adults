@@ -1,7 +1,7 @@
 Results Section (study1adults)
 ================
 Adam Stone, PhD
-10-09-2017
+10-16-2017
 
 -   [Refreshing Ourselves](#refreshing-ourselves)
 -   [Participant Characteristics](#participant-characteristics)

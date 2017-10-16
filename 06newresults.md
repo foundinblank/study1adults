@@ -3,7 +3,7 @@ New Results \#2 (study1adults)
 Adam Stone, PhD
 10-16-2017
 
--   [Introduction](#introduction)
+-   [Introduction!](#introduction)
 -   [Participants](#participants)
 -   [Deaf (All) Signers](#deaf-all-signers)
     -   [Lexical Recall](#lexical-recall)
@@ -35,8 +35,8 @@ Adam Stone, PhD
     -   [FCR in Hearing Signers](#fcr-in-hearing-signers)
     -   [FCR as a Predictor of Accuracy?](#fcr-as-a-predictor-of-accuracy)
 
-Introduction
-============
+Introduction!
+=============
 
 So this is a new attempt at sorting out the data analyses for this project. We'll go in this order:
 
@@ -777,7 +777,7 @@ ggplot(eye_deaf_heat, aes(x = direction, y = aoi)) +
   geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
 #  scale_fill_gradient(low = "lightblue",high = "steelblue") +
 #  scale_fill_distiller(type="div", palette = "RdYlBu") +
-  scale_fill_viridis(option = "viridis", direction=-1) +
+  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,1)) +
   theme(axis.text.x=element_text(angle=45,hjust=1)) + facet_wrap("maingroup") +
   ylab("") + xlab("") + ggtitle("Deaf Signers' Eye Gaze Heat Map")
 ```
@@ -939,7 +939,7 @@ eye_deaf_heat %>%
   geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
 #  scale_fill_gradient(low = "lightblue",high = "steelblue") +
 #  scale_fill_distiller(type="div", palette = "RdYlBu") +
-  scale_fill_viridis(option = "viridis", direction=-1) +
+  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,1)) +
   theme(axis.text.x=element_text(angle=45,hjust=1)) +
   ylab("") + xlab("") + ggtitle("Deaf Signers' REVERSED STORIES Eye Gaze")
 ```
@@ -1522,7 +1522,7 @@ ggplot(eye_late_heat, aes(x = direction, y = aoi)) +
   geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
 #  scale_fill_gradient(low = "lightblue",high = "steelblue") +
 #  scale_fill_distiller(type="div", palette = "RdYlBu") +
-  scale_fill_viridis(option = "viridis", direction=-1) +
+  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,1)) +
   theme(axis.text.x=element_text(angle=45,hjust=1)) + facet_wrap("hearing") +
   ylab("") + xlab("") + ggtitle("Late Signers' Eye Gaze Heat Map")
 ```
@@ -1713,7 +1713,7 @@ ggplot(filter(eye_late_heat,direction=="reversed"), aes(x = hearing, y = aoi)) +
   geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
 #  scale_fill_gradient(low = "lightblue",high = "steelblue") +
 #  scale_fill_distiller(type="div", palette = "RdYlBu") +
-  scale_fill_viridis(option = "viridis", direction=-1) +
+  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,1)) +
   theme(axis.text.x=element_text(angle=45,hjust=1)) + 
   ylab("") + xlab("") + ggtitle("Late Signers' REVERSED ONLY Eye Gaze")
 ```
@@ -2247,7 +2247,7 @@ ggplot(eye_hearing_heat, aes(x = direction, y = aoi)) +
   geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
 #  scale_fill_gradient(low = "lightblue",high = "steelblue") +
 #  scale_fill_distiller(type="div", palette = "RdYlBu") +
-  scale_fill_viridis(option = "viridis", direction=-1) +
+  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,1)) +
   theme(axis.text.x=element_text(angle=45,hjust=1)) + facet_wrap("aoagroup") +
   ylab("") + xlab("") + ggtitle("Hearing Signers' Eye Gaze Heat Map")
 ```
@@ -2482,7 +2482,7 @@ ggplot(filter(eye_hearing_heat, direction == "reversed"), aes(x = aoagroup, y = 
   geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
 #  scale_fill_gradient(low = "lightblue",high = "steelblue") +
 #  scale_fill_distiller(type="div", palette = "RdYlBu") +
-  scale_fill_viridis(option = "viridis", direction=-1) +
+  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,1)) +
   theme(axis.text.x=element_text(angle=45,hjust=1)) +
   ylab("") + xlab("") + ggtitle("Hearing Signers' REVERSED ONLY Eye Gaze")
 ```

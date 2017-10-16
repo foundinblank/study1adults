@@ -1,0 +1,377 @@
+---
+title: "Gist (study1adults)"
+author: "Adam Stone, PhD" 
+date: '`r format(Sys.Date(), "%m-%d-%Y")`'
+output:
+  github_document:
+    toc: yes
+    toc_depth: 2
+  html_notebook:
+    code_folding: hide
+    theme: paper
+    highlight: tango
+    toc: yes
+    toc_depth: 2
+    toc_float: yes
+    df_print: paged
+---
+
+# Introduction 
+xxx
+
+# Participants
+```{r warning=FALSE}
+# Load libraries
+library(tidyverse)
+library(stringr)
+library(lme4)
+library(lmerTest)
+library(prettydoc)
+library(broom)
+library(knitr)
+library(xtable)
+library(kableExtra)
+library(viridis)
+library(cowplot)
+options(knitr.table.format = "html") 
+
+# Import data!
+data <- read_csv('cleanpercentdata.csv',col_types = 
+                   cols(
+                     id = col_integer(),
+                     participant = col_character(),
+                     hearing = col_character(),
+                     videogroup = col_character(),
+                     aoagroup = col_character(),
+                     languagegroup = col_character(),
+                     maingroup = col_character(),
+                     video = col_character(),
+                     story = col_character(),
+                     direction = col_character(),
+                     age = col_double(),
+                     selfrate = col_double(),
+                     signyrs = col_double(),
+                     aoasl = col_integer(),
+                     acc = col_double(),
+                     aoi = col_character(),
+                     percent = col_double()
+                   ))
+
+# And factorize
+data <- data %>%
+  mutate(participant = as.factor(participant)) %>%
+  mutate(id = as.factor(id)) %>%
+  mutate(hearing = as.factor(hearing)) %>%
+  mutate(videogroup = as.factor(videogroup)) %>%
+  mutate(aoagroup = as.factor(aoagroup)) %>%
+  mutate(languagegroup = as.factor(languagegroup)) %>%
+  mutate(maingroup = as.factor(maingroup)) %>%
+  mutate(video = as.factor(video)) %>%
+  mutate(story = as.factor(story)) %>%
+  mutate(direction = as.factor(direction)) %>%
+  mutate(aoi = as.factor(aoi))
+
+# Remove ASL from the end of MainGroup names
+data <- data %>%
+  mutate(maingroup = case_when(
+    str_detect(maingroup,"DeafNative") ~ "DeafNative",
+    str_detect(maingroup,"DeafEarlyASL") ~ "DeafEarly",
+    str_detect(maingroup,"DeafLateASL") ~ "DeafLate",
+    str_detect(maingroup,"HearingLateASL") ~ "HearingLate",
+    str_detect(maingroup,"HearingNoviceASL") ~ "HearingNovice"
+  )) %>%
+  mutate(maingroup = as.factor(maingroup))
+
+# Set reference levels for maingroup
+data$maingroup <- relevel(data$maingroup, ref="DeafNative")
+
+dataoriginal <- data # Save item-level data just in case
+
+# Take out HearingNoviceASL
+# data <- data %>%
+#   filter(maingroup!="HearingNoviceASL")
+
+# Load awesome function to make correlation tables with stars for significance
+# From: https://myowelt.blogspot.co.uk/2008/04/beautiful-correlation-tables-in-r.html
+corstarsl <- function(x){ 
+require(Hmisc) 
+x <- as.matrix(x) 
+R <- Hmisc::rcorr(x)$r 
+p <- Hmisc::rcorr(x)$P 
+## define notions for significance levels; spacing is important.
+mystars <- ifelse(p < .001, "***", ifelse(p < .01, "** ", ifelse(p < .05, "* ", " ")))
+## trunctuate the matrix that holds the correlations to two decimal
+R <- format(round(cbind(rep(-1.11, ncol(x)), R), 2))[,-1] 
+## build a new matrix that includes the correlations with their apropriate stars 
+Rnew <- matrix(paste(R, mystars, sep=""), ncol=ncol(x)) 
+diag(Rnew) <- paste(diag(R), " ", sep="") 
+rownames(Rnew) <- colnames(x) 
+colnames(Rnew) <- paste(colnames(x), "", sep="") 
+## remove upper triangle
+Rnew <- as.matrix(Rnew)
+Rnew[upper.tri(Rnew, diag = TRUE)] <- ""
+Rnew <- as.data.frame(Rnew) 
+## remove last column and return the matrix (which is now a data frame)
+Rnew <- cbind(Rnew[1:length(Rnew)-1])
+return(Rnew) 
+}
+
+
+# # Now collapse eye gaze data to subject-level 
+# data <- data %>%
+#   group_by(participant,direction,aoi) %>%
+#   dplyr::summarize(percent = mean(percent,na.rm=TRUE))
+# data[data=="NaN"] <- NA
+# 
+# # Join subject info with data that's now subject-level
+# data <- left_join(data,data.subjectinfo, by=c("participant","direction"))
+
+
+# But now we need to go back and add in a complete lexical recall dataset, even including those trials that got thrown out in 03eyegaze.nb.html. Because the lexical accuracy data is still good. So let's work on that. 
+cleanlexdata <- read_csv('cleandata.csv',col_types = 
+                   cols(
+                     id = col_integer(),
+                     participant = col_character(),
+                     hearing = col_character(),
+                     videogroup = col_character(),
+                     aoagroup = col_character(),
+                     languagegroup = col_character(),
+                     maingroup = col_character(),
+                     video = col_character(),
+                     story = col_character(),
+                     direction = col_character(),
+                     age = col_double(),
+                     selfrate = col_double(),
+                     signyrs = col_double(),
+                     aoasl = col_integer(),
+                     acc = col_double(),
+                     forehead = col_double(),
+                     eyes = col_double(),
+                     mouth = col_double(),
+                     chin = col_double(),
+                     upperchest = col_double(),
+                     midchest = col_double(),
+                     lowerchest = col_double(),
+                     belly = col_double(),
+                     left = col_double(),
+                     right = col_double(),
+                     total = col_double()
+                   )) %>%
+  mutate(maingroup = case_when(
+    str_detect(maingroup,"DeafNative") ~ "DeafNative",
+    str_detect(maingroup,"DeafEarlyASL") ~ "DeafEarly",
+    str_detect(maingroup,"DeafLateASL") ~ "DeafLate",
+    str_detect(maingroup,"HearingLateASL") ~ "HearingLate",
+    str_detect(maingroup,"HearingNoviceASL") ~ "HearingNovice"
+  )) %>%
+  mutate(maingroup = as.factor(maingroup))
+
+# Pull out subject info for later in summary tables
+subjectinfo <- data %>%
+  select(-aoi,-percent,-video,-story,-direction,-acc) %>%
+  distinct()
+
+# Participant Characteristics Table (using cleanlexdata because it's more complete)
+groupmeans <- cleanlexdata %>%
+  ungroup() %>%
+  select(id,participant,maingroup,age,selfrate,signyrs,aoasl) %>%
+  distinct() %>%
+  group_by(maingroup) %>%
+  dplyr::summarize(n = n(),
+            age.m = mean(age),
+            age.sd = sd(age),
+            selfrate.m = mean(selfrate),
+            selfrate.sd = sd(selfrate),
+            signyrs.m = mean(signyrs),
+            signyrs.sd = sd(signyrs),
+            aoasl.m = mean(aoasl),
+            aoasl.sd = sd(aoasl)) %>%
+  mutate(maingroup =  factor(maingroup, levels = c("DeafNative","DeafEarly","DeafLate",
+                                                   "HearingLate","HearingNovice"))) %>%
+  arrange(maingroup)    
+kable(groupmeans, digits=1) %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+
+Next we fold in the gist data to both datasets. Because the gist data is direction-level we have to summarize both eyegaze and lexrecall datasets. After doing that we can get a quick snapshot of what comprehension looked like across groups. 
+
+```{r}
+# Import gist data
+gist <- read_csv('gist.csv', col_types = cols(
+  participant = col_character(),
+  forward = col_double(),
+  reversed = col_double()
+)) %>%
+  gather(direction, gist, forward:reversed)
+
+# Bump up data to direction-level and join with gist
+data <- data %>%
+  group_by(participant, direction, aoi) %>%
+  mutate(percent = mean(percent, na.rm=TRUE),
+         acc = mean(acc, na.rm=TRUE)) %>%
+  select(-video, -story) %>%
+  distinct() %>%
+  left_join(gist, by = c("participant", "direction")) %>%
+  mutate(maingroup = factor(maingroup, levels = c("DeafNative","DeafEarly","DeafLate",
+                                                  "HearingLate","HearingNovice")))
+
+cleanlexdata <- cleanlexdata %>%
+  select(id:acc) %>%
+  group_by(participant, direction) %>%
+  mutate(acc = mean(acc,na.rm=TRUE)) %>%
+  select(-video, -story) %>%
+  distinct() %>%
+  left_join(gist, by = c("participant", "direction")) %>%
+  mutate(maingroup = factor(maingroup, levels = c("DeafNative","DeafEarly","DeafLate",
+                                                  "HearingLate","HearingNovice")))
+
+cleanlexdata %>%
+  group_by(maingroup, direction) %>%
+  dplyr::summarize(gist = mean(gist, na.rm=TRUE)) %>%
+  ggplot(aes(x = maingroup, y = gist, fill = direction)) + geom_col(position = "dodge")
+```
+
+# Lexical Recall
+Immediately, one would think lexical recall and gist should be correlated, right? Let's check it out. 
+```{r}
+cleanlexdata %>%
+  ggplot(aes(x = gist, y = acc, color = direction)) + geom_point() + 
+  geom_smooth(method = "lm") + facet_wrap("direction") + 
+  scale_x_continuous(breaks = c(0, 0.5, 1))
+```
+
+Is there an effect of maingroup and/or direction on gist? Let's do a LMM. The results are that there is a strong effect of direction (p < 0.001) and of group, specifically HearingNovice did much worse on the gist measure than other groups (p < 0.001). 
+
+```{r}
+gist_lmm <- lmer(gist ~ direction * maingroup + (1|id), data = cleanlexdata)
+summary(gist_lmm)
+```
+
+What about reversed stories only? A simple linear regression here. HearingNovice are significantly different (p = 0.01), and a nonsignificant effect for HearingLate at p = 0.06.
+
+```{r}
+gist_lmm_r <- lm(gist ~ maingroup, data = filter(cleanlexdata, direction == "reversed"))
+summary(gist_lmm_r)
+```
+
+# High, Medium, and Low Comprehenders
+I'm going to focus on reversed stories only for now. And we'll group the 100%, 50%, and 0% in three "gist" groups.  
+
+```{r}
+lex_groups <- cleanlexdata %>%
+  filter(direction == "reversed") %>%
+  mutate(gistgroup = case_when(
+    gist == 1 ~ "high",
+    gist == 0.5 ~ "medium",
+    gist == 0 ~ "low")) %>%
+  mutate(gistgroup = factor(gistgroup, levels = c("high","medium","low")))
+
+lex_groups %>%
+  group_by(gistgroup,maingroup) %>%
+  dplyr::summarize(count = n()) %>%
+  spread(gistgroup,count)
+```
+
+## Lex Recall
+
+Are the gist groups significantly different for lexical recall scores? Low is significantly different from medium and high. So medium and high still have somewhat similar lex recall scores. *(Aside: I did also run a regression of gist score on acc and the effect was significant, p = 0.00014. So maybe sometimes we just use gist as a continuous variable instead of a grouping variable.)*
+
+```{r}
+lex_group_m <- lm(acc ~ gist, data = lex_groups)
+summary(lex_group_m)
+```
+
+# Heat Maps
+Let's get heat maps of each group's eye behavior for reversed stories. I'll present them collapsed across all AoA groups and then show each AoA group in a grid. 
+
+And here we go. I think it's pretty interesting. Of course we've got some sub-groups with only 1 or 2 people but you can sort of see the pattern among the DeafNative - the less they understand, the more distributed the eye gaze is
+```{r}
+eye_groups <- data %>%
+  filter(direction == "reversed") %>%
+  mutate(gistgroup = case_when(
+    gist == 1 ~ "high",
+    gist == 0.5 ~ "medium",
+    gist == 0 ~ "low")) %>%
+  mutate(gistgroup = factor(gistgroup, levels = c("high","medium","low"))) 
+
+eye_groups_heat <- eye_groups %>%
+  filter(aoi != "left" & aoi != "right" & aoi != "facechest" & aoi != "face" & aoi != "chest") %>%
+  group_by(gistgroup, maingroup, participant, aoi) %>%
+  dplyr::summarize(percent = mean(percent, na.rm=TRUE)) %>%
+  group_by(gistgroup, maingroup, aoi) %>%
+  dplyr::summarize(percent = mean(percent, na.rm=TRUE)) %>%
+#  spread(aoi,percent) %>%
+#  filter(!is.na(aoi)) %>%
+  mutate(aoi = factor(aoi,levels=c("belly","lowerchest","midchest",
+                                   "upperchest","chin","mouth","eyes","forehead")))
+
+eye_groups_heat %>%
+  group_by(gistgroup,aoi) %>%
+  dplyr::summarize(percent = mean(percent, na.rm=TRUE)) %>%
+  ggplot(aes(x = gistgroup, y = aoi)) +
+  geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
+  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,1)) +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) + 
+  ylab("") + xlab("") + ggtitle("Heat Map for Reversed Stories Only")
+
+eye_groups_heat %>%
+  ggplot(aes(x = gistgroup, y = aoi)) +
+  geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
+  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,1)) +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) + facet_grid(.~maingroup) +
+  ylab("") + xlab("") + ggtitle("Heat Map for Reversed Stories Only")
+```
+
+# Gist & Gaze Modeling
+
+That's cool, right? Anyway so I am now going to try to make models. I was thinking...should eye gaze behavior predict gist, or gist predict eye behavior? Which direction could this work? Gist is measured after eye gaze, so it sounds like eye gaze should predict gist. 
+
+But that can't be right. Eye gaze is a function of whether one can understand or comprehend the story. So gist should predict eye gaze changes. *Aside: I've read criticism of the use "predict" in psychology and that it's better characterized as "associated with"...we can think about that in the write-up.* 
+
+So a basic model would be (A) gist -> eye gaze. We could predict group differences such that (B) gist X group -> eye gaze. Let's give it a shot. Breaking it down by AOI, and checking both A and B. **Again, reversed stories only. We can add forward stories back in later, maybe, or analyze separately**
+
+## Eye AOI
+(A) No effect of gist. 
+(B) No effect of gist or maingroup. 
+```{r}
+eye_groups_aoi <- eye_groups %>%
+  spread(aoi,percent)
+
+eye_lm <- lm(eyes ~ gist, data = eye_groups_aoi)
+summary(eye_lm)
+
+eye_lm_mg <- lm(eyes ~ gist * maingroup, data = eye_groups_aoi)
+summary(eye_lm_mg)
+```
+
+## Mouth AOI
+(A) No effect of gist. 
+(B) No effect of gist or maingroup. One weeeeaaakkk interaction for gist and HearingNovice (p = 0.098). 
+```{r}
+mouth_lm <- lm(mouth ~ gist, data = eye_groups_aoi)
+summary(mouth_lm)
+
+mouth_lm_mg <- lm(mouth ~ gist * maingroup, data = eye_groups_aoi)
+summary(mouth_lm_mg)
+```
+
+## Chin AOI
+(A) No effect of gist. 
+(B) No effect of gist. One significant effect of DeafLate (p = 0.04), they look at chin less. 
+```{r}
+chin_lm <- lm(chin ~ gist, data = eye_groups_aoi)
+summary(chin_lm)
+
+chin_lm_mg <- lm(chin ~ gist * maingroup, data = eye_groups_aoi)
+summary(chin_lm_mg)
+```
+
+## FaceChest Ratio
+(A) No effect of gist. 
+(B) No effect of gist or maingroup. 
+```{r}
+fcr_lm <- lm(facechest ~ gist, data = eye_groups_aoi)
+summary(fcr_lm)
+
+fcr_lm_mg <- lm(facechest ~ gist * maingroup, data = eye_groups_aoi)
+summary(fcr_lm_mg)
+```
