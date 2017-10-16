@@ -1,11 +1,13 @@
 Four Groups (study1adults)
 ================
 Adam Stone, PhD
-10-12-2017
+10-16-2017
 
 -   [Introduction](#introduction)
 -   [Participants](#participants)
 -   [Lexical Recall](#lexical-recall)
+    -   [Recovery](#recovery)
+    -   [Reversed Only Analysis](#reversed-only-analysis)
 -   [Eye Gaze](#eye-gaze)
     -   [Eyes AOI](#eyes-aoi)
     -   [Mouth AOI](#mouth-aoi)
@@ -547,6 +549,8 @@ TukeyHSD(lex_recall_aov, "maingroup", conf.level = 0.95)
     ## HearingNovice-DeafLate    -0.0649250000 -0.13332823  0.003478234 0.0692526
     ## HearingNovice-HearingLate -0.0646590909 -0.13162210  0.002303913 0.0624412
 
+### Recovery
+
 What about the recovery metric for reversed stories?
 
 ``` r
@@ -598,6 +602,81 @@ summary(lex_recov_lm)
     ## Multiple R-squared:  0.1409, Adjusted R-squared:  0.08488 
     ## F-statistic: 2.515 on 3 and 46 DF,  p-value: 0.06999
 
+### Reversed Only Analysis
+
+Now let's do all this again with only reversed stories data. LMM, then ANOVA.
+
+``` r
+lex_recall_lmm_r <- lmer(acc ~ maingroup * (1|id) + (1|story), data = filter(cleanlexdata,direction=="reversed"))
+summary(lex_recall_lmm_r)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: acc ~ maingroup * (1 | id) + (1 | story)
+    ##    Data: filter(cleanlexdata, direction == "reversed")
+    ## 
+    ## REML criterion at convergence: -122.8
+    ## 
+    ## Scaled residuals: 
+    ##      Min       1Q   Median       3Q      Max 
+    ## -1.67721 -0.64098  0.03689  0.57540  2.02351 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.004488 0.06699 
+    ##  story    (Intercept) 0.002662 0.05160 
+    ##  Residual             0.010233 0.10116 
+    ## Number of obs: 102, groups:  id, 52; story, 4
+    ## 
+    ## Fixed effects:
+    ##                        Estimate Std. Error       df t value Pr(>|t|)    
+    ## (Intercept)             0.74348    0.03482  7.15000  21.351 9.65e-08 ***
+    ## maingroupDeafLate      -0.04380    0.03817 49.12000  -1.148  0.25666    
+    ## maingroupHearingLate   -0.05905    0.03685 47.82000  -1.602  0.11568    
+    ## maingroupHearingNovice -0.10487    0.03797 47.96000  -2.761  0.00813 ** 
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) mngrDL mngrHL
+    ## maingrpDfLt -0.413              
+    ## mngrpHrngLt -0.429  0.395       
+    ## mngrpHrngNv -0.418  0.386  0.402
+
+``` r
+lexdata_subjects <- cleanlexdata %>%
+  group_by(maingroup,participant,direction) %>%
+  dplyr::summarize(acc = mean(acc,na.rm=TRUE))
+
+lex_recall_aov_r <- aov(acc ~ maingroup, data = filter(lexdata_subjects, direction == "reversed"))
+summary(lex_recall_aov_r)
+```
+
+    ##             Df Sum Sq  Mean Sq F value Pr(>F)  
+    ## maingroup    3 0.0773 0.025760   2.716  0.055 .
+    ## Residuals   48 0.4553 0.009486                 
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+``` r
+TukeyHSD(lex_recall_aov_r, "maingroup", conf.level = 0.95)
+```
+
+    ##   Tukey multiple comparisons of means
+    ##     95% family-wise confidence level
+    ## 
+    ## Fit: aov(formula = acc ~ maingroup, data = filter(lexdata_subjects, direction == "reversed"))
+    ## 
+    ## $maingroup
+    ##                                  diff        lwr          upr     p adj
+    ## DeafLate-DeafEarly        -0.04651364 -0.1457132  0.052685889 0.5999831
+    ## HearingLate-DeafEarly     -0.05916667 -0.1557666  0.037433292 0.3718206
+    ## HearingNovice-DeafEarly   -0.10409091 -0.2032904 -0.004891384 0.0363763
+    ## HearingLate-DeafLate      -0.01265303 -0.1208513  0.095545197 0.9894181
+    ## HearingNovice-DeafLate    -0.05757727 -0.1681026  0.052948064 0.5138660
+    ## HearingNovice-HearingLate -0.04492424 -0.1531225  0.063273984 0.6882181
+
 Eye Gaze
 ========
 
@@ -617,7 +696,7 @@ ggplot(eyegaze, aes(x = maingroup, y = percent, fill = direction)) +
 
     ## Warning: Removed 21 rows containing non-finite values (stat_boxplot).
 
-![](07fourgroups_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-8-1.png)
+![](07fourgroups_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-9-1.png)
 
 Heat map next.
 
@@ -658,7 +737,7 @@ ggplot(eyegaze_heat, aes(x = maingroup, y = aoi)) +
   ylab("") + xlab("") + ggtitle("Eye Gaze Heat Map, by Direction")
 ```
 
-![](07fourgroups_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-9-1.png)
+![](07fourgroups_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-10-1.png)
 
 ``` r
 ggplot(eyegaze_heat_all, aes(x = maingroup, y = aoi)) +
@@ -670,16 +749,14 @@ ggplot(eyegaze_heat_all, aes(x = maingroup, y = aoi)) +
   ylab("") + xlab("") + ggtitle("Eye Gaze Heat Map (Direction Collapsed)")
 ```
 
-![](07fourgroups_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-9-2.png)
+![](07fourgroups_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-10-2.png)
 
 Let's run LMMs and ANOVAs, AOI by AOI.
 
 Eyes AOI
 --------
 
-Eyes AOI. LMM tells us there was no effect of direction or maingroup. The ANOVA tells us there was a main effect of group (p = 0.001) and that this effect was driven by significant differences between HearingLate and DeafEarly (p = 0.001), HearingLate and DeafLate (p = 0.014), and HearingLate and HearingNovice (p = 0.026).
-
-In other words, the ANOVA tells us HearingLate look more at the eyes overall than other groups (see collapsed heat map).
+Eyes AOI. LMM and ANOVA tell us there was no effect of direction or maingroup.
 
 ``` r
 eyedata <- eyegaze %>%
@@ -747,43 +824,79 @@ summary(eyes_lmm)
     ## mngrpHrngN:  0.234 -0.156 -0.159 -0.374 -0.654  0.416  0.417
 
 ``` r
-eyes_aov <- aov(eyes ~ maingroup * direction, data = eyedata)
+eyes_aov <- aov(eyes ~ maingroup * direction, data = eyedata_subject)
 summary(eyes_aov)
 ```
 
-    ##                      Df Sum Sq Mean Sq F value  Pr(>F)   
-    ## maingroup             3  0.924 0.30789   5.375 0.00147 **
-    ## direction             1  0.004 0.00364   0.064 0.80124   
-    ## maingroup:direction   3  0.096 0.03187   0.556 0.64457   
-    ## Residuals           168  9.623 0.05728                   
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 17 observations deleted due to missingness
+    ##                     Df Sum Sq Mean Sq F value Pr(>F)
+    ## maingroup            3  0.315 0.10491   1.901  0.135
+    ## direction            1  0.002 0.00224   0.041  0.841
+    ## maingroup:direction  3  0.026 0.00851   0.154  0.927
+    ## Residuals           92  5.077 0.05518               
+    ## 3 observations deleted due to missingness
 
 ``` r
-TukeyHSD(eyes_aov,"maingroup",conf.level = 0.95)
+#TukeyHSD(eyes_aov,"maingroup",conf.level = 0.95)
 ```
 
-    ##   Tukey multiple comparisons of means
-    ##     95% family-wise confidence level
+How about reversed stories only? It shows that for reversed stories, HearingLate looked significantly more at the eyes than any other group.
+
+``` r
+eyes_lmm_r <- lmer(eyes ~ maingroup + (1|id) + (1|story), data = filter(eyedata,direction=="reversed"))
+summary(eyes_lmm_r)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: eyes ~ maingroup + (1 | id) + (1 | story)
+    ##    Data: filter(eyedata, direction == "reversed")
     ## 
-    ## Fit: aov(formula = eyes ~ maingroup * direction, data = eyedata)
+    ## REML criterion at convergence: -6.8
     ## 
-    ## $maingroup
-    ##                                  diff         lwr         upr     p adj
-    ## DeafLate-DeafEarly         0.02070188 -0.10996543  0.15136918 0.9764858
-    ## HearingLate-DeafEarly      0.18810717  0.05950166  0.31671267 0.0011678
-    ## HearingNovice-DeafEarly    0.03693213 -0.08889705  0.16276130 0.8715459
-    ## HearingLate-DeafLate       0.16740529  0.02487945  0.30993113 0.0141150
-    ## HearingNovice-DeafLate     0.01623025 -0.12379554  0.15625604 0.9905152
-    ## HearingNovice-HearingLate -0.15117504 -0.28927882 -0.01307127 0.0258071
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -2.1267 -0.4300 -0.1797  0.4120  2.5721 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.036665 0.19148 
+    ##  story    (Intercept) 0.006897 0.08305 
+    ##  Residual             0.020208 0.14215 
+    ## Number of obs: 85, groups:  id, 48; story, 4
+    ## 
+    ## Fixed effects:
+    ##                        Estimate Std. Error       df t value Pr(>|t|)  
+    ## (Intercept)             0.17814    0.06836  7.92000   2.606   0.0316 *
+    ## maingroupDeafLate       0.03218    0.09154 39.21000   0.352   0.7271  
+    ## maingroupHearingLate    0.19085    0.08611 39.41000   2.216   0.0325 *
+    ## maingroupHearingNovice  0.02061    0.08580 39.00000   0.240   0.8114  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) mngrDL mngrHL
+    ## maingrpDfLt -0.474              
+    ## mngrpHrngLt -0.500  0.377       
+    ## mngrpHrngNv -0.505  0.389  0.402
+
+``` r
+eyes_aov_r <- aov(eyes ~ maingroup, data = filter(eyedata_subject, direction == "reversed"))
+summary(eyes_aov_r)
+```
+
+    ##             Df Sum Sq Mean Sq F value Pr(>F)
+    ## maingroup    3 0.2313 0.07710   1.266  0.298
+    ## Residuals   44 2.6800 0.06091               
+    ## 3 observations deleted due to missingness
+
+``` r
+#TukeyHSD(eyes_aov,"maingroup",conf.level = 0.95)
+```
 
 Mouth AOI
 ---------
 
-Mouth AOI. LMM tells us there was no effect of maingroup and a weak effect of reversal (p = 0.056). The ANOVA tells us there is a main effect of group (p &lt; 0.001) and of direction (0.022), no interactions.
-
-The posthoc tells us HearingLate was different from DeafEarly (p = 0.02) and from DeafLate (0.000), and that HearingNovice was different from DeafLate (p = 0.01).
+Mouth AOI. LMM tells us there was no effect of maingroup and a weak effect of reversal (p = 0.056). The ANOVA tells us there were weak effects of group (p = 0.056) and of direction (0.058), no interactions.
 
 Look at the collapsed heat map. HearingLate looked *less* at the mouth than any of the deaf. HearingNovice looked *less* than DeafLate. Really, DeafLate looks at the mouth **a lot** compared to any other group.
 
@@ -843,15 +956,15 @@ summary(mouth_lmm)
     ## mngrpHrngN:  0.200 -0.138 -0.142 -0.350 -0.634  0.388  0.408
 
 ``` r
-mouth_aov <- aov(mouth ~ maingroup * direction, data = eyedata)
+mouth_aov <- aov(mouth ~ maingroup * direction, data = eyedata_subject)
 summary(mouth_aov)
 ```
 
-    ##                      Df Sum Sq Mean Sq F value   Pr(>F)    
-    ## maingroup             3  1.401  0.4669   6.308 0.000426 ***
-    ## direction             1  0.392  0.3923   5.301 0.022425 *  
-    ## maingroup:direction   3  0.153  0.0509   0.688 0.560353    
-    ## Residuals           185 13.692  0.0740                     
+    ##                     Df Sum Sq Mean Sq F value Pr(>F)  
+    ## maingroup            3  0.505 0.16838   2.584 0.0578 .
+    ## direction            1  0.245 0.24486   3.758 0.0555 .
+    ## maingroup:direction  3  0.067 0.02250   0.345 0.7927  
+    ## Residuals           95  6.191 0.06517                 
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -862,23 +975,88 @@ TukeyHSD(mouth_aov,"maingroup",conf.level = 0.95)
     ##   Tukey multiple comparisons of means
     ##     95% family-wise confidence level
     ## 
-    ## Fit: aov(formula = mouth ~ maingroup * direction, data = eyedata)
+    ## Fit: aov(formula = mouth ~ maingroup * direction, data = eyedata_subject)
     ## 
     ## $maingroup
-    ##                                  diff         lwr         upr     p adj
-    ## DeafLate-DeafEarly         0.07882880 -0.06479221  0.22244982 0.4866539
-    ## HearingLate-DeafEarly     -0.15113862 -0.28748649 -0.01479075 0.0232725
-    ## HearingNovice-DeafEarly   -0.10850209 -0.24576813  0.02876396 0.1739471
-    ## HearingLate-DeafLate      -0.22996742 -0.38535134 -0.07458350 0.0009747
-    ## HearingNovice-DeafLate    -0.18733089 -0.34352112 -0.03114066 0.0115613
-    ## HearingNovice-HearingLate  0.04263653 -0.10689318  0.19216624 0.8811245
+    ##                                  diff        lwr        upr     p adj
+    ## DeafLate-DeafEarly         0.06616215 -0.1171418 0.24946609 0.7812726
+    ## HearingLate-DeafEarly     -0.12267896 -0.2985985 0.05324056 0.2687176
+    ## HearingNovice-DeafEarly   -0.08798686 -0.2686405 0.09266677 0.5818581
+    ## HearingLate-DeafLate      -0.18884111 -0.3883151 0.01063288 0.0703127
+    ## HearingNovice-DeafLate    -0.15414901 -0.3578103 0.04951230 0.2030652
+    ## HearingNovice-HearingLate  0.03469210 -0.1623492 0.23173338 0.9674220
+
+For reversed stories. The LMM tells us HearingLate was significantly different for mouth-looking (p = 0.033) and HearingNovice just barely (p = 0.058). The ANOVA is not significant.
+
+``` r
+mouth_lmm_r <- lmer(mouth ~ maingroup + (1|id) + (1|story), data = filter(eyedata,direction == "reversed"))
+summary(mouth_lmm_r)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: mouth ~ maingroup + (1 | id) + (1 | story)
+    ##    Data: filter(eyedata, direction == "reversed")
+    ## 
+    ## REML criterion at convergence: 8.2
+    ## 
+    ## Scaled residuals: 
+    ##      Min       1Q   Median       3Q      Max 
+    ## -1.94643 -0.47193  0.02508  0.48393  2.10474 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.03574  0.1891  
+    ##  story    (Intercept) 0.02494  0.1579  
+    ##  Residual             0.02706  0.1645  
+    ## Number of obs: 95, groups:  id, 51; story, 4
+    ## 
+    ## Fixed effects:
+    ##                        Estimate Std. Error       df t value Pr(>|t|)   
+    ## (Intercept)             0.59357    0.09556  4.72000   6.211  0.00195 **
+    ## maingroupDeafLate       0.06952    0.09051 47.39000   0.768  0.44627   
+    ## maingroupHearingLate   -0.18568    0.08439 45.48000  -2.200  0.03290 * 
+    ## maingroupHearingNovice -0.16811    0.08652 44.81000  -1.943  0.05833 . 
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) mngrDL mngrHL
+    ## maingrpDfLt -0.339              
+    ## mngrpHrngLt -0.360  0.390       
+    ## mngrpHrngNv -0.353  0.385  0.406
+
+``` r
+mouth_aov_r <- aov(mouth ~ maingroup, data = filter(eyedata_subject,direction=="reversed"))
+summary(mouth_aov_r)
+```
+
+    ##             Df Sum Sq Mean Sq F value Pr(>F)
+    ## maingroup    3  0.430 0.14330   1.912   0.14
+    ## Residuals   47  3.522 0.07493
+
+``` r
+TukeyHSD(mouth_aov_r,"maingroup",conf.level = 0.95)
+```
+
+    ##   Tukey multiple comparisons of means
+    ##     95% family-wise confidence level
+    ## 
+    ## Fit: aov(formula = mouth ~ maingroup, data = filter(eyedata_subject, direction == "reversed"))
+    ## 
+    ## $maingroup
+    ##                                  diff        lwr        upr     p adj
+    ## DeafLate-DeafEarly         0.12085184 -0.1667010 0.40840463 0.6795485
+    ## HearingLate-DeafEarly     -0.13245624 -0.4041681 0.13925561 0.5685501
+    ## HearingNovice-DeafEarly   -0.10396253 -0.3829863 0.17506126 0.7544622
+    ## HearingLate-DeafLate      -0.25330808 -0.5654812 0.05886507 0.1492238
+    ## HearingNovice-DeafLate    -0.22481437 -0.5433721 0.09374335 0.2505673
+    ## HearingNovice-HearingLate  0.02849371 -0.2758412 0.33282863 0.9944805
 
 Chin AOI
 --------
 
-Chin AOI. LMM tells us there was no effect of maingroup and a weak effect of reversal (p = 0.050). The ANOVA tells us there is a main effect of group (p &lt; 0.028) and a very weak one of direction (0.056), no interactions.
-
-The posthoc tells us DeafEarly and DeafLate were significantly different (p = 0.026) - the heat map (collapsed) tells us DeafLate looks less at the chin.
+Chin AOI. LMM tells us there was no effect of maingroup and a weak effect of reversal (p = 0.050). The ANOVA was not significant.
 
 ``` r
 chin_lmm <- lmer(chin ~ maingroup * direction + (1|id) + (1|story), data = eyedata)
@@ -936,47 +1114,83 @@ summary(chin_lmm)
     ## mngrpHrngN:  0.195 -0.125 -0.127 -0.320 -0.626  0.384  0.400
 
 ``` r
-chin_aov <- aov(chin ~ maingroup * direction, data = eyedata)
+chin_aov <- aov(chin ~ maingroup * direction, data = eyedata_subject)
 summary(chin_aov)
 ```
 
-    ##                      Df Sum Sq Mean Sq F value Pr(>F)  
-    ## maingroup             3  0.419 0.13952   3.094 0.0283 *
-    ## direction             1  0.166 0.16631   3.688 0.0564 .
-    ## maingroup:direction   3  0.126 0.04187   0.929 0.4281  
-    ## Residuals           181  8.161 0.04509                 
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 4 observations deleted due to missingness
+    ##                     Df Sum Sq Mean Sq F value Pr(>F)
+    ## maingroup            3  0.174 0.05787   1.407  0.246
+    ## direction            1  0.108 0.10808   2.627  0.108
+    ## maingroup:direction  3  0.046 0.01519   0.369  0.775
+    ## Residuals           94  3.867 0.04114               
+    ## 1 observation deleted due to missingness
 
 ``` r
-TukeyHSD(chin_aov,"maingroup",conf.level = 0.95)
+#TukeyHSD(chin_aov,"maingroup",conf.level = 0.95)
 ```
 
-    ##   Tukey multiple comparisons of means
-    ##     95% family-wise confidence level
+For reversed stories. LMM and ANOVA tells us there was no effect of maingroup.
+
+``` r
+chin_lmm_r <- lmer(chin ~ maingroup + (1|id) + (1|story), data = filter(eyedata, direction == "reversed"))
+summary(chin_lmm_r)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: chin ~ maingroup + (1 | id) + (1 | story)
+    ##    Data: filter(eyedata, direction == "reversed")
     ## 
-    ## Fit: aov(formula = chin ~ maingroup * direction, data = eyedata)
+    ## REML criterion at convergence: -19.5
     ## 
-    ## $maingroup
-    ##                                   diff         lwr         upr     p adj
-    ## DeafLate-DeafEarly        -0.122964289 -0.23540520 -0.01052338 0.0259757
-    ## HearingLate-DeafEarly     -0.057864295 -0.16535835  0.04962976 0.5035773
-    ## HearingNovice-DeafEarly   -0.009529688 -0.11853930  0.09947992 0.9958801
-    ## HearingLate-DeafLate       0.065099994 -0.05683911  0.18703910 0.5107714
-    ## HearingNovice-DeafLate     0.113434601 -0.00984260  0.23671180 0.0834063
-    ## HearingNovice-HearingLate  0.048334607 -0.07044789  0.16711711 0.7171470
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -1.9905 -0.3544 -0.1603  0.2401  2.3543 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.03790  0.1947  
+    ##  story    (Intercept) 0.00000  0.0000  
+    ##  Residual             0.01793  0.1339  
+    ## Number of obs: 92, groups:  id, 50; story, 4
+    ## 
+    ## Fixed effects:
+    ##                        Estimate Std. Error       df t value Pr(>|t|)    
+    ## (Intercept)             0.23208    0.05327 44.11000   4.357 7.76e-05 ***
+    ## maingroupDeafLate      -0.14643    0.08763 44.31000  -1.671    0.102    
+    ## maingroupHearingLate   -0.08209    0.08244 43.39000  -0.996    0.325    
+    ## maingroupHearingNovice  0.01348    0.08501 44.15000   0.159    0.875    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) mngrDL mngrHL
+    ## maingrpDfLt -0.608              
+    ## mngrpHrngLt -0.646  0.393       
+    ## mngrpHrngNv -0.627  0.381  0.405
+
+``` r
+chin_aov_r <- aov(chin ~ maingroup, data = filter(eyedata_subject, direction == "reversed"))
+summary(chin_aov_r)
+```
+
+    ##             Df Sum Sq Mean Sq F value Pr(>F)
+    ## maingroup    3  0.177 0.05901   1.166  0.333
+    ## Residuals   46  2.327 0.05059               
+    ## 1 observation deleted due to missingness
+
+``` r
+#TukeyHSD(chin_aov_r,"maingroup",conf.level = 0.95)
+```
 
 FaceChest Ratio
 ---------------
 
-FCR. LMM tells us there was no effects of maingroup or reversals. There is a significant interaction for HearingNovice in the Reversed condition (p = 0.002) where they do worse, and non-significant interactinos of HearingLate and Reversed (p = 0.099) as well as HearingNovice overall (p = 0.055)
+FCR. LMM tells us there was no effects of maingroup or reversals. There is a significant interaction for HearingNovice in the Reversed condition (p = 0.002) where they do worse, and non-significant interactions of HearingLate and Reversed (p = 0.099) as well as HearingNovice overall (p = 0.055)
 
-The ANOVA tells us there is a main effect of group (p &lt; 0.001) and of direction (0.0279) with no interactions. The posthoc
+The ANOVA tells us there is a main effect of group (p &lt; 0.001) but a nonsignificant direction (0.064) with no interactions. The posthoc tells us HearingNovice was different from the other three groups (p &lt; 0.01) - their FCR was significantly lower.
 
-The posthoc tells us HearingNovice was different from the other three groups (p &lt; 0.001) - their FCR was significantly lower.
-
-DeafLate-DeafEarly -0.01183343 -0.08461189 0.06094503 0.9747434 HearingLate-DeafEarly -0.03550413 -0.10459700 0.03358874 0.5436463 HearingNovice-DeafEarly -0.14438626 -0.21394441 -0.07482811 0.0000013 HearingLate-DeafLate -0.02367070 -0.10240989 0.05506849 0.8637293 HearingNovice-DeafLate -0.13255283 -0.21170061 -0.05340505 0.0001358 HearingNovice-HearingLate -0.10888213 -0.18465476 -0.03310950 0.0014665
+$maingroup diff lwr upr p adj DeafLate-DeafEarly -0.01422087 -0.09856288 0.07012114 0.9711963 HearingLate-DeafEarly -0.03330513 -0.11424941 0.04763916 0.7049517 HearingNovice-DeafEarly -0.14595675 -0.22907930 -0.06283420 0.0000786 HearingLate-DeafLate -0.01908426 -0.11086645 0.07269793 0.9480092 HearingNovice-DeafLate -0.13173588 -0.22544475 -0.03802702 0.0021847 HearingNovice-HearingLate -0.11265162 -0.20331448 -0.02198877 0.0085578
 
 ``` r
 fcr_lmm <- lmer(facechest ~ maingroup * direction + (1|id) + (1|story), data = eyedata)
@@ -1034,15 +1248,15 @@ summary(fcr_lmm)
     ## mngrpHrngN:  0.238 -0.154 -0.158 -0.392 -0.634  0.386  0.406
 
 ``` r
-fcr_aov <- aov(facechest ~ maingroup * direction, data = eyedata)
+fcr_aov <- aov(fcr ~ maingroup * direction, data = eyedata_subject)
 summary(fcr_aov)
 ```
 
-    ##                      Df Sum Sq Mean Sq F value   Pr(>F)    
-    ## maingroup             3  0.614 0.20457  10.764 1.49e-06 ***
-    ## direction             1  0.093 0.09336   4.912   0.0279 *  
-    ## maingroup:direction   3  0.079 0.02639   1.389   0.2476    
-    ## Residuals           185  3.516 0.01900                     
+    ##                     Df Sum Sq Mean Sq F value   Pr(>F)    
+    ## maingroup            3 0.3193 0.10643   7.714 0.000115 ***
+    ## direction            1 0.0483 0.04829   3.500 0.064437 .  
+    ## maingroup:direction  3 0.0418 0.01392   1.009 0.392458    
+    ## Residuals           95 1.3106 0.01380                     
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -1053,16 +1267,87 @@ TukeyHSD(fcr_aov,"maingroup",conf.level = 0.95)
     ##   Tukey multiple comparisons of means
     ##     95% family-wise confidence level
     ## 
-    ## Fit: aov(formula = facechest ~ maingroup * direction, data = eyedata)
+    ## Fit: aov(formula = fcr ~ maingroup * direction, data = eyedata_subject)
     ## 
     ## $maingroup
     ##                                  diff         lwr         upr     p adj
-    ## DeafLate-DeafEarly        -0.01183343 -0.08461189  0.06094503 0.9747434
-    ## HearingLate-DeafEarly     -0.03550413 -0.10459700  0.03358874 0.5436463
-    ## HearingNovice-DeafEarly   -0.14438626 -0.21394441 -0.07482811 0.0000013
-    ## HearingLate-DeafLate      -0.02367070 -0.10240989  0.05506849 0.8637293
-    ## HearingNovice-DeafLate    -0.13255283 -0.21170061 -0.05340505 0.0001358
-    ## HearingNovice-HearingLate -0.10888213 -0.18465476 -0.03310950 0.0014665
+    ## DeafLate-DeafEarly        -0.01422087 -0.09856288  0.07012114 0.9711963
+    ## HearingLate-DeafEarly     -0.03330513 -0.11424941  0.04763916 0.7049517
+    ## HearingNovice-DeafEarly   -0.14595675 -0.22907930 -0.06283420 0.0000786
+    ## HearingLate-DeafLate      -0.01908426 -0.11086645  0.07269793 0.9480092
+    ## HearingNovice-DeafLate    -0.13173588 -0.22544475 -0.03802702 0.0021847
+    ## HearingNovice-HearingLate -0.11265162 -0.20331448 -0.02198877 0.0085578
+
+Reversed stories. HearingNovice is significantly different in the LMM (p &lt; 0.001). The ANOVA tells us there was a significant effect of maingroup. Posthocs tell us this effect was ddriven by differences between HearingNovice vs. DeafEarly & DeafLate. What's interesting is that HearingNovice was NOT significantly different than HearingLate.
+
+$maingroup diff lwr upr p adj DeafLate-DeafEarly -0.04407008 -0.1844582 0.0963180293 0.8370200 HearingLate-DeafEarly -0.06232243 -0.1949767 0.0703318668 0.5979387 HearingNovice-DeafEarly -0.20008404 -0.3363081 -0.0638599310 0.0016206 HearingLate-DeafLate -0.01825235 -0.1706605 0.1341558368 0.9886279 HearingNovice-DeafLate -0.15601396 -0.3115392 -0.0004887181 0.0490161 HearingNovice-HearingLate -0.13776161 -0.2863430 0.0108198173 0.0781045
+
+``` r
+fcr_lmm_r <- lmer(facechest ~ maingroup + (1|id) + (1|story), data = filter(eyedata, direction == "reversed"))
+summary(fcr_lmm_r)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: facechest ~ maingroup + (1 | id) + (1 | story)
+    ##    Data: filter(eyedata, direction == "reversed")
+    ## 
+    ## REML criterion at convergence: -80.1
+    ## 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -3.5706 -0.0971  0.1564  0.3311  1.7554 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance  Std.Dev.
+    ##  id       (Intercept) 0.0122590 0.11072 
+    ##  story    (Intercept) 0.0007929 0.02816 
+    ##  Residual             0.0119511 0.10932 
+    ## Number of obs: 95, groups:  id, 51; story, 4
+    ## 
+    ## Fixed effects:
+    ##                        Estimate Std. Error       df t value Pr(>|t|)    
+    ## (Intercept)             0.97940    0.03570 22.37000  27.435  < 2e-16 ***
+    ## maingroupDeafLate      -0.05018    0.05497 50.20000  -0.913 0.365609    
+    ## maingroupHearingLate   -0.06785    0.05132 48.42000  -1.322 0.192339    
+    ## maingroupHearingNovice -0.20421    0.05244 47.67000  -3.894 0.000306 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) mngrDL mngrHL
+    ## maingrpDfLt -0.552              
+    ## mngrpHrngLt -0.588  0.386       
+    ## mngrpHrngNv -0.577  0.380  0.404
+
+``` r
+fcr_aov_r <- aov(fcr ~ maingroup, data = filter(eyedata_subject, direction == "reversed"))
+summary(fcr_aov_r)
+```
+
+    ##             Df Sum Sq Mean Sq F value  Pr(>F)   
+    ## maingroup    3 0.2811 0.09371   5.247 0.00332 **
+    ## Residuals   47 0.8395 0.01786                   
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+``` r
+TukeyHSD(fcr_aov_r,"maingroup",conf.level = 0.95)
+```
+
+    ##   Tukey multiple comparisons of means
+    ##     95% family-wise confidence level
+    ## 
+    ## Fit: aov(formula = fcr ~ maingroup, data = filter(eyedata_subject, direction == "reversed"))
+    ## 
+    ## $maingroup
+    ##                                  diff        lwr           upr     p adj
+    ## DeafLate-DeafEarly        -0.04407008 -0.1844582  0.0963180293 0.8370200
+    ## HearingLate-DeafEarly     -0.06232243 -0.1949767  0.0703318668 0.5979387
+    ## HearingNovice-DeafEarly   -0.20008404 -0.3363081 -0.0638599310 0.0016206
+    ## HearingLate-DeafLate      -0.01825235 -0.1706605  0.1341558368 0.9886279
+    ## HearingNovice-DeafLate    -0.15601396 -0.3115392 -0.0004887181 0.0490161
+    ## HearingNovice-HearingLate -0.13776161 -0.2863430  0.0108198173 0.0781045
 
 Summary
 =======

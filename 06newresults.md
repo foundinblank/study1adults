@@ -1,25 +1,32 @@
 New Results \#2 (study1adults)
 ================
 Adam Stone, PhD
-10-11-2017
+10-16-2017
 
 -   [Introduction](#introduction)
 -   [Participants](#participants)
 -   [Deaf (All) Signers](#deaf-all-signers)
     -   [Lexical Recall](#lexical-recall)
+    -   [Reversed-Only Analysis](#reversed-only-analysis)
+    -   [Recovery](#recovery)
     -   [Eye Gaze Behavior](#eye-gaze-behavior)
+    -   [Reversed-Only Analysis](#reversed-only-analysis-1)
     -   [Bivariate Correlations; Eye Gaze Effect on Accuracy](#bivariate-correlations-eye-gaze-effect-on-accuracy)
     -   [Deaf Signers Summary](#deaf-signers-summary)
 -   [Late (Deaf & Hearing) Signers](#late-deaf-hearing-signers)
     -   [Participants](#participants-1)
     -   [Lexical Recall](#lexical-recall-1)
+    -   [Reversed-Only Analysis](#reversed-only-analysis-2)
     -   [Eye Gaze Behavior](#eye-gaze-behavior-1)
+    -   [Reversed-Only Analysis](#reversed-only-analysis-3)
     -   [Eye Gaze Predicting Accuracy](#eye-gaze-predicting-accuracy)
     -   [Late Signers Summary](#late-signers-summary)
 -   [Hearing (Late & Novice) Signers](#hearing-late-novice-signers)
     -   [Participants](#participants-2)
     -   [Lexical Recall](#lexical-recall-2)
+    -   [Reversed-Only Analysis](#reversed-only-analysis-4)
     -   [Eye Gaze Behavior](#eye-gaze-behavior-2)
+    -   [Reversed-Only Analysis](#reversed-only-analysis-5)
     -   [Eye Gaze Predicting Accuracy](#eye-gaze-predicting-accuracy-1)
     -   [Hearing Signers Summary](#hearing-signers-summary)
 -   [FaceChest Ratio](#facechest-ratio)
@@ -593,6 +600,48 @@ anova(lex_deaf_null,lex_deaf_m)
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
+Reversed-Only Analysis
+----------------------
+
+The analysis of reversed stories only tells us there is no AoASL effect here.
+
+``` r
+lex_deaf_m_r <- lmer(acc ~ aoasl + (1|id) + (1|story), data = filter(lex_deaf,direction=="reversed"))
+summary(lex_deaf_m_r)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: acc ~ aoasl + (1 | id) + (1 | story)
+    ##    Data: filter(lex_deaf, direction == "reversed")
+    ## 
+    ## REML criterion at convergence: -67.7
+    ## 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -1.7548 -0.6895  0.1485  0.4624  1.7406 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.004611 0.06790 
+    ##  story    (Intercept) 0.003320 0.05762 
+    ##  Residual             0.008641 0.09296 
+    ## Number of obs: 56, groups:  id, 29; story, 4
+    ## 
+    ## Fixed effects:
+    ##              Estimate Std. Error        df t value Pr(>|t|)    
+    ## (Intercept)  0.744234   0.037707  5.777000  19.737  1.6e-06 ***
+    ## aoasl       -0.003249   0.002970 27.914000  -1.094    0.283    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##       (Intr)
+    ## aoasl -0.441
+
+Recovery
+--------
+
 Next, we look at the "recovery" of the reversal effect, and how that recovery may differ based on AOA.
 
 ``` r
@@ -613,7 +662,7 @@ ggplot(lex_deaf_recovery, aes(x = aoasl, y = recov)) +
   ggtitle("Recovery for Lexical Recall Task in Reversed Stories")
 ```
 
-![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-4-1.png)
+![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-5-1.png)
 
 Is this significant? The simple regression below tells us no.
 
@@ -646,6 +695,8 @@ summary(lex_deaf_recovery_m)
 
 There was a strong reversal effect; across all Deaf signers, they showed considerably worse lexical recall scores when viewing reversed stories compared to forward stories. This effect did not change based on when the signers first acquired ASL. While there were trends suggesting that AoASL had an effect on how impacted by the reversal our Deaf signers were, these were not significant (p = 0.095).
 
+THere was no effect of AoASL on *only* reversed stories' lexical accuracy.
+
 Eye Gaze Behavior
 -----------------
 
@@ -667,7 +718,7 @@ eyegaze_deaf %>%
   ylab("Percent Looking") + xlab("") + ggtitle("Deaf Signers' Eye Gaze")
 ```
 
-![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-6-1.png)
+![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-1.png)
 
 ``` r
 # gg_deaf_fcr <- eyegaze_deaf %>%
@@ -693,7 +744,7 @@ eyegaze_deaf %>%
   scale_y_continuous(labels = scales::percent)
 ```
 
-![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-1.png)
+![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-8-1.png)
 
 Then we can show a nice heat map of where Deaf signers tend to look at.
 
@@ -731,7 +782,7 @@ ggplot(eye_deaf_heat, aes(x = direction, y = aoi)) +
   ylab("") + xlab("") + ggtitle("Deaf Signers' Eye Gaze Heat Map")
 ```
 
-![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-8-1.png)
+![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-9-1.png)
 
 Models here. The LMMs tell us there was no significant effect of reversal or AOA on eye gaze, although there were trends for mouth and chin, as can be seen in the charts above.
 
@@ -863,14 +914,158 @@ summary(eye_deaf_chin)
     ## aoasl       -0.660  0.202       
     ## drctnrvrsd:  0.202 -0.656 -0.311
 
+Reversed-Only Analysis
+----------------------
+
+Here's scatterplots and heat maps - maybe clearer to see with only reversed stories. Especially the heat map, it's kind of dramatic, isn't it?
+
+``` r
+eyegaze_deaf %>%
+  filter(direction == "reversed") %>%
+  filter(aoi == "eyes" | aoi == "mouth" | aoi == "chin") %>%
+  mutate(aoi = factor(aoi, levels = c("forehead","eyes","mouth","chin"))) %>%
+  ggplot(aes(x = aoasl, y = percent)) +
+  geom_point(alpha=.5) + geom_smooth(method="lm", se = FALSE) +
+  facet_wrap("aoi") + ylab("Percent Looking") + xlab("Age of ASL Acquisition") +
+  scale_y_continuous(labels = scales::percent)
+```
+
+![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-11-1.png)
+
+``` r
+eye_deaf_heat %>%
+  filter(direction == "reversed") %>%
+  ggplot(aes(x = maingroup, y = aoi)) +
+  geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
+#  scale_fill_gradient(low = "lightblue",high = "steelblue") +
+#  scale_fill_distiller(type="div", palette = "RdYlBu") +
+  scale_fill_viridis(option = "viridis", direction=-1) +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) +
+  ylab("") + xlab("") + ggtitle("Deaf Signers' REVERSED STORIES Eye Gaze")
+```
+
+![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-11-2.png)
+
+And now the LMMs. No effects of AoASL, with one weak effect on chin-looking (p = 0.08)
+
+``` r
+eye_deaf_aoi <- eyegaze_deaf %>%
+  spread(aoi,percent)
+
+eye_deaf_eyes_r <- lmer(eyes ~ aoasl + (1|id) + (1|story), data = filter(eye_deaf_aoi,direction == "reversed"))
+eye_deaf_mouth_r <- lmer(mouth ~ aoasl + (1|id) + (1|story), data = filter(eye_deaf_aoi,direction == "reversed"))
+eye_deaf_chin_r <- lmer(chin ~ aoasl + (1|id) + (1|story), data = filter(eye_deaf_aoi,direction == "reversed"))
+
+summary(eye_deaf_eyes_r)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: eyes ~ aoasl + (1 | id) + (1 | story)
+    ##    Data: filter(eye_deaf_aoi, direction == "reversed")
+    ## 
+    ## REML criterion at convergence: -2.6
+    ## 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -1.3073 -0.5704 -0.1798  0.3312  2.4231 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.013633 0.11676 
+    ##  story    (Intercept) 0.002393 0.04892 
+    ##  Residual             0.029508 0.17178 
+    ## Number of obs: 45, groups:  id, 26; story, 4
+    ## 
+    ## Fixed effects:
+    ##              Estimate Std. Error        df t value Pr(>|t|)  
+    ## (Intercept) 1.785e-01  5.294e-02 6.551e+00   3.372   0.0131 *
+    ## aoasl       1.051e-04  5.455e-03 1.268e+01   0.019   0.9849  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##       (Intr)
+    ## aoasl -0.596
+
+``` r
+summary(eye_deaf_mouth_r)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: mouth ~ aoasl + (1 | id) + (1 | story)
+    ##    Data: filter(eye_deaf_aoi, direction == "reversed")
+    ## 
+    ## REML criterion at convergence: 11.4
+    ## 
+    ## Scaled residuals: 
+    ##      Min       1Q   Median       3Q      Max 
+    ## -1.82351 -0.55002  0.02887  0.56227  2.05595 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.02653  0.1629  
+    ##  story    (Intercept) 0.01776  0.1333  
+    ##  Residual             0.03231  0.1798  
+    ## Number of obs: 50, groups:  id, 28; story, 4
+    ## 
+    ## Fixed effects:
+    ##              Estimate Std. Error        df t value Pr(>|t|)   
+    ## (Intercept)  0.568792   0.085894  4.272000   6.622  0.00213 **
+    ## aoasl        0.009531   0.006555 22.529000   1.454  0.15975   
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##       (Intr)
+    ## aoasl -0.422
+
+``` r
+summary(eye_deaf_chin_r)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: chin ~ aoasl + (1 | id) + (1 | story)
+    ##    Data: filter(eye_deaf_aoi, direction == "reversed")
+    ## 
+    ## REML criterion at convergence: -9.7
+    ## 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -1.7754 -0.2767 -0.1167  0.1476  2.4013 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.05007  0.2238  
+    ##  story    (Intercept) 0.00000  0.0000  
+    ##  Residual             0.01213  0.1102  
+    ## Number of obs: 49, groups:  id, 27; story, 4
+    ## 
+    ## Fixed effects:
+    ##              Estimate Std. Error        df t value Pr(>|t|)    
+    ## (Intercept)  0.253454   0.061253 24.028000   4.138 0.000371 ***
+    ## aoasl       -0.013281   0.007303 23.730000  -1.818 0.081634 .  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##       (Intr)
+    ## aoasl -0.660
+
 ### Summary
 
 Generally, Deaf signers focus most on the mouth. There is a trend (but not significant) towards greater focus on the mouth and less on the chin in reversed stories for signers with late AoASL.
+
+For reversed stories only, there was no significant effect of AoASL on eyes, mouth, and chin looking, with a possible non-significant trend (p = 0.08) for chin-looking.
 
 Bivariate Correlations; Eye Gaze Effect on Accuracy
 ---------------------------------------------------
 
 Correlations below. They tell us there is no correlation between AoASL and accuracy, or between AoASL and any eye gaze behavior, or between eye gaze behavior and accuracy. This may also be something we **should not even report** because we failed to show any effect of AoASL or reversal on eye behavior, so why bother doing this, from a stats perspective.
+
+The two tables are for forward and reversed, respectively.
 
 ``` r
 lexeye_deaf <- data %>%
@@ -945,6 +1140,7 @@ Deaf Signers Summary
 2.  There appears to be no effect of reversal on eye gaze behavior, though.
 3.  There appears to be no correlation between eye gaze and accuracy, for either forward or reversed stories.
 4.  Visualizations do repeatedly suggest subtle AoASL effects. Later signers appear to focus more on the mouth, and this effect is pronounced during reversed stories.
+5.  Reversed-stories analysis do not offer different results.
 
 Late (Deaf & Hearing) Signers
 =============================
@@ -1185,7 +1381,7 @@ lex_late %>%
   ylab("Accuracy") + xlab("") + ggtitle("Late Signers' Lexical Accuracy")
 ```
 
-![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-14-1.png)
+![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-17-1.png)
 
 And now the LMM. It tells us that while there's a reversal effect, it's not significantly different for deaf or hearing late signers.
 
@@ -1232,9 +1428,48 @@ summary(lex_late_m)
     ## hearingHrng -0.627  0.495       
     ## drctnrvrs:H  0.401 -0.783 -0.633
 
+Reversed-Only Analysis
+----------------------
+
+Now let's look at reversed stories only.
+
+``` r
+lex_late_m_r <- lmer(acc ~ hearing + (1|id) + (1|story), data = filter(lex_late,direction=="reversed"))
+summary(lex_late_m_r)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: acc ~ hearing + (1 | id) + (1 | story)
+    ##    Data: filter(lex_late, direction == "reversed")
+    ## 
+    ## REML criterion at convergence: -51.9
+    ## 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -2.5067 -0.5500 -0.0471  0.5341  2.0445 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance  Std.Dev. 
+    ##  id       (Intercept) 2.673e-16 1.635e-08
+    ##  story    (Intercept) 6.669e-03 8.166e-02
+    ##  Residual             1.050e-02 1.025e-01
+    ## Number of obs: 39, groups:  id, 20; story, 4
+    ## 
+    ## Fixed effects:
+    ##                Estimate Std. Error       df t value Pr(>|t|)    
+    ## (Intercept)     0.71249    0.04897  4.58000  14.550 5.22e-05 ***
+    ## hearingHearing -0.03102    0.03387 34.17000  -0.916    0.366    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr)
+    ## hearingHrng -0.432
+
 ### Summary
 
-There is a reversal effect, but it doesn't change whether the signer is deaf or hearing. Reversal effects on lexical accuracy seems to be about proficiency - all Deaf signers and all Hearing Late signers are proficient so they were similar.
+There is a reversal effect, but it doesn't change whether the signer is deaf or hearing. Reversal effects on lexical accuracy seems to be about proficiency - all Deaf signers and all Hearing Late signers are proficient so they were similar. There was no difference in the reversed-only analysis.
 
 Eye Gaze Behavior
 -----------------
@@ -1254,7 +1489,7 @@ eye_late %>%
   scale_y_continuous(labels = scales::percent) + ggtitle("Late Signers' Eye Gaze")
 ```
 
-![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-16-1.png)
+![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-20-1.png)
 
 ``` r
 # eye_late %>%
@@ -1292,7 +1527,7 @@ ggplot(eye_late_heat, aes(x = direction, y = aoi)) +
   ylab("") + xlab("") + ggtitle("Late Signers' Eye Gaze Heat Map")
 ```
 
-![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-17-1.png)
+![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-21-1.png)
 
 Let's run models to see if there were significant differences based on hearing. And the answer is, nope! Except a significant Direction X Hearing interaction for mouth AOI (p = 0.01).
 
@@ -1468,14 +1703,172 @@ summary(eye_late_chin)
     ## hearingHrng -0.772  0.260       
     ## drctnrvrs:H  0.258 -0.767 -0.346
 
+Reversed-Only Analysis
+----------------------
+
+Let's look at the heat map again.
+
+``` r
+ggplot(filter(eye_late_heat,direction=="reversed"), aes(x = hearing, y = aoi)) +
+  geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
+#  scale_fill_gradient(low = "lightblue",high = "steelblue") +
+#  scale_fill_distiller(type="div", palette = "RdYlBu") +
+  scale_fill_viridis(option = "viridis", direction=-1) +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) + 
+  ylab("") + xlab("") + ggtitle("Late Signers' REVERSED ONLY Eye Gaze")
+```
+
+![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-23-1.png)
+
+And now the LMMs.
+
+``` r
+eye_late_aoi_r <- eye_late %>%
+  spread(aoi,percent) %>%
+  filter(direction == "reversed")
+
+eye_late_forehead_r <- lmer(forehead ~ hearing + (1|id) + (1|story), data = eye_late_aoi_r)
+eye_late_eyes_r <- lmer(eyes ~ hearing + (1|id) + (1|story), data = eye_late_aoi_r)
+eye_late_mouth_r <- lmer(mouth ~ hearing + (1|id) + (1|story), data = eye_late_aoi_r)
+eye_late_chin_r <- lmer(chin ~ hearing + (1|id) + (1|story), data = eye_late_aoi_r)
+
+summary(eye_late_forehead_r)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: forehead ~ hearing + (1 | id) + (1 | story)
+    ##    Data: eye_late_aoi_r
+    ## 
+    ## REML criterion at convergence: -41.7
+    ## 
+    ## Scaled residuals: 
+    ##      Min       1Q   Median       3Q      Max 
+    ## -1.26329 -0.35891 -0.03406  0.07613  1.62859 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.004829 0.06949 
+    ##  story    (Intercept) 0.000000 0.00000 
+    ##  Residual             0.001104 0.03323 
+    ## Number of obs: 19, groups:  id, 13; story, 4
+    ## 
+    ## Fixed effects:
+    ##                 Estimate Std. Error        df t value Pr(>|t|)
+    ## (Intercept)     0.004322   0.034101 12.155000   0.127    0.901
+    ## hearingHearing  0.064318   0.043126 11.822000   1.491    0.162
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr)
+    ## hearingHrng -0.791
+
+``` r
+summary(eye_late_eyes_r)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: eyes ~ hearing + (1 | id) + (1 | story)
+    ##    Data: eye_late_aoi_r
+    ## 
+    ## REML criterion at convergence: -2.4
+    ## 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -1.8258 -0.3776 -0.1973  0.4918  1.8020 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.05014  0.2239  
+    ##  story    (Intercept) 0.02013  0.1419  
+    ##  Residual             0.01250  0.1118  
+    ## Number of obs: 34, groups:  id, 19; story, 4
+    ## 
+    ## Fixed effects:
+    ##                Estimate Std. Error      df t value Pr(>|t|)  
+    ## (Intercept)      0.2184     0.1110  5.7260   1.967    0.099 .
+    ## hearingHearing   0.1464     0.1118 12.5730   1.309    0.214  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr)
+    ## hearingHrng -0.584
+
+``` r
+summary(eye_late_mouth_r)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: mouth ~ hearing + (1 | id) + (1 | story)
+    ##    Data: eye_late_aoi_r
+    ## 
+    ## REML criterion at convergence: -10.4
+    ## 
+    ## Scaled residuals: 
+    ##      Min       1Q   Median       3Q      Max 
+    ## -1.90811 -0.47555  0.08185  0.45871  1.90189 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.080197 0.28319 
+    ##  story    (Intercept) 0.000000 0.00000 
+    ##  Residual             0.008784 0.09372 
+    ## Number of obs: 38, groups:  id, 20; story, 4
+    ## 
+    ## Fixed effects:
+    ##                Estimate Std. Error      df t value Pr(>|t|)    
+    ## (Intercept)      0.7510     0.1031 17.9220   7.281 9.37e-07 ***
+    ## hearingHearing  -0.3198     0.1331 17.8930  -2.403   0.0273 *  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr)
+    ## hearingHrng -0.775
+
+``` r
+summary(eye_late_chin_r)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: chin ~ hearing + (1 | id) + (1 | story)
+    ##    Data: eye_late_aoi_r
+    ## 
+    ## REML criterion at convergence: -39.4
+    ## 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -2.0302 -0.2450 -0.0959  0.1695  3.2156 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.021286 0.14590 
+    ##  story    (Intercept) 0.000000 0.00000 
+    ##  Residual             0.006059 0.07784 
+    ## Number of obs: 38, groups:  id, 20; story, 4
+    ## 
+    ## Fixed effects:
+    ##                Estimate Std. Error       df t value Pr(>|t|)
+    ## (Intercept)     0.03367    0.05552 18.22400   0.607    0.552
+    ## hearingHearing  0.11701    0.07161 18.16300   1.634    0.119
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr)
+    ## hearingHrng -0.775
+
 ### Summary
 
 Eye gaze data shows there is no significant effect of reversal on either deaf or hearing people's eye gaze behavior, with the exception of the Mouth AOI, where we observed a significant direction x hearing interaction. Late deaf signers, which we already know have a propensity to fixate more strongly on the mouth during reversed stories, are different from late hearing signers, which show more scattered patterns as evidenced by the heat map.
 
+Reversed-only analysis showed no siginificant effect of group on forehead, eye, and chin looking, but a significant effect on mouth looking (p = 0.027).
+
 Eye Gaze Predicting Accuracy
 ----------------------------
 
-Next we asked...do eye gaze behavior predict accuracy? We can't really do correlations because we're comparing groups, so we'll just skip to the LMMs. Again, there should be no point in doing this because we've shown that eye gaze behavior doesn't change based on reversal or based on deaf/hearing. So the code below shouldn't run. But if it did, it would tell us the only AOI that MAY have an effect is the chin, p = 0.09 such that increased chin % translates into better accuracy, which doesn't really make sense.
+Next we asked...do eye gaze behavior predict accuracy? We can't really do correlations because we're comparing groups, so we'll just skip to the LMMs. Again, there should be no point in doing this because we've shown that eye gaze behavior doesn't change based on reversal or based on deaf/hearing (with exception of mouth-looking). So the code below shouldn't run. But if it did, it would tell us the only AOI that MAY have an effect is the chin, p = 0.09 such that increased chin % translates into better accuracy, which doesn't really make sense.
 
 Late Signers Summary
 --------------------
@@ -1724,7 +2117,7 @@ lex_hearing %>%
   ylab("Accuracy") + xlab("") + ggtitle("Hearing Signers' Lexical Accuracy")
 ```
 
-![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-22-1.png)
+![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-28-1.png)
 
 And now the LMM. It tells us that while there's a reversal effect, there is also a significant (p = 0.043) effect of Novice (they, on average, score 8% lower)
 
@@ -1771,9 +2164,46 @@ summary(lex_hearing_m)
     ## aoagroupNvc -0.591  0.370       
     ## drctnrvrs:N  0.319 -0.683 -0.543
 
+Reversed-Only Analysis
+----------------------
+
+``` r
+lex_hearing_m_r <- lmer(acc ~ aoagroup + (1|id) + (1|story), data = filter(lex_hearing,direction=="reversed"))
+summary(lex_hearing_m_r)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: acc ~ aoagroup + (1 | id) + (1 | story)
+    ##    Data: filter(lex_hearing, direction == "reversed")
+    ## 
+    ## REML criterion at convergence: -48.8
+    ## 
+    ## Scaled residuals: 
+    ##      Min       1Q   Median       3Q      Max 
+    ## -1.62051 -0.60609 -0.09046  0.71129  2.04209 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.004353 0.06598 
+    ##  story    (Intercept) 0.002655 0.05153 
+    ##  Residual             0.011950 0.10932 
+    ## Number of obs: 46, groups:  id, 23; story, 4
+    ## 
+    ## Fixed effects:
+    ##                Estimate Std. Error       df t value Pr(>|t|)    
+    ## (Intercept)     0.68322    0.03914  6.27900  17.455 1.47e-06 ***
+    ## aoagroupNovice -0.04658    0.04246 20.37900  -1.097    0.285    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr)
+    ## aoagroupNvc -0.515
+
 ### Summary
 
-So there is an effect of reversal on lexical accuracy (a drop of 18%), but Novice signers furthermore tend to score overall 8% lower.
+So there is an effect of reversal on lexical accuracy (a drop of 18%), but Novice signers furthermore tend to score overall 8% lower. If we only look at reversed stories, we can't find a group difference.
 
 Eye Gaze Behavior
 -----------------
@@ -1796,7 +2226,7 @@ eye_hearing %>%
   scale_y_continuous(labels = scales::percent) + ggtitle("Late Signers' Eye Gaze")
 ```
 
-![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-24-1.png)
+![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-31-1.png)
 
 And next, the heat map.
 
@@ -1822,7 +2252,7 @@ ggplot(eye_hearing_heat, aes(x = direction, y = aoi)) +
   ylab("") + xlab("") + ggtitle("Hearing Signers' Eye Gaze Heat Map")
 ```
 
-![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-25-1.png)
+![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-32-1.png)
 
 Let's run models to see if there were significant differences based on late/novice. The only significant AOI is mouth, where we observed a strong reversal effect (p = 0.004) as a main effect. No differences based on Late/Novice.
 
@@ -2042,6 +2472,200 @@ summary(eye_hearing_upperchest)
     ## aoagroupNvc -0.697  0.285       
     ## drctnrvrs:N  0.279 -0.730 -0.370
 
+Reversed-Only Analysis
+----------------------
+
+First, heat map.
+
+``` r
+ggplot(filter(eye_hearing_heat, direction == "reversed"), aes(x = aoagroup, y = aoi)) +
+  geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
+#  scale_fill_gradient(low = "lightblue",high = "steelblue") +
+#  scale_fill_distiller(type="div", palette = "RdYlBu") +
+  scale_fill_viridis(option = "viridis", direction=-1) +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) +
+  ylab("") + xlab("") + ggtitle("Hearing Signers' REVERSED ONLY Eye Gaze")
+```
+
+![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-34-1.png)
+
+ANd now LMMs. It tells us there were no significant group differences for any AOI, with a non-significant (p = 0.06) for upperchest (Novice looked more at Upperchest).
+
+``` r
+eye_hearing_aoi_r <- eye_hearing %>%
+  spread(aoi,percent) %>%
+  filter(direction == "reversed")
+
+eye_hearing_forehead_r <- lmer(forehead ~ aoagroup + (1|id) + (1|story), data = eye_hearing_aoi_r)
+eye_hearing_eyes_r <- lmer(eyes ~ aoagroup + (1|id) + (1|story), data = eye_hearing_aoi_r)
+eye_hearing_mouth_r <- lmer(mouth ~ aoagroup + (1|id) + (1|story), data = eye_hearing_aoi_r)
+eye_hearing_chin_r <- lmer(chin ~ aoagroup + (1|id) + (1|story), data = eye_hearing_aoi_r)
+eye_hearing_upperchest_r <- lmer(upperchest ~ aoagroup + (1|id) + (1|story), data = eye_hearing_aoi_r)
+
+summary(eye_hearing_forehead_r)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: forehead ~ aoagroup + (1 | id) + (1 | story)
+    ##    Data: eye_hearing_aoi_r
+    ## 
+    ## REML criterion at convergence: -40.1
+    ## 
+    ## Scaled residuals: 
+    ##      Min       1Q   Median       3Q      Max 
+    ## -1.35656 -0.28779 -0.06011  0.08181  1.57134 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance  Std.Dev.
+    ##  id       (Intercept) 0.0059801 0.07733 
+    ##  story    (Intercept) 0.0000000 0.00000 
+    ##  Residual             0.0009846 0.03138 
+    ## Number of obs: 18, groups:  id, 11; story, 4
+    ## 
+    ## Fixed effects:
+    ##                Estimate Std. Error       df t value Pr(>|t|)  
+    ## (Intercept)     0.06808    0.02883  9.20100   2.362   0.0419 *
+    ## aoagroupNovice -0.06234    0.05514  9.16300  -1.130   0.2870  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr)
+    ## aoagroupNvc -0.523
+
+``` r
+summary(eye_hearing_eyes_r)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: eyes ~ aoagroup + (1 | id) + (1 | story)
+    ##    Data: eye_hearing_aoi_r
+    ## 
+    ## REML criterion at convergence: -5.1
+    ## 
+    ## Scaled residuals: 
+    ##      Min       1Q   Median       3Q      Max 
+    ## -1.81823 -0.45246 -0.09305  0.47267  1.91746 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.063190 0.25138 
+    ##  story    (Intercept) 0.005793 0.07611 
+    ##  Residual             0.011258 0.10610 
+    ## Number of obs: 40, groups:  id, 22; story, 4
+    ## 
+    ## Fixed effects:
+    ##                Estimate Std. Error       df t value Pr(>|t|)    
+    ## (Intercept)     0.36224    0.08857 16.68600   4.090  0.00079 ***
+    ## aoagroupNovice -0.17540    0.11287 17.46500  -1.554  0.13813    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr)
+    ## aoagroupNvc -0.638
+
+``` r
+summary(eye_hearing_mouth_r)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: mouth ~ aoagroup + (1 | id) + (1 | story)
+    ##    Data: eye_hearing_aoi_r
+    ## 
+    ## REML criterion at convergence: 6
+    ## 
+    ## Scaled residuals: 
+    ##      Min       1Q   Median       3Q      Max 
+    ## -1.67612 -0.44333  0.00309  0.51032  1.66679 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.04853  0.2203  
+    ##  story    (Intercept) 0.01462  0.1209  
+    ##  Residual             0.02376  0.1541  
+    ## Number of obs: 45, groups:  id, 23; story, 4
+    ## 
+    ## Fixed effects:
+    ##                Estimate Std. Error       df t value Pr(>|t|)   
+    ## (Intercept)     0.41584    0.09382  5.33700   4.433  0.00584 **
+    ## aoagroupNovice  0.02126    0.10307 16.71200   0.206  0.83905   
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr)
+    ## aoagroupNvc -0.525
+
+``` r
+summary(eye_hearing_chin_r)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: chin ~ aoagroup + (1 | id) + (1 | story)
+    ##    Data: eye_hearing_aoi_r
+    ## 
+    ## REML criterion at convergence: -9.3
+    ## 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -1.6507 -0.4330 -0.1905  0.4474  2.2821 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.024645 0.15699 
+    ##  story    (Intercept) 0.001437 0.03791 
+    ##  Residual             0.021984 0.14827 
+    ## Number of obs: 43, groups:  id, 23; story, 4
+    ## 
+    ## Fixed effects:
+    ##                Estimate Std. Error       df t value Pr(>|t|)  
+    ## (Intercept)     0.14657    0.05828 15.06500   2.515   0.0237 *
+    ## aoagroupNovice  0.09957    0.08014 20.76900   1.242   0.2279  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr)
+    ## aoagroupNvc -0.647
+
+``` r
+summary(eye_hearing_upperchest_r)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: upperchest ~ aoagroup + (1 | id) + (1 | story)
+    ##    Data: eye_hearing_aoi_r
+    ## 
+    ## REML criterion at convergence: -88.8
+    ## 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -1.1323 -0.3956 -0.1879  0.1874  2.6814 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance  Std.Dev.
+    ##  id       (Intercept) 0.0030346 0.05509 
+    ##  story    (Intercept) 0.0002809 0.01676 
+    ##  Residual             0.0013584 0.03686 
+    ## Number of obs: 35, groups:  id, 19; story, 4
+    ## 
+    ## Fixed effects:
+    ##                Estimate Std. Error       df t value Pr(>|t|)  
+    ## (Intercept)     0.02432    0.02149 14.81700   1.132   0.2756  
+    ## aoagroupNovice  0.05678    0.02847 17.12100   1.994   0.0623 .
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr)
+    ## aoagroupNvc -0.640
+
 ### Summary
 
 While the heat maps show that reversed stories appear to lead to more dispersed eye gaze patterns, statistical analyses showed only mouth AOI was significantly affected by reversal, and there was no effect of group (Late vs. Novice).
@@ -2069,6 +2693,8 @@ Hearing Signers Summary
 
 In sum, lexical recall is significantly impacted by *both* direction and group - Novice signers do worse than Late signers. There were no group effects on eye gaze behavior. In addition, eyes AOI looking percentage apeared to influence lexical accuracy scores but this was hard to interpret.
 
+The reversed-only analysis was a little different. There, there were no group differences for lexical recall, and no significant group differences for eye gaze behavior with one non-significant effect (p = 0.06) for upperchest.
+
 FaceChest Ratio
 ===============
 
@@ -2085,7 +2711,7 @@ data %>%
   scale_y_continuous(limits=c(0,1))
 ```
 
-![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-28-1.png)
+![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-37-1.png)
 
 FCR in Deaf Signers
 -------------------
@@ -2102,7 +2728,7 @@ eyegaze_deaf %>%
   ggtitle("FaceChest Ratio Among Deaf Signers")
 ```
 
-![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-29-1.png)
+![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-38-1.png)
 
 ``` r
 eye_deaf_fcr <- lmer(facechest ~ direction * aoasl + (1|id) + (1|story), data = eye_deaf_aoi)
@@ -2161,7 +2787,7 @@ eye_late %>%
   scale_y_continuous(limits = c(0,1)) + ggtitle("Late Signers' FaceChest Ratio")
 ```
 
-![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-30-1.png)
+![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-39-1.png)
 
 ``` r
 eye_late_fcr <- lmer(facechest ~ direction * hearing + (1|id) + (1|story), data = eye_late_aoi)
@@ -2220,7 +2846,7 @@ eye_hearing %>%
   scale_y_continuous(limits = c(0,1)) + ggtitle("Hearing Signers' FaceChest Ratio")
 ```
 
-![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-31-1.png)
+![](06newresults_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-40-1.png)
 
 ``` r
 eye_hearing_fcr <- lmer(facechest ~ direction * aoagroup + (1|id) + (1|story), data = eye_hearing_aoi)

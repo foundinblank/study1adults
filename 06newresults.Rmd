@@ -263,8 +263,15 @@ lex_deaf_null <- lmer(acc ~ 1 + (1|id) + (1|story), data = lex_deaf)
 anova(lex_deaf_null,lex_deaf_m)
 ```
 
-Next, we look at the "recovery" of the reversal effect, and how that recovery may differ based on AOA.
+## Reversed-Only Analysis
+The analysis of reversed stories only tells us there is no AoASL effect here. 
+```{r warning=FALSE}
+lex_deaf_m_r <- lmer(acc ~ aoasl + (1|id) + (1|story), data = filter(lex_deaf,direction=="reversed"))
+summary(lex_deaf_m_r)
+```
 
+## Recovery
+Next, we look at the "recovery" of the reversal effect, and how that recovery may differ based on AOA.
 ```{r warning=FALSE}
 lex_deaf_recovery <- lex_deaf %>%
   select(participant, video, acc) %>%
@@ -292,6 +299,8 @@ summary(lex_deaf_recovery_m)
 
 ### Summary 
 There was a strong reversal effect; across all Deaf signers, they showed considerably worse lexical recall scores when viewing reversed stories compared to forward stories. This effect did not change based on when the signers first acquired ASL. While there were trends suggesting that AoASL had an effect on how impacted by the reversal our Deaf signers were, these were not significant (p = 0.095).
+
+THere was no effect of AoASL on *only* reversed stories' lexical accuracy.  
 
 ## Eye Gaze Behavior
 Now, what did their eye gaze behavior look like? The boxplot below suggests that three AOIs saw the widest range of variation: eyes, mouth, and chin. All other AOIs did not get high looking times and were not included in statistical analyses. 
@@ -387,11 +396,53 @@ summary(eye_deaf_mouth)
 summary(eye_deaf_chin)
 ```
 
+## Reversed-Only Analysis
+Here's scatterplots and heat maps - maybe clearer to see with only reversed stories. Especially the heat map, it's kind of dramatic, isn't it? 
+```{r warning=FALSE}
+eyegaze_deaf %>%
+  filter(direction == "reversed") %>%
+  filter(aoi == "eyes" | aoi == "mouth" | aoi == "chin") %>%
+  mutate(aoi = factor(aoi, levels = c("forehead","eyes","mouth","chin"))) %>%
+  ggplot(aes(x = aoasl, y = percent)) +
+  geom_point(alpha=.5) + geom_smooth(method="lm", se = FALSE) +
+  facet_wrap("aoi") + ylab("Percent Looking") + xlab("Age of ASL Acquisition") +
+  scale_y_continuous(labels = scales::percent)
+
+eye_deaf_heat %>%
+  filter(direction == "reversed") %>%
+  ggplot(aes(x = maingroup, y = aoi)) +
+  geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
+#  scale_fill_gradient(low = "lightblue",high = "steelblue") +
+#  scale_fill_distiller(type="div", palette = "RdYlBu") +
+  scale_fill_viridis(option = "viridis", direction=-1) +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) +
+  ylab("") + xlab("") + ggtitle("Deaf Signers' REVERSED STORIES Eye Gaze")
+
+```
+
+And now the LMMs. No effects of AoASL, with one weak effect on chin-looking (p = 0.08)
+```{r warning=FALSE}
+eye_deaf_aoi <- eyegaze_deaf %>%
+  spread(aoi,percent)
+
+eye_deaf_eyes_r <- lmer(eyes ~ aoasl + (1|id) + (1|story), data = filter(eye_deaf_aoi,direction == "reversed"))
+eye_deaf_mouth_r <- lmer(mouth ~ aoasl + (1|id) + (1|story), data = filter(eye_deaf_aoi,direction == "reversed"))
+eye_deaf_chin_r <- lmer(chin ~ aoasl + (1|id) + (1|story), data = filter(eye_deaf_aoi,direction == "reversed"))
+
+summary(eye_deaf_eyes_r)
+summary(eye_deaf_mouth_r)
+summary(eye_deaf_chin_r)
+```
+
 ### Summary
 Generally, Deaf signers focus most on the mouth. There is a trend (but not significant) towards greater focus on the mouth and less on the chin in reversed stories for signers with late AoASL. 
 
+For reversed stories only, there was no significant effect of AoASL on eyes, mouth, and chin looking, with a possible non-significant trend (p = 0.08) for chin-looking. 
+
 ## Bivariate Correlations; Eye Gaze Effect on Accuracy
 Correlations below. They tell us there is no correlation between AoASL and accuracy, or between AoASL and any eye gaze behavior, or between eye gaze behavior and accuracy. This may also be something we **should not even report** because we failed to show any effect of AoASL or reversal on eye behavior, so why bother doing this, from a stats perspective. 
+
+The two tables are for forward and reversed, respectively.
 
 ```{r warning=FALSE}
 lexeye_deaf <- data %>%
@@ -436,6 +487,7 @@ summary(lexeye_deaf_chin)
 1. There appears to be no effect of reversal on eye gaze behavior, though. 
 1. There appears to be no correlation between eye gaze and accuracy, for either forward or reversed stories.
 1. Visualizations do repeatedly suggest subtle AoASL effects. Later signers appear to focus more on the mouth, and this effect is pronounced during reversed stories. 
+1. Reversed-stories analysis do not offer different results. 
 
 # Late (Deaf & Hearing) Signers
 Then we add HearingLate as a comparison group with DeafLate, to answer the "deaf/hearing" question. Now we have a little problem here, signyears and age are both different so we'll need to add those as covariates (or maybe not). But we're not using AoASL anyway, and now we can add the deaf/hearing factor. 
@@ -488,8 +540,15 @@ lex_late_m <- lmer(acc ~ direction * hearing + (1|id) + (1|story), data = lex_la
 summary(lex_late_m)
 ```
 
+## Reversed-Only Analysis
+Now let's look at reversed stories only. 
+```{r warning=FALSE}
+lex_late_m_r <- lmer(acc ~ hearing + (1|id) + (1|story), data = filter(lex_late,direction=="reversed"))
+summary(lex_late_m_r)
+```
+
 ### Summary
-There is a reversal effect, but it doesn't change whether the signer is deaf or hearing. Reversal effects on lexical accuracy seems to be about proficiency - all Deaf signers and all Hearing Late signers are proficient so they were similar.
+There is a reversal effect, but it doesn't change whether the signer is deaf or hearing. Reversal effects on lexical accuracy seems to be about proficiency - all Deaf signers and all Hearing Late signers are proficient so they were similar. There was no difference in the reversed-only analysis. 
 
 ## Eye Gaze Behavior
 Now let's compare eye gaze behavior in this population. Let's go ahead and noarrow down the AOIs. I can just write that we observed higher percentage looking for the forehead AOI in this group, so we included this AOI. First let's see how deaf and hearing late signers' AOI compared. 
@@ -558,11 +617,43 @@ summary(eye_late_mouth)
 summary(eye_late_chin)
 ```
 
+## Reversed-Only Analysis
+Let's look at the heat map again. 
+```{r}
+ggplot(filter(eye_late_heat,direction=="reversed"), aes(x = hearing, y = aoi)) +
+  geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
+#  scale_fill_gradient(low = "lightblue",high = "steelblue") +
+#  scale_fill_distiller(type="div", palette = "RdYlBu") +
+  scale_fill_viridis(option = "viridis", direction=-1) +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) + 
+  ylab("") + xlab("") + ggtitle("Late Signers' REVERSED ONLY Eye Gaze")
+```
+
+And now the LMMs. 
+
+```{r warning=FALSE}
+eye_late_aoi_r <- eye_late %>%
+  spread(aoi,percent) %>%
+  filter(direction == "reversed")
+
+eye_late_forehead_r <- lmer(forehead ~ hearing + (1|id) + (1|story), data = eye_late_aoi_r)
+eye_late_eyes_r <- lmer(eyes ~ hearing + (1|id) + (1|story), data = eye_late_aoi_r)
+eye_late_mouth_r <- lmer(mouth ~ hearing + (1|id) + (1|story), data = eye_late_aoi_r)
+eye_late_chin_r <- lmer(chin ~ hearing + (1|id) + (1|story), data = eye_late_aoi_r)
+
+summary(eye_late_forehead_r)
+summary(eye_late_eyes_r)
+summary(eye_late_mouth_r)
+summary(eye_late_chin_r)
+```
+
 ### Summary
 Eye gaze data shows there is no significant effect of reversal on either deaf or hearing people's eye gaze behavior, with the exception of the Mouth AOI, where we observed a significant direction x hearing interaction. Late deaf signers, which we already know have a propensity to fixate more strongly on the mouth during reversed stories, are different from late hearing signers, which show more scattered patterns as evidenced by the heat map.
 
+Reversed-only analysis showed no siginificant effect of group on forehead, eye, and chin looking, but a significant effect on mouth looking (p = 0.027). 
+
 ## Eye Gaze Predicting Accuracy
-Next we asked...do eye gaze behavior predict accuracy? We can't really do correlations because we're comparing groups, so we'll just skip to the LMMs. Again, there should be no point in doing this because we've shown that eye gaze behavior doesn't change based on reversal or based on deaf/hearing. So the code below shouldn't run. But if it did, it would tell us the only AOI that MAY have an effect is the chin, p = 0.09 such that increased chin % translates into better accuracy, which doesn't really make sense. 
+Next we asked...do eye gaze behavior predict accuracy? We can't really do correlations because we're comparing groups, so we'll just skip to the LMMs. Again, there should be no point in doing this because we've shown that eye gaze behavior doesn't change based on reversal or based on deaf/hearing (with exception of mouth-looking). So the code below shouldn't run. But if it did, it would tell us the only AOI that MAY have an effect is the chin, p = 0.09 such that increased chin % translates into better accuracy, which doesn't really make sense. 
 
 ```{r include=FALSE}
 lexeye_late_item <- data %>%
@@ -635,8 +726,14 @@ lex_hearing_m <- lmer(acc ~ direction * aoagroup + (1|id) + (1|story), data = le
 summary(lex_hearing_m)
 ```
 
+## Reversed-Only Analysis 
+```{r warning=FALSE}
+lex_hearing_m_r <- lmer(acc ~ aoagroup + (1|id) + (1|story), data = filter(lex_hearing,direction=="reversed"))
+summary(lex_hearing_m_r)
+```
+
 ### Summary
-So there is an effect of reversal on lexical accuracy (a drop of 18%), but Novice signers furthermore tend to score overall 8% lower. 
+So there is an effect of reversal on lexical accuracy (a drop of 18%), but Novice signers furthermore tend to score overall 8% lower. If we only look at reversed stories, we can't find a group difference.
 
 ## Eye Gaze Behavior
 Now let's compare eye gaze behavior among hearing signers.
@@ -700,6 +797,40 @@ summary(eye_hearing_mouth)
 summary(eye_hearing_chin)
 summary(eye_hearing_upperchest)
 ```
+
+## Reversed-Only Analysis
+First, heat map. 
+```{r}
+ggplot(filter(eye_hearing_heat, direction == "reversed"), aes(x = aoagroup, y = aoi)) +
+  geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
+#  scale_fill_gradient(low = "lightblue",high = "steelblue") +
+#  scale_fill_distiller(type="div", palette = "RdYlBu") +
+  scale_fill_viridis(option = "viridis", direction=-1) +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) +
+  ylab("") + xlab("") + ggtitle("Hearing Signers' REVERSED ONLY Eye Gaze")
+```
+
+ANd now LMMs. It tells us there were no significant group differences for any AOI, with a non-significant (p = 0.06) for upperchest (Novice looked more at Upperchest). 
+
+```{r warning=FALSE}
+eye_hearing_aoi_r <- eye_hearing %>%
+  spread(aoi,percent) %>%
+  filter(direction == "reversed")
+
+eye_hearing_forehead_r <- lmer(forehead ~ aoagroup + (1|id) + (1|story), data = eye_hearing_aoi_r)
+eye_hearing_eyes_r <- lmer(eyes ~ aoagroup + (1|id) + (1|story), data = eye_hearing_aoi_r)
+eye_hearing_mouth_r <- lmer(mouth ~ aoagroup + (1|id) + (1|story), data = eye_hearing_aoi_r)
+eye_hearing_chin_r <- lmer(chin ~ aoagroup + (1|id) + (1|story), data = eye_hearing_aoi_r)
+eye_hearing_upperchest_r <- lmer(upperchest ~ aoagroup + (1|id) + (1|story), data = eye_hearing_aoi_r)
+
+summary(eye_hearing_forehead_r)
+summary(eye_hearing_eyes_r)
+summary(eye_hearing_mouth_r)
+summary(eye_hearing_chin_r)
+summary(eye_hearing_upperchest_r)
+```
+
+
 ### Summary
 While the heat maps show that reversed stories appear to lead to more dispersed eye gaze patterns, statistical analyses showed only mouth AOI was significantly affected by reversal, and there was no effect of group (Late vs. Novice). 
 
@@ -737,6 +868,8 @@ summary(lexeye_hearing_upperchest)
 
 ## Hearing Signers Summary
 In sum, lexical recall is significantly impacted by *both* direction and group - Novice signers do worse than Late signers. There were no group effects on eye gaze behavior. In addition, eyes AOI looking percentage apeared to influence lexical accuracy scores but this was hard to interpret. 
+
+The reversed-only analysis was a little different. There, there were no group differences for lexical recall, and no significant group differences for eye gaze behavior with one non-significant effect (p = 0.06) for upperchest. 
 
 # FaceChest Ratio
 Now I want to try and see if FaceChest Ratio is different among the five groups we've just tested. And whether it influences lexical recall. Maybe this is an easier way to compare groups. We'll give it a shot. But first remember I made a cool chart before that showed an AoASL effect on FaceChest Ratio across all participants? But we know there were problems here...deaf/hearing, late/early, new signers, etc. And when we plot these separately we see what we thought was an effect was due to these other factors. And it's really the novice group that drove all this. 
