@@ -1,13 +1,11 @@
 Gist (study1adults)
 ================
 Adam Stone, PhD
-10-16-2017
+10-18-2017
 
 -   [Introduction](#introduction)
 -   [Participants](#participants)
 -   [Lexical Recall](#lexical-recall)
--   [High, Medium, and Low Comprehenders](#high-medium-and-low-comprehenders)
-    -   [Lex Recall](#lex-recall)
 -   [Heat Maps](#heat-maps)
 -   [Gist & Gaze Modeling](#gist-gaze-modeling)
     -   [Eye AOI](#eye-aoi)
@@ -453,49 +451,135 @@ Next we fold in the gist data to both datasets. Because the gist data is directi
 
 ``` r
 # Import gist data
-gist <- read_csv('gist.csv', col_types = cols(
+gist <- read_csv('gist_indiv.csv', col_types = cols(
   participant = col_character(),
-  forward = col_double(),
-  reversed = col_double()
+  gist.fw1 = col_integer(),
+  gist.rv2 = col_integer(),
+  gist.fw3 = col_integer(),
+  gist.rv4 = col_integer()
 )) %>%
-  gather(direction, gist, forward:reversed)
+  gather(video, gist, gist.fw1:gist.rv4) %>%
+  mutate(video = str_sub(video,6,8))
 
-# Bump up data to direction-level and join with gist
+# Join eye and lex data with gist
 data <- data %>%
-  group_by(participant, direction, aoi) %>%
-  mutate(percent = mean(percent, na.rm=TRUE),
-         acc = mean(acc, na.rm=TRUE)) %>%
-  select(-video, -story) %>%
-  distinct() %>%
-  left_join(gist, by = c("participant", "direction")) %>%
+  left_join(gist, by = c("participant", "video")) %>%
   mutate(maingroup = factor(maingroup, levels = c("DeafNative","DeafEarly","DeafLate",
-                                                  "HearingLate","HearingNovice")))
+                                                  "HearingLate","HearingNovice"))) %>%
+  mutate(gist = factor(gist, labels = c("No","Yes")))
 ```
 
     ## Warning: Column `participant` joining factor and character vector, coercing
     ## into character vector
 
-    ## Warning: Column `direction` joining factor and character vector, coercing
-    ## into character vector
+    ## Warning: Column `video` joining factor and character vector, coercing into
+    ## character vector
 
 ``` r
 cleanlexdata <- cleanlexdata %>%
   select(id:acc) %>%
-  group_by(participant, direction) %>%
-  mutate(acc = mean(acc,na.rm=TRUE)) %>%
-  select(-video, -story) %>%
-  distinct() %>%
-  left_join(gist, by = c("participant", "direction")) %>%
+  left_join(gist, by = c("participant", "video")) %>%
   mutate(maingroup = factor(maingroup, levels = c("DeafNative","DeafEarly","DeafLate",
-                                                  "HearingLate","HearingNovice")))
+                                                  "HearingLate","HearingNovice"))) %>%
+  mutate(gistfactor = factor(gist, labels = c("No","Yes"))) %>%
+  rename(gist_int = gist,
+         gist = gistfactor)
 
+# Bar chart of gist across groups
 cleanlexdata %>%
   group_by(maingroup, direction) %>%
-  dplyr::summarize(gist = mean(gist, na.rm=TRUE)) %>%
+  dplyr::summarize(gist = mean(gist_int, na.rm=TRUE)) %>%
   ggplot(aes(x = maingroup, y = gist, fill = direction)) + geom_col(position = "dodge")
 ```
 
 ![](08gist_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-2-1.png)
+
+``` r
+cleanlexdata %>%
+  select(maingroup,direction,gist) %>%
+  group_by(maingroup,direction) %>%
+  count(gist) %>%
+  ungroup() %>%
+  spread(gist,n) %>%
+  mutate(percent = if_else(!is.na(No), Yes/(No+Yes), 1)) %>%
+  select(maingroup,direction,percent) %>%
+  spread(direction,percent) %>%
+  kable(digits=2)
+```
+
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+maingroup
+</th>
+<th style="text-align:right;">
+forward
+</th>
+<th style="text-align:right;">
+reversed
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+DeafNative
+</td>
+<td style="text-align:right;">
+0.96
+</td>
+<td style="text-align:right;">
+0.71
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+DeafEarly
+</td>
+<td style="text-align:right;">
+0.83
+</td>
+<td style="text-align:right;">
+0.39
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+DeafLate
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.44
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HearingLate
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.33
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+HearingNovice
+</td>
+<td style="text-align:right;">
+0.45
+</td>
+<td style="text-align:right;">
+0.23
+</td>
+</tr>
+</tbody>
+</table>
+So we have this weird pattern of DeafLate and HearingLate doing best on the forward stories - even better than DeafNative or DeafEarly! We have a decent pattern for the reversed stories, though.
 
 Lexical Recall
 ==============
@@ -504,212 +588,324 @@ Immediately, one would think lexical recall and gist should be correlated, right
 
 ``` r
 cleanlexdata %>%
-  ggplot(aes(x = gist, y = acc, color = direction)) + geom_point() + 
-  geom_smooth(method = "lm") + facet_wrap("direction") + 
-  scale_x_continuous(breaks = c(0, 0.5, 1))
+  ggplot(aes(x = gist_int, y = acc, color = direction)) + geom_jitter(width = .1, size = .5) + 
+  geom_smooth(method = "lm", size = .75) + facet_grid(direction ~ maingroup) + 
+  scale_x_continuous(breaks = c(0, 1)) +
+  scale_y_continuous(limits = c(0,1))
 ```
+
+    ## Warning: Removed 4 rows containing non-finite values (stat_smooth).
+
+    ## Warning: Removed 9 rows containing missing values (geom_point).
 
 ![](08gist_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-3-1.png)
 
-Is there an effect of maingroup and/or direction on gist? Let's do a LMM. The results are that there is a strong effect of direction (p &lt; 0.001) and of group, specifically HearingNovice did much worse on the gist measure than other groups (p &lt; 0.001).
+Hmm. First, let's see if gist changes accuracy, via a LMM with predictors gist, maingroup, direction, and grouping variables participant & story. I think the output is cool...it tells us there are main effects of group (HearingLate and HearingNovice) on accuracy, and there's an interaction between those two groups and gist, meaning if they understand the story, accuracy would go up for those two groups.
+
+Wha I find weird is reversal is not important here, I wonder if gist and direction are highly correlated and therefore collinear. I ran models collapsing maingroup together, and in those, direction is a significant effect on acc along with gist, so it's probably just loss of power.
 
 ``` r
-gist_lmm <- lmer(gist ~ direction * maingroup + (1|id), data = cleanlexdata)
-summary(gist_lmm)
+gistonacc_lmm <- lmer(acc ~ gist * direction * maingroup + (1|id) + (1|story), data = cleanlexdata)
 ```
+
+    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
+
+``` r
+summary(gistonacc_lmm)
+```
+
+    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
 
     ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
     ##   to degrees of freedom [lmerMod]
-    ## Formula: gist ~ direction * maingroup + (1 | id)
+    ## Formula: acc ~ gist * direction * maingroup + (1 | id) + (1 | story)
     ##    Data: cleanlexdata
     ## 
-    ## REML criterion at convergence: 56.6
+    ## REML criterion at convergence: -294.6
     ## 
     ## Scaled residuals: 
-    ##     Min      1Q  Median      3Q     Max 
-    ## -1.9208 -0.5645  0.1828  0.5089  1.9714 
+    ##      Min       1Q   Median       3Q      Max 
+    ## -2.18523 -0.60898 -0.02399  0.62459  2.28421 
     ## 
     ## Random effects:
-    ##  Groups   Name        Variance Std.Dev.
-    ##  id       (Intercept) 0.009382 0.09686 
-    ##  Residual             0.074629 0.27318 
-    ## Number of obs: 104, groups:  id, 52
+    ##  Groups   Name        Variance  Std.Dev.
+    ##  id       (Intercept) 0.0025652 0.05065 
+    ##  story    (Intercept) 0.0007757 0.02785 
+    ##  Residual             0.0076850 0.08766 
+    ## Number of obs: 204, groups:  id, 52; story, 4
     ## 
     ## Fixed effects:
-    ##                                          Estimate Std. Error       df
-    ## (Intercept)                               1.00000    0.08367 92.84000
-    ## directionreversed                        -0.41667    0.11153 47.00000
-    ## maingroupDeafEarly                       -0.11111    0.12781 92.84000
-    ## maingroupDeafLate                        -0.06250    0.13230 92.84000
-    ## maingroupHearingLate                     -0.08333    0.11833 92.84000
-    ## maingroupHearingNovice                   -0.50000    0.12099 92.84000
-    ## directionreversed:maingroupDeafEarly     -0.08333    0.17036 47.00000
-    ## directionreversed:maingroupDeafLate      -0.08333    0.17634 47.00000
-    ## directionreversed:maingroupHearingLate   -0.16667    0.15772 47.00000
-    ## directionreversed:maingroupHearingNovice  0.14394    0.16127 47.00000
-    ##                                          t value Pr(>|t|)    
-    ## (Intercept)                               11.951  < 2e-16 ***
-    ## directionreversed                         -3.736 0.000506 ***
-    ## maingroupDeafEarly                        -0.869 0.386903    
-    ## maingroupDeafLate                         -0.472 0.637734    
-    ## maingroupHearingLate                      -0.704 0.483042    
-    ## maingroupHearingNovice                    -4.133 7.85e-05 ***
-    ## directionreversed:maingroupDeafEarly      -0.489 0.627003    
-    ## directionreversed:maingroupDeafLate       -0.473 0.638704    
-    ## directionreversed:maingroupHearingLate    -1.057 0.296047    
-    ## directionreversed:maingroupHearingNovice   0.893 0.376645    
+    ##                                                    Estimate Std. Error
+    ## (Intercept)                                        0.967221   0.097033
+    ## gistYes                                           -0.119291   0.097282
+    ## directionreversed                                 -0.154181   0.099973
+    ## maingroupDeafEarly                                -0.125148   0.112101
+    ## maingroupDeafLate                                 -0.098903   0.076631
+    ## maingroupHearingLate                              -0.169802   0.067540
+    ## maingroupHearingNovice                            -0.238346   0.100658
+    ## gistYes:directionreversed                          0.056673   0.104774
+    ## gistYes:maingroupDeafEarly                         0.112951   0.114791
+    ## gistYes:maingroupDeafLate                          0.123131   0.066726
+    ## gistYes:maingroupHearingLate                       0.188199   0.058745
+    ## gistYes:maingroupHearingNovice                     0.235545   0.105978
+    ## directionreversed:maingroupDeafEarly              -0.064491   0.117952
+    ## directionreversed:maingroupDeafLate               -0.021074   0.053014
+    ## directionreversed:maingroupHearingLate             0.001075   0.047317
+    ## directionreversed:maingroupHearingNovice           0.061053   0.105486
+    ## gistYes:directionreversed:maingroupDeafEarly       0.087749   0.130387
+    ## gistYes:directionreversed:maingroupHearingNovice  -0.147767   0.121800
+    ##                                                          df t value
+    ## (Intercept)                                      176.970000   9.968
+    ## gistYes                                          169.130000  -1.226
+    ## directionreversed                                163.070000  -1.542
+    ## maingroupDeafEarly                               179.880000  -1.116
+    ## maingroupDeafLate                                183.060000  -1.291
+    ## maingroupHearingLate                             184.040000  -2.514
+    ## maingroupHearingNovice                           180.110000  -2.368
+    ## gistYes:directionreversed                        163.600000   0.541
+    ## gistYes:maingroupDeafEarly                       169.010000   0.984
+    ## gistYes:maingroupDeafLate                        172.860000   1.845
+    ## gistYes:maingroupHearingLate                     162.610000   3.204
+    ## gistYes:maingroupHearingNovice                   171.830000   2.223
+    ## directionreversed:maingroupDeafEarly             164.230000  -0.547
+    ## directionreversed:maingroupDeafLate              151.890000  -0.398
+    ## directionreversed:maingroupHearingLate           145.820000   0.023
+    ## directionreversed:maingroupHearingNovice         161.670000   0.579
+    ## gistYes:directionreversed:maingroupDeafEarly     167.460000   0.673
+    ## gistYes:directionreversed:maingroupHearingNovice 163.420000  -1.213
+    ##                                                  Pr(>|t|)    
+    ## (Intercept)                                       < 2e-16 ***
+    ## gistYes                                           0.22181    
+    ## directionreversed                                 0.12496    
+    ## maingroupDeafEarly                                0.26575    
+    ## maingroupDeafLate                                 0.19846    
+    ## maingroupHearingLate                              0.01279 *  
+    ## maingroupHearingNovice                            0.01895 *  
+    ## gistYes:directionreversed                         0.58930    
+    ## gistYes:maingroupDeafEarly                        0.32654    
+    ## gistYes:maingroupDeafLate                         0.06670 .  
+    ## gistYes:maingroupHearingLate                      0.00163 ** 
+    ## gistYes:maingroupHearingNovice                    0.02755 *  
+    ## directionreversed:maingroupDeafEarly              0.58529    
+    ## directionreversed:maingroupDeafLate               0.69155    
+    ## directionreversed:maingroupHearingLate            0.98191    
+    ## directionreversed:maingroupHearingNovice          0.56354    
+    ## gistYes:directionreversed:maingroupDeafEarly      0.50188    
+    ## gistYes:directionreversed:maingroupHearingNovice  0.22681    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+    ## 
+    ## Correlation matrix not shown by default, as p = 18 > 12.
+    ## Use print(x, correlation=TRUE)  or
+    ##   vcov(x)     if you need it
+
+    ## fit warnings:
+    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
+
+Is there an effect of maingroup and/or direction on gist? Let's do a LMM but with a logit-link function since it's a binary outcome.
+
+The coefficients are log odds. HearingNovice and Direction are significant main effects. I converted them to probability by hand (odds = exp(coef), then probability = odds / 1+odds). From (Sebastian's blog)\[<https://sebastiansauer.github.io/convert_logit2prob/>\]. (And a good SO post here.)\[<https://stackoverflow.com/questions/41384075/r-calculate-and-interpret-odds-ratio-in-logistic-regression>\] The intercept is around 0.99, so the probability of getting it right as a DeafNative is 99%. (If I'm interpreting this right). Adding up the coefficients:
+
+1.  If you are a DeafNative watched a reversed story, the probability is 80% (and this is a significant change).
+2.  If you are watching a forward story as a HearingNovice, the probability is 44% (and this is also significant).
+3.  If you are watching a reversed story as a HearingNovice, the probability is only 13%!
+
+And this kind of makes sense if you look at the scatterplot above. Most HearingNovice watching reversed stories get it wrong.
+
+``` r
+gist_glmm <- glmer(gist ~ direction * maingroup + (1|id) + (1|story), data = cleanlexdata, family=binomial (link="logit"))
+```
+
+    ## Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control
+    ## $checkConv, : unable to evaluate scaled gradient
+
+    ## Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control
+    ## $checkConv, : Model failed to converge: degenerate Hessian with 1 negative
+    ## eigenvalues
+
+``` r
+summary(gist_glmm)
+```
+
+    ## Warning in vcov.merMod(object, use.hessian = use.hessian): variance-covariance matrix computed from finite-difference Hessian is
+    ## not positive definite or contains NA values: falling back to var-cov estimated from RX
+
+    ## Warning in vcov.merMod(object, correlation = correlation, sigm = sig): variance-covariance matrix computed from finite-difference Hessian is
+    ## not positive definite or contains NA values: falling back to var-cov estimated from RX
+
+    ## Generalized linear mixed model fit by maximum likelihood (Laplace
+    ##   Approximation) [glmerMod]
+    ##  Family: binomial  ( logit )
+    ## Formula: gist ~ direction * maingroup + (1 | id) + (1 | story)
+    ##    Data: cleanlexdata
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##    184.8    224.8    -80.4    160.8      196 
+    ## 
+    ## Scaled residuals: 
+    ##      Min       1Q   Median       3Q      Max 
+    ## -3.08490 -0.33968  0.00007  0.36340  1.71836 
+    ## 
+    ## Random effects:
+    ##  Groups Name        Variance Std.Dev.
+    ##  id     (Intercept) 1.085    1.041   
+    ##  story  (Intercept) 1.712    1.309   
+    ## Number of obs: 208, groups:  id, 52; story, 4
+    ## 
+    ## Fixed effects:
+    ##                                           Estimate Std. Error z value
+    ## (Intercept)                                 4.2193     1.4362   2.938
+    ## directionreversed                          -2.8536     1.3328  -2.141
+    ## maingroupDeafEarly                         -1.8362     1.5008  -1.224
+    ## maingroupDeafLate                          16.7964  6643.2544   0.002
+    ## maingroupHearingLate                       15.6594  3160.2428   0.005
+    ## maingroupHearingNovice                     -4.4651     1.4152  -3.155
+    ## directionreversed:maingroupDeafEarly       -0.1721     1.6265  -0.106
+    ## directionreversed:maingroupDeafLate       -18.6070  6643.2545  -0.003
+    ## directionreversed:maingroupHearingLate    -18.0996  3160.2429  -0.006
+    ## directionreversed:maingroupHearingNovice    1.1708     1.5555   0.753
+    ##                                          Pr(>|z|)   
+    ## (Intercept)                                0.0033 **
+    ## directionreversed                          0.0323 * 
+    ## maingroupDeafEarly                         0.2212   
+    ## maingroupDeafLate                          0.9980   
+    ## maingroupHearingLate                       0.9960   
+    ## maingroupHearingNovice                     0.0016 **
+    ## directionreversed:maingroupDeafEarly       0.9157   
+    ## directionreversed:maingroupDeafLate        0.9978   
+    ## directionreversed:maingroupHearingLate     0.9954   
+    ## directionreversed:maingroupHearingNovice   0.4516   
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr) drctnr mngrDE mngrDL mngrHL mngrHN drc:DE drc:DL drc:HL
-    ## dirctnrvrsd -0.666                                                        
-    ## mngrpDfErly -0.655  0.436                                                 
-    ## maingrpDfLt -0.632  0.422  0.414                                          
-    ## mngrpHrngLt -0.707  0.471  0.463  0.447                                   
-    ## mngrpHrngNv -0.692  0.461  0.453  0.437  0.489                            
-    ## drctnrvr:DE  0.436 -0.655 -0.666 -0.276 -0.309 -0.302                     
-    ## drctnrvr:DL  0.422 -0.632 -0.276 -0.666 -0.298 -0.291  0.414              
-    ## drctnrvr:HL  0.471 -0.707 -0.309 -0.298 -0.666 -0.326  0.463  0.447       
-    ## drctnrvr:HN  0.461 -0.692 -0.302 -0.291 -0.326 -0.666  0.453  0.437  0.489
+    ## dirctnrvrsd -0.794                                                        
+    ## mngrpDfErly -0.742  0.751                                                 
+    ## maingrpDfLt  0.000  0.000  0.000                                          
+    ## mngrpHrngLt  0.000  0.000  0.000  0.000                                   
+    ## mngrpHrngNv -0.806  0.808  0.752  0.000  0.000                            
+    ## drctnrvr:DE  0.629 -0.807 -0.835  0.000  0.000 -0.634                     
+    ## drctnrvr:DL  0.000  0.000  0.000 -1.000  0.000  0.000  0.000              
+    ## drctnrvr:HL  0.000  0.000  0.000  0.000 -1.000  0.000  0.000  0.000       
+    ## drctnrvr:HN  0.671 -0.854 -0.641  0.000  0.000 -0.803  0.694  0.000  0.000
+    ## convergence code: 0
+    ## unable to evaluate scaled gradient
+    ## Model failed to converge: degenerate  Hessian with 1 negative eigenvalues
 
-What about reversed stories only? A simple linear regression here. HearingNovice are significantly different (p = 0.01), and a nonsignificant effect for HearingLate at p = 0.06.
+What about reversed stories only? Doing it again here. Not going to interpret odds again, but there are maingroup differences at all levels.
 
 ``` r
-gist_lmm_r <- lm(gist ~ maingroup, data = filter(cleanlexdata, direction == "reversed"))
-summary(gist_lmm_r)
+gist_glmm_r <- glmer(gist ~ maingroup + (1|id) + (1|story), data = filter(cleanlexdata, direction=="reversed"), family=binomial (link="logit"))
+summary(gist_glmm_r)
 ```
 
+    ## Generalized linear mixed model fit by maximum likelihood (Laplace
+    ##   Approximation) [glmerMod]
+    ##  Family: binomial  ( logit )
+    ## Formula: gist ~ maingroup + (1 | id) + (1 | story)
+    ##    Data: filter(cleanlexdata, direction == "reversed")
     ## 
-    ## Call:
-    ## lm(formula = gist ~ maingroup, data = filter(cleanlexdata, direction == 
-    ##     "reversed"))
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##    125.5    144.0    -55.7    111.5       97 
     ## 
-    ## Residuals:
+    ## Scaled residuals: 
     ##     Min      1Q  Median      3Q     Max 
-    ## -0.5833 -0.2273  0.0625  0.1667  0.6111 
+    ## -3.5451 -0.4940 -0.2469  0.7100  1.6423 
     ## 
-    ## Coefficients:
-    ##                        Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)             0.58333    0.09295   6.276 1.03e-07 ***
-    ## maingroupDeafEarly     -0.19444    0.14198  -1.369   0.1774    
-    ## maingroupDeafLate      -0.14583    0.14697  -0.992   0.3261    
-    ## maingroupHearingLate   -0.25000    0.13145  -1.902   0.0633 .  
-    ## maingroupHearingNovice -0.35606    0.13441  -2.649   0.0110 *  
+    ## Random effects:
+    ##  Groups Name        Variance Std.Dev.
+    ##  id     (Intercept) 0.5038   0.7098  
+    ##  story  (Intercept) 1.8083   1.3447  
+    ## Number of obs: 104, groups:  id, 52; story, 4
+    ## 
+    ## Fixed effects:
+    ##                        Estimate Std. Error z value Pr(>|z|)   
+    ## (Intercept)              1.3098     0.9330   1.404  0.16034   
+    ## maingroupDeafEarly      -1.9922     0.9651  -2.064  0.03900 * 
+    ## maingroupDeafLate       -1.7113     0.9742  -1.757  0.07897 . 
+    ## maingroupHearingLate    -2.3442     0.9489  -2.470  0.01350 * 
+    ## maingroupHearingNovice  -3.1104     1.0960  -2.838  0.00454 **
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 0.322 on 47 degrees of freedom
-    ## Multiple R-squared:  0.1403, Adjusted R-squared:  0.06718 
-    ## F-statistic: 1.918 on 4 and 47 DF,  p-value: 0.123
-
-High, Medium, and Low Comprehenders
-===================================
-
-I'm going to focus on reversed stories only for now. And we'll group the 100%, 50%, and 0% in three "gist" groups.
-
-``` r
-lex_groups <- cleanlexdata %>%
-  filter(direction == "reversed") %>%
-  mutate(gistgroup = case_when(
-    gist == 1 ~ "high",
-    gist == 0.5 ~ "medium",
-    gist == 0 ~ "low")) %>%
-  mutate(gistgroup = factor(gistgroup, levels = c("high","medium","low")))
-
-lex_groups %>%
-  group_by(gistgroup,maingroup) %>%
-  dplyr::summarize(count = n()) %>%
-  spread(gistgroup,count)
-```
-
-    ## # A tibble: 5 x 4
-    ##       maingroup  high medium   low
-    ## *        <fctr> <int>  <int> <int>
-    ## 1    DeafNative     4      6     2
-    ## 2     DeafEarly     1      5     3
-    ## 3      DeafLate     2      3     3
-    ## 4   HearingLate    NA      8     4
-    ## 5 HearingNovice    NA      5     6
-
-Lex Recall
-----------
-
-Are the gist groups significantly different for lexical recall scores? Low is significantly different from medium and high. So medium and high still have somewhat similar lex recall scores. *(Aside: I did also run a regression of gist score on acc and the effect was significant, p = 0.00014. So maybe sometimes we just use gist as a continuous variable instead of a grouping variable.)*
-
-``` r
-lex_group_m <- lm(acc ~ gist, data = lex_groups)
-summary(lex_group_m)
-```
-
-    ## 
-    ## Call:
-    ## lm(formula = acc ~ gist, data = lex_groups)
-    ## 
-    ## Residuals:
-    ##      Min       1Q   Median       3Q      Max 
-    ## -0.18860 -0.04819 -0.01360  0.05918  0.18640 
-    ## 
-    ## Coefficients:
-    ##             Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)  0.63860    0.01925  33.166  < 2e-16 ***
-    ## gist         0.15446    0.03744   4.125  0.00014 ***
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 
-    ## Residual standard error: 0.08915 on 50 degrees of freedom
-    ## Multiple R-squared:  0.2539, Adjusted R-squared:  0.239 
-    ## F-statistic: 17.02 on 1 and 50 DF,  p-value: 0.0001399
+    ## Correlation of Fixed Effects:
+    ##             (Intr) mngrDE mngrDL mngrHL
+    ## mngrpDfErly -0.514                     
+    ## maingrpDfLt -0.496  0.540              
+    ## mngrpHrngLt -0.541  0.603  0.580       
+    ## mngrpHrngNv -0.521  0.595  0.572  0.649
 
 Heat Maps
 =========
 
-Let's get heat maps of each group's eye behavior for reversed stories. I'll present them collapsed across all AoA groups and then show each AoA group in a grid.
-
-And here we go. I think it's pretty interesting. Of course we've got some sub-groups with only 1 or 2 people but you can sort of see the pattern among the DeafNative - the less they understand, the more distributed the eye gaze is
+I'm going to focus on reversed stories only for now. Can we see differences in eye gaze between those who "got" the reversed story and those who didn't?
 
 ``` r
-eye_groups <- data %>%
+eye_heat <- data %>%
   filter(direction == "reversed") %>%
-  mutate(gistgroup = case_when(
-    gist == 1 ~ "high",
-    gist == 0.5 ~ "medium",
-    gist == 0 ~ "low")) %>%
-  mutate(gistgroup = factor(gistgroup, levels = c("high","medium","low"))) 
-
-eye_groups_heat <- eye_groups %>%
   filter(aoi != "left" & aoi != "right" & aoi != "facechest" & aoi != "face" & aoi != "chest") %>%
-  group_by(gistgroup, maingroup, participant, aoi) %>%
+  group_by(gist, maingroup, participant, aoi) %>%
   dplyr::summarize(percent = mean(percent, na.rm=TRUE)) %>%
-  group_by(gistgroup, maingroup, aoi) %>%
+  group_by(gist, maingroup, aoi) %>%
   dplyr::summarize(percent = mean(percent, na.rm=TRUE)) %>%
 #  spread(aoi,percent) %>%
 #  filter(!is.na(aoi)) %>%
   mutate(aoi = factor(aoi,levels=c("belly","lowerchest","midchest",
                                    "upperchest","chin","mouth","eyes","forehead")))
 
-eye_groups_heat %>%
-  group_by(gistgroup,aoi) %>%
+eye_heat %>%
+  group_by(gist,aoi) %>%
   dplyr::summarize(percent = mean(percent, na.rm=TRUE)) %>%
-  ggplot(aes(x = gistgroup, y = aoi)) +
+  ggplot(aes(x = gist, y = aoi)) +
   geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
   scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,1)) +
   theme(axis.text.x=element_text(angle=45,hjust=1)) + 
   ylab("") + xlab("") + ggtitle("Heat Map for Reversed Stories Only")
 ```
 
-![](08gist_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-8-1.png)
+![](08gist_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-1.png)
 
 ``` r
-eye_groups_heat %>%
-  ggplot(aes(x = gistgroup, y = aoi)) +
+eye_heat %>%
+  ggplot(aes(x = gist, y = aoi)) +
   geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
   scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,1)) +
   theme(axis.text.x=element_text(angle=45,hjust=1)) + facet_grid(.~maingroup) +
   ylab("") + xlab("") + ggtitle("Heat Map for Reversed Stories Only")
 ```
 
-![](08gist_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-8-2.png)
+![](08gist_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-2.png)
+
+``` r
+eye_heat %>%
+  ggplot(aes(x = maingroup, y = aoi)) +
+  geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
+  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,1)) +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) + facet_grid(.~gist) +
+  ylab("") + xlab("") + ggtitle("Heat Map for Reversed Stories Only")
+```
+
+![](08gist_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-3.png)
 
 Gist & Gaze Modeling
 ====================
@@ -727,248 +923,453 @@ Eye AOI
 2.  No effect of gist or maingroup.
 
 ``` r
-eye_groups_aoi <- eye_groups %>%
+data_r <- data %>%
+  filter(direction=="reversed") %>%
   spread(aoi,percent)
 
-eye_lm <- lm(eyes ~ gist, data = eye_groups_aoi)
+eye_lm <- lmer(eyes ~ gist + (1|id) + (1|story), data = data_r)
 summary(eye_lm)
 ```
 
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: eyes ~ gist + (1 | id) + (1 | story)
+    ##    Data: data_r
     ## 
-    ## Call:
-    ## lm(formula = eyes ~ gist, data = eye_groups_aoi)
+    ## REML criterion at convergence: -7.3
     ## 
-    ## Residuals:
+    ## Scaled residuals: 
     ##     Min      1Q  Median      3Q     Max 
-    ## -0.2390 -0.1783 -0.1048  0.1502  0.6462 
+    ## -2.2691 -0.3907 -0.1829  0.4183  2.5880 
     ## 
-    ## Coefficients:
-    ##             Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)  0.21079    0.05749   3.666 0.000636 ***
-    ## gist         0.02875    0.11266   0.255 0.799748    
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.040382 0.20095 
+    ##  story    (Intercept) 0.007595 0.08715 
+    ##  Residual             0.019833 0.14083 
+    ## Number of obs: 85, groups:  id, 48; story, 4
+    ## 
+    ## Fixed effects:
+    ##             Estimate Std. Error       df t value Pr(>|t|)  
+    ## (Intercept)  0.24909    0.05844  3.79000   4.262   0.0146 *
+    ## gistYes     -0.03937    0.04881 56.84000  -0.807   0.4233  
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 0.2514 on 46 degrees of freedom
-    ##   (3 observations deleted due to missingness)
-    ## Multiple R-squared:  0.001413,   Adjusted R-squared:  -0.0203 
-    ## F-statistic: 0.0651 on 1 and 46 DF,  p-value: 0.7997
+    ## Correlation of Fixed Effects:
+    ##         (Intr)
+    ## gistYes -0.349
 
 ``` r
-eye_lm_mg <- lm(eyes ~ gist * maingroup, data = eye_groups_aoi)
+eye_lm_mg <- lmer(eyes ~ gist * maingroup + (1|id) + (1|story), data = data_r)
 summary(eye_lm_mg)
 ```
 
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: eyes ~ gist * maingroup + (1 | id) + (1 | story)
+    ##    Data: data_r
     ## 
-    ## Call:
-    ## lm(formula = eyes ~ gist * maingroup, data = eye_groups_aoi)
+    ## REML criterion at convergence: 6.3
     ## 
-    ## Residuals:
-    ##      Min       1Q   Median       3Q      Max 
-    ## -0.37726 -0.15142 -0.03162  0.05603  0.53884 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -2.0372 -0.4805 -0.1178  0.3587  2.6839 
     ## 
-    ## Coefficients:
-    ##                              Estimate Std. Error t value Pr(>|t|)
-    ## (Intercept)                  0.112780   0.171678   0.657    0.515
-    ## gist                         0.011001   0.242789   0.045    0.964
-    ## maingroupDeafEarly          -0.081817   0.245532  -0.333    0.741
-    ## maingroupDeafLate            0.003314   0.216460   0.015    0.988
-    ## maingroupHearingLate         0.264758   0.211848   1.250    0.219
-    ## maingroupHearingNovice       0.054189   0.199359   0.272    0.787
-    ## gist:maingroupDeafEarly      0.692308   0.481143   1.439    0.158
-    ## gist:maingroupDeafLate       0.175124   0.330925   0.529    0.600
-    ## gist:maingroupHearingLate   -0.101014   0.394698  -0.256    0.799
-    ## gist:maingroupHearingNovice  0.035629   0.386433   0.092    0.927
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.037100 0.19261 
+    ##  story    (Intercept) 0.006467 0.08042 
+    ##  Residual             0.021307 0.14597 
+    ## Number of obs: 85, groups:  id, 48; story, 4
     ## 
-    ## Residual standard error: 0.2482 on 38 degrees of freedom
-    ##   (3 observations deleted due to missingness)
-    ## Multiple R-squared:  0.1956, Adjusted R-squared:  0.005122 
-    ## F-statistic: 1.027 on 9 and 38 DF,  p-value: 0.4369
+    ## Fixed effects:
+    ##                                 Estimate Std. Error        df t value
+    ## (Intercept)                     0.173821   0.104380 33.570000   1.665
+    ## gistYes                        -0.056810   0.089987 39.920000  -0.631
+    ## maingroupDeafEarly              0.120458   0.130817 63.030000   0.921
+    ## maingroupDeafLate               0.015261   0.131362 65.300000   0.116
+    ## maingroupHearingLate            0.201964   0.119752 65.790000   1.687
+    ## maingroupHearingNovice          0.008729   0.118278 65.230000   0.074
+    ## gistYes:maingroupDeafEarly     -0.056524   0.143642 38.330000  -0.394
+    ## gistYes:maingroupDeafLate       0.086627   0.138559 48.120000   0.625
+    ## gistYes:maingroupHearingLate    0.035512   0.123981 39.650000   0.286
+    ## gistYes:maingroupHearingNovice  0.118984   0.126808 39.310000   0.938
+    ##                                Pr(>|t|)  
+    ## (Intercept)                      0.1052  
+    ## gistYes                          0.5314  
+    ## maingroupDeafEarly               0.3607  
+    ## maingroupDeafLate                0.9079  
+    ## maingroupHearingLate             0.0964 .
+    ## maingroupHearingNovice           0.9414  
+    ## gistYes:maingroupDeafEarly       0.6961  
+    ## gistYes:maingroupDeafLate        0.5348  
+    ## gistYes:maingroupHearingLate     0.7760  
+    ## gistYes:maingroupHearingNovice   0.3538  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) gistYs mngrDE mngrDL mngrHL mngrHN gsY:DE gsY:DL gsY:HL
+    ## gistYes     -0.656                                                        
+    ## mngrpDfErly -0.660  0.493                                                 
+    ## maingrpDfLt -0.663  0.510  0.519                                          
+    ## mngrpHrngLt -0.726  0.550  0.574  0.576                                   
+    ## mngrpHrngNv -0.743  0.571  0.579  0.591  0.639                            
+    ## gstYs:mngDE  0.368 -0.562 -0.466 -0.300 -0.333 -0.330                     
+    ## gstYs:mngDL  0.393 -0.613 -0.314 -0.585 -0.357 -0.362  0.388              
+    ## gstYs:mngHL  0.432 -0.667 -0.357 -0.360 -0.549 -0.390  0.441  0.478       
+    ## gstYs:mngHN  0.426 -0.662 -0.347 -0.361 -0.389 -0.505  0.427  0.483  0.526
 
 Mouth AOI
 ---------
 
 1.  No effect of gist.
-2.  No effect of gist or maingroup. One weeeeaaakkk interaction for gist and HearingNovice (p = 0.098).
+2.  No effect of gist or maingroup.
 
 ``` r
-mouth_lm <- lm(mouth ~ gist, data = eye_groups_aoi)
+mouth_lm <- lmer(mouth ~ gist + (1|id) + (1|story), data = data_r)
 summary(mouth_lm)
 ```
 
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: mouth ~ gist + (1 | id) + (1 | story)
+    ##    Data: data_r
     ## 
-    ## Call:
-    ## lm(formula = mouth ~ gist, data = eye_groups_aoi)
+    ## REML criterion at convergence: 12.7
     ## 
-    ## Residuals:
-    ##      Min       1Q   Median       3Q      Max 
-    ## -0.49569 -0.21194 -0.00104  0.25736  0.41236 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -1.8185 -0.5222  0.0608  0.4316  2.1468 
     ## 
-    ## Coefficients:
-    ##             Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)  0.52462    0.06168   8.505 3.26e-11 ***
-    ## gist         0.02646    0.12337   0.215    0.831    
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.04539  0.2131  
+    ##  story    (Intercept) 0.02199  0.1483  
+    ##  Residual             0.02698  0.1643  
+    ## Number of obs: 95, groups:  id, 51; story, 4
+    ## 
+    ## Fixed effects:
+    ##             Estimate Std. Error       df t value Pr(>|t|)   
+    ## (Intercept)  0.53044    0.08471  3.42000   6.262  0.00552 **
+    ## gistYes     -0.01041    0.05402 75.67000  -0.193  0.84768   
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 0.2839 on 49 degrees of freedom
-    ## Multiple R-squared:  0.0009382,  Adjusted R-squared:  -0.01945 
-    ## F-statistic: 0.04602 on 1 and 49 DF,  p-value: 0.831
+    ## Correlation of Fixed Effects:
+    ##         (Intr)
+    ## gistYes -0.258
 
 ``` r
-mouth_lm_mg <- lm(mouth ~ gist * maingroup, data = eye_groups_aoi)
+mouth_lm_mg <- lmer(mouth ~ gist * maingroup + (1|id) + (1|story), data = data_r)
 summary(mouth_lm_mg)
 ```
 
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: mouth ~ gist * maingroup + (1 | id) + (1 | story)
+    ##    Data: data_r
     ## 
-    ## Call:
-    ## lm(formula = mouth ~ gist * maingroup, data = eye_groups_aoi)
+    ## REML criterion at convergence: 21.1
     ## 
-    ## Residuals:
+    ## Scaled residuals: 
     ##      Min       1Q   Median       3Q      Max 
-    ## -0.56616 -0.16468  0.02667  0.18076  0.42708 
+    ## -1.91890 -0.46168  0.01684  0.49722  2.04902 
     ## 
-    ## Coefficients:
-    ##                             Estimate Std. Error t value Pr(>|t|)   
-    ## (Intercept)                  0.49111    0.15251   3.220  0.00251 **
-    ## gist                         0.14311    0.22527   0.635  0.52878   
-    ## maingroupDeafEarly           0.12268    0.21731   0.565  0.57547   
-    ## maingroupDeafLate            0.34090    0.20866   1.634  0.10996   
-    ## maingroupHearingLate        -0.20287    0.20306  -0.999  0.32363   
-    ## maingroupHearingNovice       0.08917    0.18773   0.475  0.63733   
-    ## gist:maingroupDeafEarly     -0.45213    0.45180  -1.001  0.32282   
-    ## gist:maingroupDeafLate      -0.33477    0.33127  -1.011  0.31815   
-    ## gist:maingroupHearingLate    0.28868    0.39823   0.725  0.47263   
-    ## gist:maingroupHearingNovice -0.66938    0.39521  -1.694  0.09790 . 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.03673  0.1916  
+    ##  story    (Intercept) 0.02500  0.1581  
+    ##  Residual             0.02831  0.1683  
+    ## Number of obs: 95, groups:  id, 51; story, 4
+    ## 
+    ## Fixed effects:
+    ##                                 Estimate Std. Error        df t value
+    ## (Intercept)                     0.618740   0.125414 13.090000   4.934
+    ## gistYes                        -0.047262   0.098455 55.130000  -0.480
+    ## maingroupDeafEarly             -0.045355   0.129471 72.070000  -0.350
+    ## maingroupDeafLate               0.112518   0.136098 73.950000   0.827
+    ## maingroupHearingLate           -0.185734   0.119737 75.360000  -1.551
+    ## maingroupHearingNovice         -0.197481   0.120387 73.170000  -1.640
+    ## gistYes:maingroupDeafEarly      0.009804   0.159982 50.950000   0.061
+    ## gistYes:maingroupDeafLate       0.021645   0.153543 62.900000   0.141
+    ## gistYes:maingroupHearingLate   -0.024066   0.128980 49.260000  -0.187
+    ## gistYes:maingroupHearingNovice  0.068327   0.141253 51.870000   0.484
+    ##                                Pr(>|t|)    
+    ## (Intercept)                    0.000268 ***
+    ## gistYes                        0.633102    
+    ## maingroupDeafEarly             0.727127    
+    ## maingroupDeafLate              0.411042    
+    ## maingroupHearingLate           0.125047    
+    ## maingroupHearingNovice         0.105216    
+    ## gistYes:maingroupDeafEarly     0.951377    
+    ## gistYes:maingroupDeafLate      0.888344    
+    ## gistYes:maingroupHearingLate   0.852749    
+    ## gistYes:maingroupHearingNovice 0.630623    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 0.2681 on 41 degrees of freedom
-    ## Multiple R-squared:  0.2541, Adjusted R-squared:  0.09037 
-    ## F-statistic: 1.552 on 9 and 41 DF,  p-value: 0.1626
+    ## Correlation of Fixed Effects:
+    ##             (Intr) gistYs mngrDE mngrDL mngrHL mngrHN gsY:DE gsY:DL gsY:HL
+    ## gistYes     -0.568                                                        
+    ## mngrpDfErly -0.569  0.528                                                 
+    ## maingrpDfLt -0.547  0.513  0.517                                          
+    ## mngrpHrngLt -0.614  0.570  0.588  0.576                                   
+    ## mngrpHrngNv -0.619  0.579  0.587  0.577  0.644                            
+    ## gstYs:mngDE  0.308 -0.552 -0.466 -0.293 -0.335 -0.329                     
+    ## gstYs:mngDL  0.339 -0.605 -0.324 -0.609 -0.377 -0.369  0.375              
+    ## gstYs:mngHL  0.390 -0.700 -0.384 -0.386 -0.581 -0.422  0.451  0.509       
+    ## gstYs:mngHN  0.360 -0.645 -0.352 -0.355 -0.402 -0.520  0.409  0.466  0.556
 
 Chin AOI
 --------
 
 1.  No effect of gist.
-2.  No effect of gist. One significant effect of DeafLate (p = 0.04), they look at chin less.
+2.  No effect of gist or maingroup.
 
 ``` r
-chin_lm <- lm(chin ~ gist, data = eye_groups_aoi)
+chin_lm <- lmer(chin ~ gist + (1|id) + (1|story), data = data_r)
 summary(chin_lm)
 ```
 
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: chin ~ gist + (1 | id) + (1 | story)
+    ##    Data: data_r
     ## 
-    ## Call:
-    ## lm(formula = chin ~ gist, data = eye_groups_aoi)
+    ## REML criterion at convergence: -20.5
     ## 
-    ## Residuals:
-    ##      Min       1Q   Median       3Q      Max 
-    ## -0.19298 -0.15689 -0.10408  0.07455  0.72826 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -1.8702 -0.3256 -0.2160  0.2778  2.4096 
     ## 
-    ## Coefficients:
-    ##             Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)  0.19400    0.04969   3.904 0.000295 ***
-    ## gist        -0.01597    0.09938  -0.161 0.872999    
+    ## Random effects:
+    ##  Groups   Name        Variance  Std.Dev.
+    ##  id       (Intercept) 0.0391173 0.19778 
+    ##  story    (Intercept) 0.0002256 0.01502 
+    ##  Residual             0.0180216 0.13424 
+    ## Number of obs: 92, groups:  id, 50; story, 4
+    ## 
+    ## Fixed effects:
+    ##             Estimate Std. Error       df t value Pr(>|t|)    
+    ## (Intercept) 0.184830   0.035749 8.268000   5.170 0.000769 ***
+    ## gistYes     0.003223   0.037515 5.261000   0.086 0.934713    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 0.2284 on 48 degrees of freedom
-    ##   (1 observation deleted due to missingness)
-    ## Multiple R-squared:  0.0005378,  Adjusted R-squared:  -0.02028 
-    ## F-statistic: 0.02583 on 1 and 48 DF,  p-value: 0.873
+    ## Correlation of Fixed Effects:
+    ##         (Intr)
+    ## gistYes -0.427
 
 ``` r
-chin_lm_mg <- lm(chin ~ gist * maingroup, data = eye_groups_aoi)
+chin_lm_mg <- lmer(chin ~ gist * maingroup + (1|id) + (1|story), data = data_r)
 summary(chin_lm_mg)
 ```
 
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: chin ~ gist * maingroup + (1 | id) + (1 | story)
+    ##    Data: data_r
     ## 
-    ## Call:
-    ## lm(formula = chin ~ gist * maingroup, data = eye_groups_aoi)
+    ## REML criterion at convergence: -7.8
     ## 
-    ## Residuals:
-    ##      Min       1Q   Median       3Q      Max 
-    ## -0.33836 -0.11838 -0.03239  0.09000  0.70113 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -2.0678 -0.3978 -0.0728  0.2629  2.0613 
     ## 
-    ## Coefficients:
-    ##                             Estimate Std. Error t value Pr(>|t|)   
-    ## (Intercept)                  0.39112    0.12494   3.130  0.00326 **
-    ## gist                        -0.18597    0.18455  -1.008  0.31967   
-    ## maingroupDeafEarly          -0.06914    0.17803  -0.388  0.69982   
-    ## maingroupDeafLate           -0.35927    0.17094  -2.102  0.04191 * 
-    ## maingroupHearingLate        -0.26981    0.16635  -1.622  0.11268   
-    ## maingroupHearingNovice      -0.22687    0.15379  -1.475  0.14799   
-    ## gist:maingroupDeafEarly     -0.30083    0.38294  -0.786  0.43674   
-    ## gist:maingroupDeafLate       0.18910    0.27138   0.697  0.48995   
-    ## gist:maingroupHearingLate    0.27864    0.32624   0.854  0.39815   
-    ## gist:maingroupHearingNovice  0.51631    0.32377   1.595  0.11865   
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.03910  0.1977  
+    ##  story    (Intercept) 0.00000  0.0000  
+    ##  Residual             0.01734  0.1317  
+    ## Number of obs: 92, groups:  id, 50; story, 4
+    ## 
+    ## Fixed effects:
+    ##                                Estimate Std. Error       df t value
+    ## (Intercept)                     0.25342    0.08436 79.35000   3.004
+    ## gistYes                         0.03140    0.07714 46.98000   0.407
+    ## maingroupDeafEarly             -0.07912    0.12158 65.41000  -0.651
+    ## maingroupDeafLate              -0.20027    0.12183 69.23000  -1.644
+    ## maingroupHearingLate           -0.11935    0.10778 69.84000  -1.107
+    ## maingroupHearingNovice          0.02219    0.10922 68.53000   0.203
+    ## gistYes:maingroupDeafEarly     -0.02007    0.12828 44.19000  -0.156
+    ## gistYes:maingroupDeafLate      -0.07666    0.12231 52.07000  -0.627
+    ## gistYes:maingroupHearingLate    0.01603    0.10022 43.85000   0.160
+    ## gistYes:maingroupHearingNovice -0.16116    0.11079 44.62000  -1.455
+    ##                                Pr(>|t|)   
+    ## (Intercept)                     0.00356 **
+    ## gistYes                         0.68586   
+    ## maingroupDeafEarly              0.51746   
+    ## maingroupDeafLate               0.10475   
+    ## maingroupHearingLate            0.27191   
+    ## maingroupHearingNovice          0.83959   
+    ## gistYes:maingroupDeafEarly      0.87639   
+    ## gistYes:maingroupDeafLate       0.53355   
+    ## gistYes:maingroupHearingLate    0.87364   
+    ## gistYes:maingroupHearingNovice  0.15274   
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 0.2197 on 40 degrees of freedom
-    ##   (1 observation deleted due to missingness)
-    ## Multiple R-squared:  0.2293, Adjusted R-squared:  0.05595 
-    ## F-statistic: 1.323 on 9 and 40 DF,  p-value: 0.2561
+    ## Correlation of Fixed Effects:
+    ##             (Intr) gistYs mngrDE mngrDL mngrHL mngrHN gsY:DE gsY:DL gsY:HL
+    ## gistYes     -0.653                                                        
+    ## mngrpDfErly -0.694  0.453                                                 
+    ## maingrpDfLt -0.692  0.452  0.480                                          
+    ## mngrpHrngLt -0.783  0.511  0.543  0.542                                   
+    ## mngrpHrngNv -0.772  0.504  0.536  0.535  0.605                            
+    ## gstYs:mngDE  0.392 -0.601 -0.423 -0.272 -0.307 -0.303                     
+    ## gstYs:mngDL  0.412 -0.631 -0.286 -0.543 -0.322 -0.318  0.379              
+    ## gstYs:mngHL  0.502 -0.770 -0.349 -0.348 -0.521 -0.388  0.463  0.485       
+    ## gstYs:mngHN  0.454 -0.696 -0.315 -0.315 -0.356 -0.473  0.419  0.439  0.536
 
 FaceChest Ratio
 ---------------
 
 1.  No effect of gist.
-2.  No effect of gist or maingroup.
+2.  No effect of gist. Main effect of HearingNovice (much lower facechest ratio)
 
 ``` r
-fcr_lm <- lm(facechest ~ gist, data = eye_groups_aoi)
+fcr_lm <- lmer(facechest ~ gist + (1|id) + (1|story), data = data_r)
 summary(fcr_lm)
 ```
 
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: facechest ~ gist + (1 | id) + (1 | story)
+    ##    Data: data_r
     ## 
-    ## Call:
-    ## lm(formula = facechest ~ gist, data = eye_groups_aoi)
+    ## REML criterion at convergence: -73.6
     ## 
-    ## Residuals:
-    ##      Min       1Q   Median       3Q      Max 
-    ## -0.56175 -0.01058  0.05806  0.08131  0.11501 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -3.7034  0.0201  0.1606  0.3381  1.5996 
     ## 
-    ## Coefficients:
-    ##             Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)  0.88499    0.03251  27.224   <2e-16 ***
-    ## gist         0.06741    0.06502   1.037    0.305    
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.01723  0.1313  
+    ##  story    (Intercept) 0.00074  0.0272  
+    ##  Residual             0.01206  0.1098  
+    ## Number of obs: 95, groups:  id, 51; story, 4
+    ## 
+    ## Fixed effects:
+    ##             Estimate Std. Error       df t value Pr(>|t|)    
+    ## (Intercept)  0.91414    0.02871 10.65000  31.845 6.56e-12 ***
+    ## gistYes     -0.01345    0.03223 39.07000  -0.417    0.679    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 0.1496 on 49 degrees of freedom
-    ## Multiple R-squared:  0.02146,    Adjusted R-squared:  0.001495 
-    ## F-statistic: 1.075 on 1 and 49 DF,  p-value: 0.3049
+    ## Correlation of Fixed Effects:
+    ##         (Intr)
+    ## gistYes -0.451
 
 ``` r
-fcr_lm_mg <- lm(facechest ~ gist * maingroup, data = eye_groups_aoi)
+fcr_lm_mg <- lmer(facechest ~ gist * maingroup + (1|id) + (1|story), data = data_r)
 summary(fcr_lm_mg)
 ```
 
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: facechest ~ gist * maingroup + (1 | id) + (1 | story)
+    ##    Data: data_r
     ## 
-    ## Call:
-    ## lm(formula = facechest ~ gist * maingroup, data = eye_groups_aoi)
+    ## REML criterion at convergence: -64.8
     ## 
-    ## Residuals:
-    ##      Min       1Q   Median       3Q      Max 
-    ## -0.37383 -0.02580  0.01980  0.05194  0.29205 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -3.4273 -0.1647  0.0852  0.3758  1.8842 
     ## 
-    ## Coefficients:
-    ##                               Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)                  0.9749728  0.0774997  12.580 1.16e-15 ***
-    ## gist                         0.0032373  0.1144747   0.028    0.978    
-    ## maingroupDeafEarly          -0.0515619  0.1104284  -0.467    0.643    
-    ## maingroupDeafLate           -0.0006825  0.1060302  -0.006    0.995    
-    ## maingroupHearingLate        -0.1263958  0.1031861  -1.225    0.228    
-    ## maingroupHearingNovice      -0.1358642  0.0953956  -1.424    0.162    
-    ## gist:maingroupDeafEarly      0.0071607  0.2295845   0.031    0.975    
-    ## gist:maingroupDeafLate      -0.0056539  0.1683360  -0.034    0.973    
-    ## gist:maingroupHearingLate    0.1957267  0.2023646   0.967    0.339    
-    ## gist:maingroupHearingNovice -0.2759135  0.2008298  -1.374    0.177    
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.014320 0.11967 
+    ##  story    (Intercept) 0.001601 0.04001 
+    ##  Residual             0.010698 0.10343 
+    ## Number of obs: 95, groups:  id, 51; story, 4
+    ## 
+    ## Fixed effects:
+    ##                                Estimate Std. Error       df t value
+    ## (Intercept)                     1.02328    0.06311 56.86000  16.213
+    ## gistYes                        -0.06262    0.06013 57.05000  -1.041
+    ## maingroupDeafEarly             -0.05347    0.08015 74.67000  -0.667
+    ## maingroupDeafLate              -0.03808    0.08393 76.51000  -0.454
+    ## maingroupHearingLate           -0.10508    0.07403 77.66000  -1.419
+    ## maingroupHearingNovice         -0.25686    0.07436 75.76000  -3.454
+    ## gistYes:maingroupDeafEarly     -0.12719    0.09836 51.70000  -1.293
+    ## gistYes:maingroupDeafLate       0.01905    0.09408 64.14000   0.203
+    ## gistYes:maingroupHearingLate    0.04385    0.07881 51.54000   0.556
+    ## gistYes:maingroupHearingNovice  0.10049    0.08647 53.60000   1.162
+    ##                                Pr(>|t|)    
+    ## (Intercept)                     < 2e-16 ***
+    ## gistYes                        0.302136    
+    ## maingroupDeafEarly             0.506692    
+    ## maingroupDeafLate              0.651352    
+    ## maingroupHearingLate           0.159793    
+    ## maingroupHearingNovice         0.000907 ***
+    ## gistYes:maingroupDeafEarly     0.201707    
+    ## gistYes:maingroupDeafLate      0.840157    
+    ## gistYes:maingroupHearingLate   0.580318    
+    ## gistYes:maingroupHearingNovice 0.250308    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 0.1363 on 41 degrees of freedom
-    ## Multiple R-squared:  0.3208, Adjusted R-squared:  0.1717 
-    ## F-statistic: 2.151 on 9 and 41 DF,  p-value: 0.04656
+    ## Correlation of Fixed Effects:
+    ##             (Intr) gistYs mngrDE mngrDL mngrHL mngrHN gsY:DE gsY:DL gsY:HL
+    ## gistYes     -0.687                                                        
+    ## mngrpDfErly -0.696  0.525                                                 
+    ## maingrpDfLt -0.669  0.509  0.518                                          
+    ## mngrpHrngLt -0.752  0.568  0.587  0.573                                   
+    ## mngrpHrngNv -0.756  0.574  0.586  0.572  0.641                            
+    ## gstYs:mngDE  0.383 -0.565 -0.467 -0.294 -0.336 -0.331                     
+    ## gstYs:mngDL  0.417 -0.613 -0.325 -0.605 -0.373 -0.366  0.376              
+    ## gstYs:mngHL  0.486 -0.717 -0.387 -0.387 -0.580 -0.425  0.452  0.505       
+    ## gstYs:mngHN  0.447 -0.658 -0.354 -0.355 -0.400 -0.521  0.411  0.462  0.550
+
+I want to make and see DeafLate's mouth AOI model...and eyes and chin. Nothing.
+
+``` r
+deaflate <- data %>% filter(maingroup == "DeafLate") %>% spread(aoi,percent)
+
+deaflate_m <- lmer(chin ~ gist * direction + (1|id) + (1|story), data = deaflate)
+```
+
+    ## fixed-effect model matrix is rank deficient so dropping 1 column / coefficient
+
+``` r
+summary(deaflate_m)
+```
+
+    ## fixed-effect model matrix is rank deficient so dropping 1 column / coefficient
+    ## fixed-effect model matrix is rank deficient so dropping 1 column / coefficient
+    ## fixed-effect model matrix is rank deficient so dropping 1 column / coefficient
+    ## fixed-effect model matrix is rank deficient so dropping 1 column / coefficient
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: chin ~ gist * direction + (1 | id) + (1 | story)
+    ##    Data: deaflate
+    ## 
+    ## REML criterion at convergence: -68.6
+    ## 
+    ## Scaled residuals: 
+    ##      Min       1Q   Median       3Q      Max 
+    ## -0.76918 -0.51863 -0.32469  0.09753  2.96036 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance  Std.Dev.
+    ##  id       (Intercept) 0.0001238 0.01113 
+    ##  story    (Intercept) 0.0001306 0.01143 
+    ##  Residual             0.0034050 0.05835 
+    ## Number of obs: 30, groups:  id, 8; story, 4
+    ## 
+    ## Fixed effects:
+    ##                   Estimate Std. Error       df t value Pr(>|t|)
+    ## (Intercept)        0.05704    0.03597 22.35400   1.586    0.127
+    ## gistYes           -0.01423    0.03208 24.97000  -0.444    0.661
+    ## directionreversed -0.01556    0.02865 24.29800  -0.543    0.592
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) gistYs
+    ## gistYes     -0.886       
+    ## dirctnrvrsd -0.808  0.657
+    ## fit warnings:
+    ## fixed-effect model matrix is rank deficient so dropping 1 column / coefficient
