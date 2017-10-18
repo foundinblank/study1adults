@@ -116,6 +116,11 @@ Rnew <- cbind(Rnew[1:length(Rnew)-1])
 return(Rnew) 
 }
 
+prob_calc <- function(x){
+  odds <- exp(x)
+  prob <- odds / (1 + odds)
+  return(prob)
+}
 
 # # Now collapse eye gaze data to subject-level 
 # data <- data %>%
@@ -263,11 +268,11 @@ summary(gistonacc_lmm)
 
 Is there an effect of maingroup and/or direction on gist? Let's do a LMM but with a logit-link function since it's a binary outcome. 
 
-The coefficients are log odds. HearingNovice and Direction are significant main effects. I converted them to probability by hand (odds = exp(coef), then probability = odds / 1+odds). From (Sebastian's blog)[https://sebastiansauer.github.io/convert_logit2prob/]. (And a good SO post here.)[https://stackoverflow.com/questions/41384075/r-calculate-and-interpret-odds-ratio-in-logistic-regression] The intercept is around 0.99, so the probability of getting it right as a DeafNative is 99%. (If I'm interpreting this right). Adding up the coefficients:
+The coefficients are log odds. HearingNovice and Direction are significant main effects. I converted them to probability by hand (odds = exp(coef), then probability = odds / 1+odds). From (Sebastian's blog)[https://sebastiansauer.github.io/convert_logit2prob/]. (And a good SO post here.)[https://stackoverflow.com/questions/41384075/r-calculate-and-interpret-odds-ratio-in-logistic-regression] The intercept is around 1, so the probability of getting it right as a DeafNative is 100%. (If I'm interpreting this right). Adding up the coefficients:
 
 1. If you are a DeafNative watched a reversed story, the probability is 80% (and this is a significant change).
-1. If you are watching a forward story as a HearingNovice, the probability is 44% (and this is also significant).
-1. If you are watching a reversed story as a HearingNovice, the probability is only 13%! 
+1. If you are watching a forward story as a HearingNovice, the probability is 43% (and this is also significant).
+1. If you are watching a reversed story as a HearingNovice, the probability is only 14%! 
 
 And this kind of makes sense if you look at the scatterplot above. Most HearingNovice watching reversed stories get it wrong. 
 ```{r}

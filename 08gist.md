@@ -173,6 +173,11 @@ Rnew <- cbind(Rnew[1:length(Rnew)-1])
 return(Rnew) 
 }
 
+prob_calc <- function(x){
+  odds <- exp(x)
+  prob <- odds / (1 + odds)
+  return(prob)
+}
 
 # # Now collapse eye gaze data to subject-level 
 # data <- data %>%
@@ -527,7 +532,7 @@ reversed
 DeafNative
 </td>
 <td style="text-align:right;">
-0.96
+1.00
 </td>
 <td style="text-align:right;">
 0.71
@@ -596,7 +601,7 @@ cleanlexdata %>%
 
     ## Warning: Removed 4 rows containing non-finite values (stat_smooth).
 
-    ## Warning: Removed 9 rows containing missing values (geom_point).
+    ## Warning: Removed 7 rows containing missing values (geom_point).
 
 ![](08gist_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-3-1.png)
 
@@ -608,126 +613,122 @@ Wha I find weird is reversal is not important here, I wonder if gist and directi
 gistonacc_lmm <- lmer(acc ~ gist * direction * maingroup + (1|id) + (1|story), data = cleanlexdata)
 ```
 
-    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 3 columns / coefficients
 
 ``` r
 summary(gistonacc_lmm)
 ```
 
-    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
-    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
-    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
-    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
-    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
-    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
-    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
-    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
-    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
-    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
-    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
-    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
-    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
-    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
-    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
-    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
-    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
-    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
-    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 3 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 3 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 3 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 3 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 3 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 3 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 3 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 3 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 3 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 3 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 3 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 3 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 3 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 3 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 3 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 3 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 3 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 3 columns / coefficients
 
     ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
     ##   to degrees of freedom [lmerMod]
     ## Formula: acc ~ gist * direction * maingroup + (1 | id) + (1 | story)
     ##    Data: cleanlexdata
     ## 
-    ## REML criterion at convergence: -294.6
+    ## REML criterion at convergence: -295.9
     ## 
     ## Scaled residuals: 
     ##      Min       1Q   Median       3Q      Max 
-    ## -2.18523 -0.60898 -0.02399  0.62459  2.28421 
+    ## -2.16714 -0.62107 -0.02386  0.60181  2.28761 
     ## 
     ## Random effects:
     ##  Groups   Name        Variance  Std.Dev.
-    ##  id       (Intercept) 0.0025652 0.05065 
-    ##  story    (Intercept) 0.0007757 0.02785 
-    ##  Residual             0.0076850 0.08766 
+    ##  id       (Intercept) 0.0025366 0.05036 
+    ##  story    (Intercept) 0.0007529 0.02744 
+    ##  Residual             0.0077270 0.08790 
     ## Number of obs: 204, groups:  id, 52; story, 4
     ## 
     ## Fixed effects:
-    ##                                                    Estimate Std. Error
-    ## (Intercept)                                        0.967221   0.097033
-    ## gistYes                                           -0.119291   0.097282
-    ## directionreversed                                 -0.154181   0.099973
-    ## maingroupDeafEarly                                -0.125148   0.112101
-    ## maingroupDeafLate                                 -0.098903   0.076631
-    ## maingroupHearingLate                              -0.169802   0.067540
-    ## maingroupHearingNovice                            -0.238346   0.100658
-    ## gistYes:directionreversed                          0.056673   0.104774
-    ## gistYes:maingroupDeafEarly                         0.112951   0.114791
-    ## gistYes:maingroupDeafLate                          0.123131   0.066726
-    ## gistYes:maingroupHearingLate                       0.188199   0.058745
-    ## gistYes:maingroupHearingNovice                     0.235545   0.105978
-    ## directionreversed:maingroupDeafEarly              -0.064491   0.117952
-    ## directionreversed:maingroupDeafLate               -0.021074   0.053014
-    ## directionreversed:maingroupHearingLate             0.001075   0.047317
-    ## directionreversed:maingroupHearingNovice           0.061053   0.105486
-    ## gistYes:directionreversed:maingroupDeafEarly       0.087749   0.130387
-    ## gistYes:directionreversed:maingroupHearingNovice  -0.147767   0.121800
-    ##                                                          df t value
-    ## (Intercept)                                      176.970000   9.968
-    ## gistYes                                          169.130000  -1.226
-    ## directionreversed                                163.070000  -1.542
-    ## maingroupDeafEarly                               179.880000  -1.116
-    ## maingroupDeafLate                                183.060000  -1.291
-    ## maingroupHearingLate                             184.040000  -2.514
-    ## maingroupHearingNovice                           180.110000  -2.368
-    ## gistYes:directionreversed                        163.600000   0.541
-    ## gistYes:maingroupDeafEarly                       169.010000   0.984
-    ## gistYes:maingroupDeafLate                        172.860000   1.845
-    ## gistYes:maingroupHearingLate                     162.610000   3.204
-    ## gistYes:maingroupHearingNovice                   171.830000   2.223
-    ## directionreversed:maingroupDeafEarly             164.230000  -0.547
-    ## directionreversed:maingroupDeafLate              151.890000  -0.398
-    ## directionreversed:maingroupHearingLate           145.820000   0.023
-    ## directionreversed:maingroupHearingNovice         161.670000   0.579
-    ## gistYes:directionreversed:maingroupDeafEarly     167.460000   0.673
-    ## gistYes:directionreversed:maingroupHearingNovice 163.420000  -1.213
-    ##                                                  Pr(>|t|)    
-    ## (Intercept)                                       < 2e-16 ***
-    ## gistYes                                           0.22181    
-    ## directionreversed                                 0.12496    
-    ## maingroupDeafEarly                                0.26575    
-    ## maingroupDeafLate                                 0.19846    
-    ## maingroupHearingLate                              0.01279 *  
-    ## maingroupHearingNovice                            0.01895 *  
-    ## gistYes:directionreversed                         0.58930    
-    ## gistYes:maingroupDeafEarly                        0.32654    
-    ## gistYes:maingroupDeafLate                         0.06670 .  
-    ## gistYes:maingroupHearingLate                      0.00163 ** 
-    ## gistYes:maingroupHearingNovice                    0.02755 *  
-    ## directionreversed:maingroupDeafEarly              0.58529    
-    ## directionreversed:maingroupDeafLate               0.69155    
-    ## directionreversed:maingroupHearingLate            0.98191    
-    ## directionreversed:maingroupHearingNovice          0.56354    
-    ## gistYes:directionreversed:maingroupDeafEarly      0.50188    
-    ## gistYes:directionreversed:maingroupHearingNovice  0.22681    
+    ##                                                Estimate Std. Error
+    ## (Intercept)                                    0.822826   0.080545
+    ## gistYes                                        0.030206   0.075743
+    ## directionreversed                             -0.011472   0.068874
+    ## maingroupDeafEarly                             0.019608   0.098428
+    ## maingroupDeafLate                             -0.101523   0.076707
+    ## maingroupHearingLate                          -0.173734   0.067573
+    ## maingroupHearingNovice                        -0.094410   0.075421
+    ## gistYes:directionreversed                     -0.090504   0.062593
+    ## gistYes:maingroupDeafEarly                    -0.036764   0.097609
+    ## gistYes:maingroupDeafLate                      0.120499   0.066825
+    ## gistYes:maingroupHearingLate                   0.186940   0.058864
+    ## gistYes:maingroupHearingNovice                 0.086734   0.064262
+    ## directionreversed:maingroupDeafEarly          -0.208103   0.093058
+    ## directionreversed:maingroupDeafLate           -0.016525   0.053013
+    ## directionreversed:maingroupHearingLate         0.006429   0.047243
+    ## directionreversed:maingroupHearingNovice      -0.081341   0.058086
+    ## gistYes:directionreversed:maingroupDeafEarly   0.236075   0.099695
+    ##                                                      df t value Pr(>|t|)
+    ## (Intercept)                                  175.660000  10.216  < 2e-16
+    ## gistYes                                      166.550000   0.399  0.69055
+    ## directionreversed                            161.680000  -0.167  0.86792
+    ## maingroupDeafEarly                           182.230000   0.199  0.84232
+    ## maingroupDeafLate                            184.020000  -1.324  0.18731
+    ## maingroupHearingLate                         185.110000  -2.571  0.01092
+    ## maingroupHearingNovice                       183.470000  -1.252  0.21225
+    ## gistYes:directionreversed                    165.520000  -1.446  0.15010
+    ## gistYes:maingroupDeafEarly                   168.220000  -0.377  0.70691
+    ## gistYes:maingroupDeafLate                    173.860000   1.803  0.07309
+    ## gistYes:maingroupHearingLate                 163.650000   3.176  0.00179
+    ## gistYes:maingroupHearingNovice               166.580000   1.350  0.17895
+    ## directionreversed:maingroupDeafEarly         164.400000  -2.236  0.02668
+    ## directionreversed:maingroupDeafLate          153.150000  -0.312  0.75568
+    ## directionreversed:maingroupHearingLate       146.860000   0.136  0.89194
+    ## directionreversed:maingroupHearingNovice     151.880000  -1.400  0.16344
+    ## gistYes:directionreversed:maingroupDeafEarly 171.110000   2.368  0.01900
+    ##                                                 
+    ## (Intercept)                                  ***
+    ## gistYes                                         
+    ## directionreversed                               
+    ## maingroupDeafEarly                              
+    ## maingroupDeafLate                               
+    ## maingroupHearingLate                         *  
+    ## maingroupHearingNovice                          
+    ## gistYes:directionreversed                       
+    ## gistYes:maingroupDeafEarly                      
+    ## gistYes:maingroupDeafLate                    .  
+    ## gistYes:maingroupHearingLate                 ** 
+    ## gistYes:maingroupHearingNovice                  
+    ## directionreversed:maingroupDeafEarly         *  
+    ## directionreversed:maingroupDeafLate             
+    ## directionreversed:maingroupHearingLate          
+    ## directionreversed:maingroupHearingNovice        
+    ## gistYes:directionreversed:maingroupDeafEarly *  
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
     ## 
-    ## Correlation matrix not shown by default, as p = 18 > 12.
+    ## Correlation matrix not shown by default, as p = 17 > 12.
     ## Use print(x, correlation=TRUE)  or
     ##   vcov(x)     if you need it
 
     ## fit warnings:
-    ## fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients
+    ## fixed-effect model matrix is rank deficient so dropping 3 columns / coefficients
 
 Is there an effect of maingroup and/or direction on gist? Let's do a LMM but with a logit-link function since it's a binary outcome.
 
-The coefficients are log odds. HearingNovice and Direction are significant main effects. I converted them to probability by hand (odds = exp(coef), then probability = odds / 1+odds). From (Sebastian's blog)\[<https://sebastiansauer.github.io/convert_logit2prob/>\]. (And a good SO post here.)\[<https://stackoverflow.com/questions/41384075/r-calculate-and-interpret-odds-ratio-in-logistic-regression>\] The intercept is around 0.99, so the probability of getting it right as a DeafNative is 99%. (If I'm interpreting this right). Adding up the coefficients:
+The coefficients are log odds. HearingNovice and Direction are significant main effects. I converted them to probability by hand (odds = exp(coef), then probability = odds / 1+odds). From (Sebastian's blog)\[<https://sebastiansauer.github.io/convert_logit2prob/>\]. (And a good SO post here.)\[<https://stackoverflow.com/questions/41384075/r-calculate-and-interpret-odds-ratio-in-logistic-regression>\] The intercept is around 1, so the probability of getting it right as a DeafNative is 100%. (If I'm interpreting this right). Adding up the coefficients:
 
 1.  If you are a DeafNative watched a reversed story, the probability is 80% (and this is a significant change).
-2.  If you are watching a forward story as a HearingNovice, the probability is 44% (and this is also significant).
-3.  If you are watching a reversed story as a HearingNovice, the probability is only 13%!
+2.  If you are watching a forward story as a HearingNovice, the probability is 43% (and this is also significant).
+3.  If you are watching a reversed story as a HearingNovice, the probability is only 14%!
 
 And this kind of makes sense if you look at the scatterplot above. Most HearingNovice watching reversed stories get it wrong.
 
@@ -735,22 +736,12 @@ And this kind of makes sense if you look at the scatterplot above. Most HearingN
 gist_glmm <- glmer(gist ~ direction * maingroup + (1|id) + (1|story), data = cleanlexdata, family=binomial (link="logit"))
 ```
 
-    ## Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control
-    ## $checkConv, : unable to evaluate scaled gradient
-
-    ## Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control
-    ## $checkConv, : Model failed to converge: degenerate Hessian with 1 negative
-    ## eigenvalues
+    ## Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv, : Model is nearly unidentifiable: large eigenvalue ratio
+    ##  - Rescale variables?
 
 ``` r
 summary(gist_glmm)
 ```
-
-    ## Warning in vcov.merMod(object, use.hessian = use.hessian): variance-covariance matrix computed from finite-difference Hessian is
-    ## not positive definite or contains NA values: falling back to var-cov estimated from RX
-
-    ## Warning in vcov.merMod(object, correlation = correlation, sigm = sig): variance-covariance matrix computed from finite-difference Hessian is
-    ## not positive definite or contains NA values: falling back to var-cov estimated from RX
 
     ## Generalized linear mixed model fit by maximum likelihood (Laplace
     ##   Approximation) [glmerMod]
@@ -759,58 +750,56 @@ summary(gist_glmm)
     ##    Data: cleanlexdata
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##    184.8    224.8    -80.4    160.8      196 
+    ##    177.4    217.4    -76.7    153.4      196 
     ## 
     ## Scaled residuals: 
-    ##      Min       1Q   Median       3Q      Max 
-    ## -3.08490 -0.33968  0.00007  0.36340  1.71836 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -3.4631 -0.3348  0.0000  0.3127  1.8485 
     ## 
     ## Random effects:
     ##  Groups Name        Variance Std.Dev.
-    ##  id     (Intercept) 1.085    1.041   
-    ##  story  (Intercept) 1.712    1.309   
+    ##  id     (Intercept) 0.9819   0.9909  
+    ##  story  (Intercept) 1.7057   1.3060  
     ## Number of obs: 208, groups:  id, 52; story, 4
     ## 
     ## Fixed effects:
-    ##                                           Estimate Std. Error z value
-    ## (Intercept)                                 4.2193     1.4362   2.938
-    ## directionreversed                          -2.8536     1.3328  -2.141
-    ## maingroupDeafEarly                         -1.8362     1.5008  -1.224
-    ## maingroupDeafLate                          16.7964  6643.2544   0.002
-    ## maingroupHearingLate                       15.6594  3160.2428   0.005
-    ## maingroupHearingNovice                     -4.4651     1.4152  -3.155
-    ## directionreversed:maingroupDeafEarly       -0.1721     1.6265  -0.106
-    ## directionreversed:maingroupDeafLate       -18.6070  6643.2545  -0.003
-    ## directionreversed:maingroupHearingLate    -18.0996  3160.2429  -0.006
-    ## directionreversed:maingroupHearingNovice    1.1708     1.5555   0.753
-    ##                                          Pr(>|z|)   
-    ## (Intercept)                                0.0033 **
-    ## directionreversed                          0.0323 * 
-    ## maingroupDeafEarly                         0.2212   
-    ## maingroupDeafLate                          0.9980   
-    ## maingroupHearingLate                       0.9960   
-    ## maingroupHearingNovice                     0.0016 **
-    ## directionreversed:maingroupDeafEarly       0.9157   
-    ## directionreversed:maingroupDeafLate        0.9978   
-    ## directionreversed:maingroupHearingLate     0.9954   
-    ## directionreversed:maingroupHearingNovice   0.4516   
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ##                                          Estimate Std. Error z value
+    ## (Intercept)                               21.2855   149.4658   0.142
+    ## directionreversed                        -19.9283   149.4640  -0.133
+    ## maingroupDeafEarly                       -18.8856   149.4651  -0.126
+    ## maingroupDeafLate                         -0.7515   315.1652  -0.002
+    ## maingroupHearingLate                      -0.9767   232.7695  -0.004
+    ## maingroupHearingNovice                   -21.5508   149.4653  -0.144
+    ## directionreversed:maingroupDeafEarly      16.8617   149.4658   0.113
+    ## directionreversed:maingroupDeafLate       -1.0368   315.1644  -0.003
+    ## directionreversed:maingroupHearingLate    -1.4365   232.7692  -0.006
+    ## directionreversed:maingroupHearingNovice  18.2965   149.4650   0.122
+    ##                                          Pr(>|z|)
+    ## (Intercept)                                 0.887
+    ## directionreversed                           0.894
+    ## maingroupDeafEarly                          0.899
+    ## maingroupDeafLate                           0.998
+    ## maingroupHearingLate                        0.997
+    ## maingroupHearingNovice                      0.885
+    ## directionreversed:maingroupDeafEarly        0.910
+    ## directionreversed:maingroupDeafLate         0.997
+    ## directionreversed:maingroupHearingLate      0.995
+    ## directionreversed:maingroupHearingNovice    0.903
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr) drctnr mngrDE mngrDL mngrHL mngrHN drc:DE drc:DL drc:HL
-    ## dirctnrvrsd -0.794                                                        
-    ## mngrpDfErly -0.742  0.751                                                 
-    ## maingrpDfLt  0.000  0.000  0.000                                          
-    ## mngrpHrngLt  0.000  0.000  0.000  0.000                                   
-    ## mngrpHrngNv -0.806  0.808  0.752  0.000  0.000                            
-    ## drctnrvr:DE  0.629 -0.807 -0.835  0.000  0.000 -0.634                     
-    ## drctnrvr:DL  0.000  0.000  0.000 -1.000  0.000  0.000  0.000              
-    ## drctnrvr:HL  0.000  0.000  0.000  0.000 -1.000  0.000  0.000  0.000       
-    ## drctnrvr:HN  0.671 -0.854 -0.641  0.000  0.000 -0.803  0.694  0.000  0.000
+    ## dirctnrvrsd -1.000                                                        
+    ## mngrpDfErly -1.000  1.000                                                 
+    ## maingrpDfLt -0.338  0.338  0.338                                          
+    ## mngrpHrngLt -0.029  0.029  0.029  0.087                                   
+    ## mngrpHrngNv -1.000  1.000  1.000  0.338  0.029                            
+    ## drctnrvr:DE  1.000 -1.000 -1.000 -0.338 -0.029 -1.000                     
+    ## drctnrvr:DL  0.338 -0.338 -0.338 -1.000 -0.087 -0.338  0.338              
+    ## drctnrvr:HL  0.029 -0.029 -0.029 -0.087 -1.000 -0.029  0.029  0.087       
+    ## drctnrvr:HN  1.000 -1.000 -1.000 -0.338 -0.029 -1.000  1.000  0.338  0.029
     ## convergence code: 0
-    ## unable to evaluate scaled gradient
-    ## Model failed to converge: degenerate  Hessian with 1 negative eigenvalues
+    ## Model is nearly unidentifiable: large eigenvalue ratio
+    ##  - Rescale variables?
 
 What about reversed stories only? Doing it again here. Not going to interpret odds again, but there are maingroup differences at all levels.
 
