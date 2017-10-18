@@ -17,7 +17,7 @@ output:
 ---
 
 # Introduction 
-xxx
+Okay let's look at gist!
 
 # Participants
 ```{r warning=FALSE}
@@ -242,7 +242,7 @@ cleanlexdata %>%
   mutate(percent = if_else(!is.na(No), Yes/(No+Yes), 1)) %>%
   select(maingroup,direction,percent) %>%
   spread(direction,percent) %>%
-  kable(digits=2)
+  kable(digits=2) %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
 ```
 
 So we have this weird pattern of DeafLate and HearingLate doing best on the forward stories - even better than DeafNative or DeafEarly! We have a decent pattern for the reversed stories, though. 
@@ -279,7 +279,15 @@ And this kind of makes sense if you look at the scatterplot above. Most HearingN
 gist_glmm <- glmer(gist ~ direction * maingroup + (1|id) + (1|story), data = cleanlexdata, family=binomial (link="logit"))
 summary(gist_glmm)
 ```
-What about reversed stories only? Doing it again here. Not going to interpret odds again, but there are maingroup differences at all levels. 
+
+# AoA effects for Reversed Stories on Gist!
+What about reversed stories only? Doing it again here.
+
+1. DeafNative probability of getting gist correctly (the intercept): 79%
+1. DeafEarly probability: 33.5% (significant diff from DeafNative, p = 0.039)
+1. DeafLate probability: 40% (not significantly diff from DeafNative, p = 0.079)
+1. HearingLate probability: 26% (significantly diff from DeafNative, p = 0.014)
+1. HearingNovice probability: 14% (significantly diff from DeafNative, p = 0.004)
 
 ```{r}
 gist_glmm_r <- glmer(gist ~ maingroup + (1|id) + (1|story), data = filter(cleanlexdata, direction=="reversed"), family=binomial (link="logit"))
