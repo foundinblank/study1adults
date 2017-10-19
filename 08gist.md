@@ -1,7 +1,7 @@
 Gist (study1adults)
 ================
 Adam Stone, PhD
-10-18-2017
+10-19-2017
 
 -   [Introduction](#introduction)
 -   [Participants](#participants)
@@ -725,13 +725,7 @@ summary(gistonacc_lmm)
 
 Is there an effect of maingroup and/or direction on gist? Let's do a LMM but with a logit-link function since it's a binary outcome.
 
-The coefficients are log odds. HearingNovice and Direction are significant main effects. I converted them to probability by hand (odds = exp(coef), then probability = odds / 1+odds). From (Sebastian's blog)\[<https://sebastiansauer.github.io/convert_logit2prob/>\]. (And a good SO post here.)\[<https://stackoverflow.com/questions/41384075/r-calculate-and-interpret-odds-ratio-in-logistic-regression>\] The intercept is around 1, so the probability of getting it right as a DeafNative is 100%. (If I'm interpreting this right). Adding up the coefficients:
-
-1.  If you are a DeafNative watched a reversed story, the probability is 80% (and this is a significant change).
-2.  If you are watching a forward story as a HearingNovice, the probability is 43% (and this is also significant).
-3.  If you are watching a reversed story as a HearingNovice, the probability is only 14%!
-
-And this kind of makes sense if you look at the scatterplot above. Most HearingNovice watching reversed stories get it wrong.
+Nothing significant here, mainly because most people got gist correctly for forward stories so it's not a very normal thingy... or this model is just screwy. The reversed-only model below gets it better.
 
 ``` r
 gist_glmm <- glmer(gist ~ direction * maingroup + (1|id) + (1|story), data = cleanlexdata, family=binomial (link="logit"))
@@ -814,6 +808,8 @@ summary(gist_glmm)
 
 AoA effects for Reversed Stories on Gist!
 =========================================
+
+The coefficients are log odds. HearingNovice and Direction are significant main effects. I converted them to probability by hand (odds = exp(coef), then probability = odds / 1+odds). From (Sebastian's blog)\[<https://sebastiansauer.github.io/convert_logit2prob/>\]. (And a good SO post here.)\[<https://stackoverflow.com/questions/41384075/r-calculate-and-interpret-odds-ratio-in-logistic-regression>\] The intercept is around 1, so the probability of getting it right as a DeafNative is 100%. (If I'm interpreting this right). Adding up the coefficients:
 
 What about reversed stories only? Doing it again here.
 
