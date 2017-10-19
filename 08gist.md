@@ -602,7 +602,7 @@ cleanlexdata %>%
 
     ## Warning: Removed 4 rows containing non-finite values (stat_smooth).
 
-    ## Warning: Removed 7 rows containing missing values (geom_point).
+    ## Warning: Removed 8 rows containing missing values (geom_point).
 
 ![](08gist_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-3-1.png)
 
@@ -809,7 +809,7 @@ summary(gist_glmm)
 AoA effects for Reversed Stories on Gist!
 =========================================
 
-The coefficients are log odds. HearingNovice and Direction are significant main effects. I converted them to probability by hand (odds = exp(coef), then probability = odds / 1+odds). From (Sebastian's blog)\[<https://sebastiansauer.github.io/convert_logit2prob/>\]. (And a good SO post here.)\[<https://stackoverflow.com/questions/41384075/r-calculate-and-interpret-odds-ratio-in-logistic-regression>\] The intercept is around 1, so the probability of getting it right as a DeafNative is 100%. (If I'm interpreting this right). Adding up the coefficients:
+The coefficients are log odds. HearingNovice and Direction are significant main effects. I converted them to probability by hand (odds = exp(coef), then probability = odds / 1+odds). From [Sebastian's blog](https://sebastiansauer.github.io/convert_logit2prob/). [And a good SO post here.](https://stackoverflow.com/questions/41384075/r-calculate-and-interpret-odds-ratio-in-logistic-regression) The intercept is around 1, so the probability of getting it right as a DeafNative is 100%. (If I'm interpreting this right). Adding up the coefficients:
 
 What about reversed stories only? Doing it again here.
 
