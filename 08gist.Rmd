@@ -395,3 +395,55 @@ deaflate_m <- lmer(chin ~ gist * direction + (1|id) + (1|story), data = deaflate
 summary(deaflate_m)
 ```
 
+# Correlations
+Now I wanna do correlations. We've got eye gaze and lex recall and gist in the `data` object now, right? Okay I'll break it down to lexrecall, gist, and have forward/reversed flavors for each. 
+
+GIST and FORWARD (is this fair to even compute? not normal...85 out of 98 forward stories were correct gist.)
+```{r  rows.print=20}
+gaze_gist_fw <- data %>% 
+  filter(direction == "forward") %>%
+  spread(aoi,percent) %>%
+  select(-(id:acc)) %>%
+  mutate(gist = case_when(
+    gist == "Yes" ~ 1,
+    gist == "No" ~ 0
+  ))
+
+corstarsl(gaze_gist_fw)
+```
+
+GIST and REVERSED. No correlations. 
+```{r rows.print=20}
+gaze_gist_rv <- data %>% 
+  filter(direction == "reversed") %>%
+  spread(aoi,percent) %>%
+  select(-(id:acc)) %>%
+  mutate(gist = case_when(
+    gist == "Yes" ~ 1,
+    gist == "No" ~ 0
+  ))
+
+corstarsl(gaze_gist_rv)
+```
+
+LEX RECALL and FORWARD. Only one correlation - forehead is negatively correlated with accuracy. There was some increased forehead looking in reversed stories that we didn't see in forward stories. But forward stories has really tiny forehead percentages. May not be good to report it.
+```{r rows.print=20}
+gaze_lex_fw <- data %>% 
+  filter(direction == "forward") %>%
+  spread(aoi,percent) %>%
+  select(-(id:aoasl)) %>%
+  select(-gist)
+
+corstarsl(gaze_lex_fw)
+```
+
+LEX RECALL and REVERSED. Face-looking correlated with increased accuracy in reversed stories. Nice. r = 0.23, p <= 0.05. 
+```{r rows.print=20}
+gaze_lex_rv<- data %>% 
+  filter(direction == "reversed") %>%
+  spread(aoi,percent) %>%
+  select(-(id:aoasl)) %>%
+  select(-gist)
+
+corstarsl(gaze_lex_rv)
+```

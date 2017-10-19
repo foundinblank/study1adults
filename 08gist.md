@@ -13,6 +13,7 @@ Adam Stone, PhD
     -   [Mouth AOI](#mouth-aoi)
     -   [Chin AOI](#chin-aoi)
     -   [FaceChest Ratio](#facechest-ratio)
+-   [Correlations](#correlations)
 
 Introduction
 ============
@@ -602,7 +603,7 @@ cleanlexdata %>%
 
     ## Warning: Removed 4 rows containing non-finite values (stat_smooth).
 
-    ## Warning: Removed 8 rows containing missing values (geom_point).
+    ## Warning: Removed 7 rows containing missing values (geom_point).
 
 ![](08gist_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-3-1.png)
 
@@ -1378,3 +1379,209 @@ summary(deaflate_m)
     ## dirctnrvrsd -0.808  0.657
     ## fit warnings:
     ## fixed-effect model matrix is rank deficient so dropping 1 column / coefficient
+
+Correlations
+============
+
+Now I wanna do correlations. We've got eye gaze and lex recall and gist in the `data` object now, right? Okay I'll break it down to lexrecall, gist, and have forward/reversed flavors for each.
+
+GIST and FORWARD (is this fair to even compute? not normal...85 out of 98 forward stories were correct gist.)
+
+``` r
+gaze_gist_fw <- data %>% 
+  filter(direction == "forward") %>%
+  spread(aoi,percent) %>%
+  select(-(id:acc)) %>%
+  mutate(gist = case_when(
+    gist == "Yes" ~ 1,
+    gist == "No" ~ 0
+  ))
+
+corstarsl(gaze_gist_fw)
+```
+
+    ## Loading required package: Hmisc
+
+    ## Loading required package: lattice
+
+    ## Loading required package: survival
+
+    ## Loading required package: Formula
+
+    ## 
+    ## Attaching package: 'Hmisc'
+
+    ## The following objects are masked from 'package:xtable':
+    ## 
+    ##     label, label<-
+
+    ## The following objects are masked from 'package:dplyr':
+    ## 
+    ##     combine, src, summarize
+
+    ## The following objects are masked from 'package:base':
+    ## 
+    ##     format.pval, round.POSIXt, trunc.POSIXt, units
+
+    ##                gist    belly    chest     chin     eyes     face facechest
+    ## gist                                                                      
+    ## belly       -0.46*                                                        
+    ## chest       -0.24*   0.63***                                              
+    ## chin          0.00     0.21   0.36***                                     
+    ## eyes          0.00    -0.18    -0.15  -0.38***                            
+    ## face         0.24*  -0.62*** -0.91*** -0.29**    -0.12                    
+    ## facechest    0.25*  -0.63*** -1.00*** -0.36***    0.14   0.91***          
+    ## forehead     -0.09    -0.12    -0.07    -0.13     0.34  -0.64***     0.06 
+    ## left         -0.12     0.24     0.38     0.28    -0.13   -0.59*     -0.38 
+    ## lowerchest   -0.13     0.15    0.40*     0.14    -0.13   -0.38*    -0.39* 
+    ## midchest     -0.15     0.36   0.63***    0.16    -0.16  -0.59***  -0.63***
+    ## mouth         0.07    -0.11  -0.34*** -0.46*** -0.76***  0.48***   0.34***
+    ## right      -0.54**     0.36    0.48*     0.11     0.20   -0.47*    -0.48* 
+    ## upperchest  -0.28*   0.65***  0.98***  0.35**    -0.19  -0.89***  -0.98***
+    ##            forehead   left lowerchest midchest    mouth    right
+    ## gist                                                            
+    ## belly                                                           
+    ## chest                                                           
+    ## chin                                                            
+    ## eyes                                                            
+    ## face                                                            
+    ## facechest                                                       
+    ## forehead                                                        
+    ## left         -0.22                                              
+    ## lowerchest    0.25  -0.45                                       
+    ## midchest     -0.04   0.09      0.48*                            
+    ## mouth      -0.48**  -0.17      -0.12    -0.17                   
+    ## right         0.33  -0.44       0.04     0.26    -0.26          
+    ## upperchest   -0.07   0.30       0.27   0.44**  -0.35**   0.65**
+
+GIST and REVERSED. No correlations.
+
+``` r
+gaze_gist_rv <- data %>% 
+  filter(direction == "reversed") %>%
+  spread(aoi,percent) %>%
+  select(-(id:acc)) %>%
+  mutate(gist = case_when(
+    gist == "Yes" ~ 1,
+    gist == "No" ~ 0
+  ))
+
+corstarsl(gaze_gist_rv)
+```
+
+    ##              gist  belly    chest     chin     eyes     face facechest
+    ## gist                                                                  
+    ## belly      -0.28                                                      
+    ## chest      -0.04   0.23                                               
+    ## chin        0.02  -0.09   0.28**                                      
+    ## eyes       -0.04   0.02    -0.15  -0.46***                            
+    ## face        0.11  -0.30  -0.80***   -0.11    -0.14                    
+    ## facechest   0.05  -0.24  -1.00*** -0.27**     0.14   0.82***          
+    ## forehead   -0.03  -0.26    -0.10    -0.22   0.44**  -0.71***     0.05 
+    ## left       -0.08  -0.42     0.32     0.13    -0.18    -0.33     -0.35 
+    ## lowerchest  0.07   0.38   0.44**     0.06     0.12  -0.47**   -0.44** 
+    ## midchest    0.11   0.18   0.83***    0.06    -0.10  -0.68***  -0.82***
+    ## mouth       0.05  -0.11  -0.40*** -0.44*** -0.63***  0.60***   0.41***
+    ## right      -0.31   0.40    0.39*    -0.03     0.11  -0.64***   -0.42* 
+    ## upperchest -0.09   0.18   0.94***    0.23    -0.21  -0.83***  -0.94***
+    ##            forehead   left lowerchest midchest    mouth  right
+    ## gist                                                          
+    ## belly                                                         
+    ## chest                                                         
+    ## chin                                                          
+    ## eyes                                                          
+    ## face                                                          
+    ## facechest                                                     
+    ## forehead                                                      
+    ## left         -0.14                                            
+    ## lowerchest    0.34   0.11                                     
+    ## midchest     -0.17  -0.03       0.23                          
+    ## mouth      -0.62*** -0.15     -0.33*   -0.30*                 
+    ## right         0.47   0.27      0.57*   0.66**   -0.43*        
+    ## upperchest    0.11   0.31      0.34*   0.59*** -0.37**   0.38
+
+LEX RECALL and FORWARD. Only one correlation - forehead is negatively correlated with accuracy. There was some increased forehead looking in reversed stories that we didn't see in forward stories. But forward stories has really tiny forehead percentages. May not be good to report it.
+
+``` r
+gaze_lex_fw <- data %>% 
+  filter(direction == "forward") %>%
+  spread(aoi,percent) %>%
+  select(-(id:aoasl)) %>%
+  select(-gist)
+
+corstarsl(gaze_lex_fw)
+```
+
+    ##                acc    belly    chest     chin     eyes     face facechest
+    ## acc                                                                      
+    ## belly        0.28                                                        
+    ## chest       -0.02   0.63***                                              
+    ## chin         0.01     0.21   0.36***                                     
+    ## eyes        -0.11    -0.18    -0.15  -0.38***                            
+    ## face         0.09  -0.62*** -0.91*** -0.29**    -0.12                    
+    ## facechest    0.02  -0.63*** -1.00*** -0.36***    0.14   0.91***          
+    ## forehead   -0.37*    -0.12    -0.07    -0.13     0.34  -0.64***     0.06 
+    ## left        -0.06     0.24     0.38     0.28    -0.13   -0.59*     -0.38 
+    ## lowerchest  -0.04     0.15    0.40*     0.14    -0.13   -0.38*    -0.39* 
+    ## midchest     0.08     0.36   0.63***    0.16    -0.16  -0.59***  -0.63***
+    ## mouth        0.13    -0.11  -0.34*** -0.46*** -0.76***  0.48***   0.34***
+    ## right        0.01     0.36    0.48*     0.11     0.20   -0.47*    -0.48* 
+    ## upperchest  -0.06   0.65***  0.98***  0.35**    -0.19  -0.89***  -0.98***
+    ##            forehead   left lowerchest midchest    mouth    right
+    ## acc                                                             
+    ## belly                                                           
+    ## chest                                                           
+    ## chin                                                            
+    ## eyes                                                            
+    ## face                                                            
+    ## facechest                                                       
+    ## forehead                                                        
+    ## left         -0.22                                              
+    ## lowerchest    0.25  -0.45                                       
+    ## midchest     -0.04   0.09      0.48*                            
+    ## mouth      -0.48**  -0.17      -0.12    -0.17                   
+    ## right         0.33  -0.44       0.04     0.26    -0.26          
+    ## upperchest   -0.07   0.30       0.27   0.44**  -0.35**   0.65**
+
+LEX RECALL and REVERSED. Face-looking correlated with increased accuracy in reversed stories. Nice. r = 0.23, p &lt;= 0.05.
+
+``` r
+gaze_lex_rv<- data %>% 
+  filter(direction == "reversed") %>%
+  spread(aoi,percent) %>%
+  select(-(id:aoasl)) %>%
+  select(-gist)
+
+corstarsl(gaze_lex_rv)
+```
+
+    ##                acc  belly    chest     chin     eyes     face facechest
+    ## acc                                                                    
+    ## belly        0.13                                                      
+    ## chest       -0.15   0.23                                               
+    ## chin         0.04  -0.09   0.28**                                      
+    ## eyes        -0.13   0.02    -0.15  -0.46***                            
+    ## face        0.23*  -0.30  -0.80***   -0.11    -0.14                    
+    ## facechest    0.17  -0.24  -1.00*** -0.27**     0.14   0.82***          
+    ## forehead    -0.22  -0.26    -0.10    -0.22   0.44**  -0.71***     0.05 
+    ## left        -0.12  -0.42     0.32     0.13    -0.18    -0.33     -0.35 
+    ## lowerchest  -0.13   0.38   0.44**     0.06     0.12  -0.47**   -0.44** 
+    ## midchest     0.00   0.18   0.83***    0.06    -0.10  -0.68***  -0.82***
+    ## mouth        0.14  -0.11  -0.40*** -0.44*** -0.63***  0.60***   0.41***
+    ## right       -0.30   0.40    0.39*    -0.03     0.11  -0.64***   -0.42* 
+    ## upperchest  -0.21   0.18   0.94***    0.23    -0.21  -0.83***  -0.94***
+    ##            forehead   left lowerchest midchest    mouth  right
+    ## acc                                                           
+    ## belly                                                         
+    ## chest                                                         
+    ## chin                                                          
+    ## eyes                                                          
+    ## face                                                          
+    ## facechest                                                     
+    ## forehead                                                      
+    ## left         -0.14                                            
+    ## lowerchest    0.34   0.11                                     
+    ## midchest     -0.17  -0.03       0.23                          
+    ## mouth      -0.62*** -0.15     -0.33*   -0.30*                 
+    ## right         0.47   0.27      0.57*   0.66**   -0.43*        
+    ## upperchest    0.11   0.31      0.34*   0.59*** -0.37**   0.38
