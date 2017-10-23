@@ -173,13 +173,13 @@ cleanlexdata <- read_csv('cleandata.csv',col_types =
 
 # Pull out subject info for later in summary tables
 subjectinfo <- data %>%
-  select(-aoi,-percent,-video,-story,-direction,-acc) %>%
+  dplyr::select(-aoi,-percent,-video,-story,-direction,-acc) %>%
   distinct()
 
 # Participant Characteristics Table (using cleanlexdata because it's more complete)
 groupmeans <- cleanlexdata %>%
   ungroup() %>%
-  select(id,participant,maingroup,age,selfrate,signyrs,aoasl) %>%
+  dplyr::select(id,participant,maingroup,age,selfrate,signyrs,aoasl) %>%
   distinct() %>%
   group_by(maingroup) %>%
   dplyr::summarize(n = n(),
@@ -219,7 +219,7 @@ data <- data %>%
   mutate(gist = factor(gist, labels = c("No","Yes")))
 
 cleanlexdata <- cleanlexdata %>%
-  select(id:acc) %>%
+  dplyr::select(id:acc) %>%
   left_join(gist, by = c("participant", "video")) %>%
   mutate(maingroup = factor(maingroup, levels = c("DeafNative","DeafEarly","DeafLate",
                                                   "HearingLate","HearingNovice"))) %>%
@@ -234,13 +234,13 @@ cleanlexdata %>%
   ggplot(aes(x = maingroup, y = gist, fill = direction)) + geom_col(position = "dodge")
 
 cleanlexdata %>%
-  select(maingroup,direction,gist) %>%
+  dplyr::select(maingroup,direction,gist) %>%
   group_by(maingroup,direction) %>%
   count(gist) %>%
   ungroup() %>%
   spread(gist,n) %>%
   mutate(percent = if_else(!is.na(No), Yes/(No+Yes), 1)) %>%
-  select(maingroup,direction,percent) %>%
+  dplyr::select(maingroup,direction,percent) %>%
   spread(direction,percent) %>%
   kable(digits=2) %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
 ```
@@ -289,6 +289,13 @@ What about reversed stories only? Doing it again here.
 ```{r}
 gist_glmm_r <- glmer(gist ~ maingroup + (1|id) + (1|story), data = filter(cleanlexdata, direction=="reversed"), family=binomial (link="logit"))
 summary(gist_glmm_r)
+```
+
+I ran posthoc contrasts here. Tells us HearingNovice is driving the differences  (HearingNovice significantly different from DeafNative at 0.0362). 
+
+```{r}
+library(multcomp)
+summary(glht(gist_glmm_r, linfct = mcp(maingroup = "Tukey")))
 ```
 
 # Heat Maps
@@ -387,6 +394,17 @@ fcr_lm_mg <- lmer(facechest ~ gist * maingroup + (1|id) + (1|story), data = data
 summary(fcr_lm_mg)
 ```
 
+## MouthEye Ratio (+1 = Mouth, -1 = Eye)
+(A) No effect of gist. 
+(B) No effect of gist. Main effect of HearingLate (much lower moutheye ratio (meaning more looking at eye)). 
+```{r}
+me_lm <- lmer(moutheye ~ gist + (1|id) + (1|story), data = data_r)
+summary(me_lm)
+
+me_lm_mg <- lmer(moutheye ~ gist * maingroup + (1|id) + (1|story), data = data_r)
+summary(me_lm_mg)
+```
+
 I want to make and see DeafLate's mouth AOI model...and eyes and chin. Nothing.  
 ```{r}
 deaflate <- data %>% filter(maingroup == "DeafLate") %>% spread(aoi,percent)
@@ -403,7 +421,7 @@ GIST and FORWARD (is this fair to even compute? not normal...85 out of 98 forwar
 gaze_gist_fw <- data %>% 
   filter(direction == "forward") %>%
   spread(aoi,percent) %>%
-  select(-(id:acc)) %>%
+  dplyr::select(-(id:acc)) %>%
   mutate(gist = case_when(
     gist == "Yes" ~ 1,
     gist == "No" ~ 0
@@ -417,7 +435,7 @@ GIST and REVERSED. No correlations.
 gaze_gist_rv <- data %>% 
   filter(direction == "reversed") %>%
   spread(aoi,percent) %>%
-  select(-(id:acc)) %>%
+  dplyr::select(-(id:acc)) %>%
   mutate(gist = case_when(
     gist == "Yes" ~ 1,
     gist == "No" ~ 0
@@ -431,8 +449,8 @@ LEX RECALL and FORWARD. Only one correlation - forehead is negatively correlated
 gaze_lex_fw <- data %>% 
   filter(direction == "forward") %>%
   spread(aoi,percent) %>%
-  select(-(id:aoasl)) %>%
-  select(-gist)
+  dplyr::select(-(id:aoasl)) %>%
+  dplyr::select(-gist)
 
 corstarsl(gaze_lex_fw)
 ```
@@ -442,8 +460,31 @@ LEX RECALL and REVERSED. Face-looking correlated with increased accuracy in reve
 gaze_lex_rv<- data %>% 
   filter(direction == "reversed") %>%
   spread(aoi,percent) %>%
-  select(-(id:aoasl)) %>%
-  select(-gist)
+  dplyr::select(-(id:aoasl)) %>%
+  dplyr::select(-gist)
 
 corstarsl(gaze_lex_rv)
+```
+
+# Moutheye Ratio
+Checking out moutheye ratio. Okay I think this is interesting. HearingLate has much more variance for moutheye, quite low (a lot of eye looking). 
+```{r}
+me_data <- data %>%
+  dplyr::select(-aoi, -percent, -gist) %>%
+  distinct()
+
+ggplot(me_data, aes(x = maingroup, y = moutheye, fill = direction)) + geom_boxplot()
+```
+
+Is there an AoA effect on moutheye ratio? Nope...
+```{r}
+me_aoa <- lmer(moutheye ~ maingroup * direction + (1|id) + (1|story), data = me_data)
+summary(me_aoa)
+```
+
+AoA effect for reversed stories only? Yes, HearingLate. 
+
+```{r}
+me_aoa_r <- lmer(moutheye ~ maingroup + (1|id) + (1|story), data = filter(me_data, direction=="reversed"))
+summary(me_aoa_r)
 ```

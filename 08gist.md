@@ -1,7 +1,7 @@
 Gist (study1adults)
 ================
 Adam Stone, PhD
-10-19-2017
+10-23-2017
 
 -   [Introduction](#introduction)
 -   [Participants](#participants)
@@ -13,7 +13,9 @@ Adam Stone, PhD
     -   [Mouth AOI](#mouth-aoi)
     -   [Chin AOI](#chin-aoi)
     -   [FaceChest Ratio](#facechest-ratio)
+    -   [MouthEye Ratio (+1 = Mouth, -1 = Eye)](#moutheye-ratio-1-mouth--1-eye)
 -   [Correlations](#correlations)
+-   [Moutheye Ratio](#moutheye-ratio)
 
 Introduction
 ============
@@ -232,13 +234,13 @@ cleanlexdata <- read_csv('cleandata.csv',col_types =
 
 # Pull out subject info for later in summary tables
 subjectinfo <- data %>%
-  select(-aoi,-percent,-video,-story,-direction,-acc) %>%
+  dplyr::select(-aoi,-percent,-video,-story,-direction,-acc) %>%
   distinct()
 
 # Participant Characteristics Table (using cleanlexdata because it's more complete)
 groupmeans <- cleanlexdata %>%
   ungroup() %>%
-  select(id,participant,maingroup,age,selfrate,signyrs,aoasl) %>%
+  dplyr::select(id,participant,maingroup,age,selfrate,signyrs,aoasl) %>%
   distinct() %>%
   group_by(maingroup) %>%
   dplyr::summarize(n = n(),
@@ -484,7 +486,7 @@ data <- data %>%
 
 ``` r
 cleanlexdata <- cleanlexdata %>%
-  select(id:acc) %>%
+  dplyr::select(id:acc) %>%
   left_join(gist, by = c("participant", "video")) %>%
   mutate(maingroup = factor(maingroup, levels = c("DeafNative","DeafEarly","DeafLate",
                                                   "HearingLate","HearingNovice"))) %>%
@@ -503,13 +505,13 @@ cleanlexdata %>%
 
 ``` r
 cleanlexdata %>%
-  select(maingroup,direction,gist) %>%
+  dplyr::select(maingroup,direction,gist) %>%
   group_by(maingroup,direction) %>%
   count(gist) %>%
   ungroup() %>%
   spread(gist,n) %>%
   mutate(percent = if_else(!is.na(No), Yes/(No+Yes), 1)) %>%
-  select(maingroup,direction,percent) %>%
+  dplyr::select(maingroup,direction,percent) %>%
   spread(direction,percent) %>%
   kable(digits=2) %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
 ```
@@ -861,6 +863,63 @@ summary(gist_glmm_r)
     ## mngrpHrngLt -0.541  0.603  0.580       
     ## mngrpHrngNv -0.521  0.595  0.572  0.649
 
+I ran posthoc contrasts here. Tells us HearingNovice is driving the differences (HearingNovice significantly different from DeafNative at 0.0362).
+
+``` r
+library(multcomp)
+```
+
+    ## Loading required package: mvtnorm
+
+    ## Loading required package: survival
+
+    ## Loading required package: TH.data
+
+    ## Loading required package: MASS
+
+    ## 
+    ## Attaching package: 'MASS'
+
+    ## The following object is masked from 'package:dplyr':
+    ## 
+    ##     select
+
+    ## 
+    ## Attaching package: 'TH.data'
+
+    ## The following object is masked from 'package:MASS':
+    ## 
+    ##     geyser
+
+``` r
+summary(glht(gist_glmm_r, linfct = mcp(maingroup = "Tukey")))
+```
+
+    ## 
+    ##   Simultaneous Tests for General Linear Hypotheses
+    ## 
+    ## Multiple Comparisons of Means: Tukey Contrasts
+    ## 
+    ## 
+    ## Fit: glmer(formula = gist ~ maingroup + (1 | id) + (1 | story), data = filter(cleanlexdata, 
+    ##     direction == "reversed"), family = binomial(link = "logit"))
+    ## 
+    ## Linear Hypotheses:
+    ##                                  Estimate Std. Error z value Pr(>|z|)  
+    ## DeafEarly - DeafNative == 0       -1.9922     0.9651  -2.064   0.2335  
+    ## DeafLate - DeafNative == 0        -1.7113     0.9742  -1.757   0.3964  
+    ## HearingLate - DeafNative == 0     -2.3442     0.9489  -2.470   0.0965 .
+    ## HearingNovice - DeafNative == 0   -3.1104     1.0960  -2.838   0.0363 *
+    ## DeafLate - DeafEarly == 0          0.2809     0.9296   0.302   0.9982  
+    ## HearingLate - DeafEarly == 0      -0.3520     0.8526  -0.413   0.9938  
+    ## HearingNovice - DeafEarly == 0    -1.1182     0.9349  -1.196   0.7514  
+    ## HearingLate - DeafLate == 0       -0.6329     0.8818  -0.718   0.9519  
+    ## HearingNovice - DeafLate == 0     -1.3991     0.9642  -1.451   0.5916  
+    ## HearingNovice - HearingLate == 0  -0.7662     0.8676  -0.883   0.9021  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## (Adjusted p values reported -- single-step method)
+
 Heat Maps
 =========
 
@@ -889,7 +948,7 @@ eye_heat %>%
   ylab("") + xlab("") + ggtitle("Heat Map for Reversed Stories Only")
 ```
 
-![](08gist_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-1.png)
+![](08gist_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-8-1.png)
 
 ``` r
 eye_heat %>%
@@ -900,7 +959,7 @@ eye_heat %>%
   ylab("") + xlab("") + ggtitle("Heat Map for Reversed Stories Only")
 ```
 
-![](08gist_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-2.png)
+![](08gist_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-8-2.png)
 
 ``` r
 eye_heat %>%
@@ -911,7 +970,7 @@ eye_heat %>%
   ylab("") + xlab("") + ggtitle("Heat Map for Reversed Stories Only")
 ```
 
-![](08gist_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-3.png)
+![](08gist_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-8-3.png)
 
 Gist & Gaze Modeling
 ====================
@@ -1330,6 +1389,107 @@ summary(fcr_lm_mg)
     ## gstYs:mngHL  0.486 -0.717 -0.387 -0.387 -0.580 -0.425  0.452  0.505       
     ## gstYs:mngHN  0.447 -0.658 -0.354 -0.355 -0.400 -0.521  0.411  0.462  0.550
 
+MouthEye Ratio (+1 = Mouth, -1 = Eye)
+-------------------------------------
+
+1.  No effect of gist.
+2.  No effect of gist. Main effect of HearingLate (much lower moutheye ratio (meaning more looking at eye)).
+
+``` r
+me_lm <- lmer(moutheye ~ gist + (1|id) + (1|story), data = data_r)
+summary(me_lm)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: moutheye ~ gist + (1 | id) + (1 | story)
+    ##    Data: data_r
+    ## 
+    ## REML criterion at convergence: 131.1
+    ## 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -2.6349 -0.3461  0.1181  0.4187  2.0975 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.20789  0.4560  
+    ##  story    (Intercept) 0.06189  0.2488  
+    ##  Residual             0.10496  0.3240  
+    ## Number of obs: 85, groups:  id, 48; story, 4
+    ## 
+    ## Fixed effects:
+    ##             Estimate Std. Error       df t value Pr(>|t|)  
+    ## (Intercept)  0.39638    0.15306  3.64000    2.59   0.0667 .
+    ## gistYes      0.08611    0.11328 61.73000    0.76   0.4500  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##         (Intr)
+    ## gistYes -0.309
+
+``` r
+me_lm_mg <- lmer(moutheye ~ gist * maingroup + (1|id) + (1|story), data = data_r)
+summary(me_lm_mg)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: moutheye ~ gist * maingroup + (1 | id) + (1 | story)
+    ##    Data: data_r
+    ## 
+    ## REML criterion at convergence: 129.9
+    ## 
+    ## Scaled residuals: 
+    ##      Min       1Q   Median       3Q      Max 
+    ## -2.71836 -0.27365  0.08178  0.51162  1.79965 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.17569  0.4191  
+    ##  story    (Intercept) 0.05661  0.2379  
+    ##  Residual             0.11508  0.3392  
+    ## Number of obs: 85, groups:  id, 48; story, 4
+    ## 
+    ## Fixed effects:
+    ##                                Estimate Std. Error       df t value
+    ## (Intercept)                     0.56502    0.24855 24.65000   2.273
+    ## gistYes                         0.11995    0.20848 40.37000   0.575
+    ## maingroupDeafEarly             -0.22764    0.29380 65.19000  -0.775
+    ## maingroupDeafLate               0.01464    0.29546 66.79000   0.050
+    ## maingroupHearingLate           -0.52335    0.26943 67.72000  -1.942
+    ## maingroupHearingNovice         -0.02101    0.26604 66.96000  -0.079
+    ## gistYes:maingroupDeafEarly      0.07386    0.33237 38.62000   0.222
+    ## gistYes:maingroupDeafLate      -0.14684    0.31924 49.03000  -0.460
+    ## gistYes:maingroupHearingLate   -0.06754    0.28694 39.92000  -0.235
+    ## gistYes:maingroupHearingNovice -0.25698    0.29368 39.68000  -0.875
+    ##                                Pr(>|t|)  
+    ## (Intercept)                      0.0320 *
+    ## gistYes                          0.5683  
+    ## maingroupDeafEarly               0.4412  
+    ## maingroupDeafLate                0.9606  
+    ## maingroupHearingLate             0.0562 .
+    ## maingroupHearingNovice           0.9373  
+    ## gistYes:maingroupDeafEarly       0.8253  
+    ## gistYes:maingroupDeafLate        0.6476  
+    ## gistYes:maingroupHearingLate     0.8151  
+    ## gistYes:maingroupHearingNovice   0.3868  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) gistYs mngrDE mngrDL mngrHL mngrHN gsY:DE gsY:DL gsY:HL
+    ## gistYes     -0.637                                                        
+    ## mngrpDfErly -0.631  0.506                                                 
+    ## maingrpDfLt -0.635  0.523  0.525                                          
+    ## mngrpHrngLt -0.694  0.564  0.581  0.582                                   
+    ## mngrpHrngNv -0.711  0.586  0.585  0.599  0.647                            
+    ## gstYs:mngDE  0.354 -0.557 -0.480 -0.307 -0.341 -0.337                     
+    ## gstYs:mngDL  0.382 -0.615 -0.324 -0.599 -0.368 -0.374  0.389              
+    ## gstYs:mngHL  0.417 -0.663 -0.367 -0.368 -0.563 -0.400  0.442  0.481       
+    ## gstYs:mngHN  0.412 -0.659 -0.357 -0.370 -0.400 -0.518  0.427  0.485  0.528
+
 I want to make and see DeafLate's mouth AOI model...and eyes and chin. Nothing.
 
 ``` r
@@ -1391,7 +1551,7 @@ GIST and FORWARD (is this fair to even compute? not normal...85 out of 98 forwar
 gaze_gist_fw <- data %>% 
   filter(direction == "forward") %>%
   spread(aoi,percent) %>%
-  select(-(id:acc)) %>%
+  dplyr::select(-(id:acc)) %>%
   mutate(gist = case_when(
     gist == "Yes" ~ 1,
     gist == "No" ~ 0
@@ -1403,8 +1563,6 @@ corstarsl(gaze_gist_fw)
     ## Loading required package: Hmisc
 
     ## Loading required package: lattice
-
-    ## Loading required package: survival
 
     ## Loading required package: Formula
 
@@ -1423,36 +1581,38 @@ corstarsl(gaze_gist_fw)
     ## 
     ##     format.pval, round.POSIXt, trunc.POSIXt, units
 
-    ##                gist    belly    chest     chin     eyes     face facechest
+    ##            moutheye     gist    belly    chest     chin     eyes     face
+    ## moutheye                                                                 
+    ## gist          0.00                                                       
+    ## belly         0.15   -0.46*                                              
+    ## chest         0.09   -0.24*   0.63***                                    
+    ## chin        0.34**     0.00     0.21   0.36***                           
+    ## eyes       -0.99***    0.00    -0.18    -0.15  -0.38***                  
+    ## face         0.21*    0.24*  -0.62*** -0.91*** -0.29**    -0.12          
+    ## facechest    -0.09    0.25*  -0.63*** -1.00*** -0.36***    0.14   0.91***
+    ## forehead    -0.44*    -0.09    -0.12    -0.07    -0.13     0.34  -0.64***
+    ## left          0.08    -0.12     0.24     0.38     0.28    -0.13   -0.59* 
+    ## lowerchest    0.09    -0.13     0.15    0.40*     0.14    -0.13   -0.38* 
+    ## midchest      0.11    -0.15     0.36   0.63***    0.16    -0.16  -0.59***
+    ## mouth       0.79***    0.07    -0.11  -0.34*** -0.46*** -0.76***  0.48***
+    ## right        -0.18  -0.54**     0.36    0.48*     0.11     0.20   -0.47* 
+    ## upperchest    0.13   -0.28*   0.65***  0.98***  0.35**    -0.19  -0.89***
+    ##            facechest forehead   left lowerchest midchest    mouth    right
+    ## moutheye                                                                  
     ## gist                                                                      
-    ## belly       -0.46*                                                        
-    ## chest       -0.24*   0.63***                                              
-    ## chin          0.00     0.21   0.36***                                     
-    ## eyes          0.00    -0.18    -0.15  -0.38***                            
-    ## face         0.24*  -0.62*** -0.91*** -0.29**    -0.12                    
-    ## facechest    0.25*  -0.63*** -1.00*** -0.36***    0.14   0.91***          
-    ## forehead     -0.09    -0.12    -0.07    -0.13     0.34  -0.64***     0.06 
-    ## left         -0.12     0.24     0.38     0.28    -0.13   -0.59*     -0.38 
-    ## lowerchest   -0.13     0.15    0.40*     0.14    -0.13   -0.38*    -0.39* 
-    ## midchest     -0.15     0.36   0.63***    0.16    -0.16  -0.59***  -0.63***
-    ## mouth         0.07    -0.11  -0.34*** -0.46*** -0.76***  0.48***   0.34***
-    ## right      -0.54**     0.36    0.48*     0.11     0.20   -0.47*    -0.48* 
-    ## upperchest  -0.28*   0.65***  0.98***  0.35**    -0.19  -0.89***  -0.98***
-    ##            forehead   left lowerchest midchest    mouth    right
-    ## gist                                                            
-    ## belly                                                           
-    ## chest                                                           
-    ## chin                                                            
-    ## eyes                                                            
-    ## face                                                            
-    ## facechest                                                       
-    ## forehead                                                        
-    ## left         -0.22                                              
-    ## lowerchest    0.25  -0.45                                       
-    ## midchest     -0.04   0.09      0.48*                            
-    ## mouth      -0.48**  -0.17      -0.12    -0.17                   
-    ## right         0.33  -0.44       0.04     0.26    -0.26          
-    ## upperchest   -0.07   0.30       0.27   0.44**  -0.35**   0.65**
+    ## belly                                                                     
+    ## chest                                                                     
+    ## chin                                                                      
+    ## eyes                                                                      
+    ## face                                                                      
+    ## facechest                                                                 
+    ## forehead       0.06                                                       
+    ## left          -0.38    -0.22                                              
+    ## lowerchest   -0.39*     0.25  -0.45                                       
+    ## midchest    -0.63***   -0.04   0.09      0.48*                            
+    ## mouth        0.34*** -0.48**  -0.17      -0.12    -0.17                   
+    ## right        -0.48*     0.33  -0.44       0.04     0.26    -0.26          
+    ## upperchest  -0.98***   -0.07   0.30       0.27   0.44**  -0.35**   0.65**
 
 GIST and REVERSED. No correlations.
 
@@ -1460,7 +1620,7 @@ GIST and REVERSED. No correlations.
 gaze_gist_rv <- data %>% 
   filter(direction == "reversed") %>%
   spread(aoi,percent) %>%
-  select(-(id:acc)) %>%
+  dplyr::select(-(id:acc)) %>%
   mutate(gist = case_when(
     gist == "Yes" ~ 1,
     gist == "No" ~ 0
@@ -1469,36 +1629,38 @@ gaze_gist_rv <- data %>%
 corstarsl(gaze_gist_rv)
 ```
 
-    ##              gist  belly    chest     chin     eyes     face facechest
-    ## gist                                                                  
-    ## belly      -0.28                                                      
-    ## chest      -0.04   0.23                                               
-    ## chin        0.02  -0.09   0.28**                                      
-    ## eyes       -0.04   0.02    -0.15  -0.46***                            
-    ## face        0.11  -0.30  -0.80***   -0.11    -0.14                    
-    ## facechest   0.05  -0.24  -1.00*** -0.27**     0.14   0.82***          
-    ## forehead   -0.03  -0.26    -0.10    -0.22   0.44**  -0.71***     0.05 
-    ## left       -0.08  -0.42     0.32     0.13    -0.18    -0.33     -0.35 
-    ## lowerchest  0.07   0.38   0.44**     0.06     0.12  -0.47**   -0.44** 
-    ## midchest    0.11   0.18   0.83***    0.06    -0.10  -0.68***  -0.82***
-    ## mouth       0.05  -0.11  -0.40*** -0.44*** -0.63***  0.60***   0.41***
-    ## right      -0.31   0.40    0.39*    -0.03     0.11  -0.64***   -0.42* 
-    ## upperchest -0.09   0.18   0.94***    0.23    -0.21  -0.83***  -0.94***
-    ##            forehead   left lowerchest midchest    mouth  right
-    ## gist                                                          
-    ## belly                                                         
-    ## chest                                                         
-    ## chin                                                          
-    ## eyes                                                          
-    ## face                                                          
-    ## facechest                                                     
-    ## forehead                                                      
-    ## left         -0.14                                            
-    ## lowerchest    0.34   0.11                                     
-    ## midchest     -0.17  -0.03       0.23                          
-    ## mouth      -0.62*** -0.15     -0.33*   -0.30*                 
-    ## right         0.47   0.27      0.57*   0.66**   -0.43*        
-    ## upperchest    0.11   0.31      0.34*   0.59*** -0.37**   0.38
+    ##            moutheye   gist  belly    chest     chin     eyes     face
+    ## moutheye                                                             
+    ## gist          0.07                                                   
+    ## belly        -0.06  -0.28                                            
+    ## chest         0.03  -0.04   0.23                                     
+    ## chin        0.40***  0.02  -0.09   0.28**                            
+    ## eyes       -0.96*** -0.04   0.02    -0.15  -0.46***                  
+    ## face        0.35***  0.11  -0.30  -0.80***   -0.11    -0.14          
+    ## facechest     0.00   0.05  -0.24  -1.00*** -0.27**     0.14   0.82***
+    ## forehead   -0.65*** -0.03  -0.26    -0.10    -0.22   0.44**  -0.71***
+    ## left          0.05  -0.08  -0.42     0.32     0.13    -0.18    -0.33 
+    ## lowerchest   -0.23   0.07   0.38   0.44**     0.06     0.12  -0.47** 
+    ## midchest     -0.02   0.11   0.18   0.83***    0.06    -0.10  -0.68***
+    ## mouth       0.71***  0.05  -0.11  -0.40*** -0.44*** -0.63***  0.60***
+    ## right        -0.31  -0.31   0.40    0.39*    -0.03     0.11  -0.64***
+    ## upperchest    0.08  -0.09   0.18   0.94***    0.23    -0.21  -0.83***
+    ##            facechest forehead   left lowerchest midchest    mouth  right
+    ## moutheye                                                                
+    ## gist                                                                    
+    ## belly                                                                   
+    ## chest                                                                   
+    ## chin                                                                    
+    ## eyes                                                                    
+    ## face                                                                    
+    ## facechest                                                               
+    ## forehead       0.05                                                     
+    ## left          -0.35    -0.14                                            
+    ## lowerchest  -0.44**     0.34   0.11                                     
+    ## midchest    -0.82***   -0.17  -0.03       0.23                          
+    ## mouth        0.41*** -0.62*** -0.15     -0.33*   -0.30*                 
+    ## right        -0.42*     0.47   0.27      0.57*   0.66**   -0.43*        
+    ## upperchest  -0.94***    0.11   0.31      0.34*   0.59*** -0.37**   0.38
 
 LEX RECALL and FORWARD. Only one correlation - forehead is negatively correlated with accuracy. There was some increased forehead looking in reversed stories that we didn't see in forward stories. But forward stories has really tiny forehead percentages. May not be good to report it.
 
@@ -1506,42 +1668,44 @@ LEX RECALL and FORWARD. Only one correlation - forehead is negatively correlated
 gaze_lex_fw <- data %>% 
   filter(direction == "forward") %>%
   spread(aoi,percent) %>%
-  select(-(id:aoasl)) %>%
-  select(-gist)
+  dplyr::select(-(id:aoasl)) %>%
+  dplyr::select(-gist)
 
 corstarsl(gaze_lex_fw)
 ```
 
-    ##                acc    belly    chest     chin     eyes     face facechest
-    ## acc                                                                      
-    ## belly        0.28                                                        
-    ## chest       -0.02   0.63***                                              
-    ## chin         0.01     0.21   0.36***                                     
-    ## eyes        -0.11    -0.18    -0.15  -0.38***                            
-    ## face         0.09  -0.62*** -0.91*** -0.29**    -0.12                    
-    ## facechest    0.02  -0.63*** -1.00*** -0.36***    0.14   0.91***          
-    ## forehead   -0.37*    -0.12    -0.07    -0.13     0.34  -0.64***     0.06 
-    ## left        -0.06     0.24     0.38     0.28    -0.13   -0.59*     -0.38 
-    ## lowerchest  -0.04     0.15    0.40*     0.14    -0.13   -0.38*    -0.39* 
-    ## midchest     0.08     0.36   0.63***    0.16    -0.16  -0.59***  -0.63***
-    ## mouth        0.13    -0.11  -0.34*** -0.46*** -0.76***  0.48***   0.34***
-    ## right        0.01     0.36    0.48*     0.11     0.20   -0.47*    -0.48* 
-    ## upperchest  -0.06   0.65***  0.98***  0.35**    -0.19  -0.89***  -0.98***
-    ##            forehead   left lowerchest midchest    mouth    right
-    ## acc                                                             
-    ## belly                                                           
-    ## chest                                                           
-    ## chin                                                            
-    ## eyes                                                            
-    ## face                                                            
-    ## facechest                                                       
-    ## forehead                                                        
-    ## left         -0.22                                              
-    ## lowerchest    0.25  -0.45                                       
-    ## midchest     -0.04   0.09      0.48*                            
-    ## mouth      -0.48**  -0.17      -0.12    -0.17                   
-    ## right         0.33  -0.44       0.04     0.26    -0.26          
-    ## upperchest   -0.07   0.30       0.27   0.44**  -0.35**   0.65**
+    ##                acc moutheye    belly    chest     chin     eyes     face
+    ## acc                                                                     
+    ## moutheye     0.11                                                       
+    ## belly        0.28     0.15                                              
+    ## chest       -0.02     0.09   0.63***                                    
+    ## chin         0.01   0.34**     0.21   0.36***                           
+    ## eyes        -0.11  -0.99***   -0.18    -0.15  -0.38***                  
+    ## face         0.09    0.21*  -0.62*** -0.91*** -0.29**    -0.12          
+    ## facechest    0.02    -0.09  -0.63*** -1.00*** -0.36***    0.14   0.91***
+    ## forehead   -0.37*   -0.44*    -0.12    -0.07    -0.13     0.34  -0.64***
+    ## left        -0.06     0.08     0.24     0.38     0.28    -0.13   -0.59* 
+    ## lowerchest  -0.04     0.09     0.15    0.40*     0.14    -0.13   -0.38* 
+    ## midchest     0.08     0.11     0.36   0.63***    0.16    -0.16  -0.59***
+    ## mouth        0.13   0.79***   -0.11  -0.34*** -0.46*** -0.76***  0.48***
+    ## right        0.01    -0.18     0.36    0.48*     0.11     0.20   -0.47* 
+    ## upperchest  -0.06     0.13   0.65***  0.98***  0.35**    -0.19  -0.89***
+    ##            facechest forehead   left lowerchest midchest    mouth    right
+    ## acc                                                                       
+    ## moutheye                                                                  
+    ## belly                                                                     
+    ## chest                                                                     
+    ## chin                                                                      
+    ## eyes                                                                      
+    ## face                                                                      
+    ## facechest                                                                 
+    ## forehead       0.06                                                       
+    ## left          -0.38    -0.22                                              
+    ## lowerchest   -0.39*     0.25  -0.45                                       
+    ## midchest    -0.63***   -0.04   0.09      0.48*                            
+    ## mouth        0.34*** -0.48**  -0.17      -0.12    -0.17                   
+    ## right        -0.48*     0.33  -0.44       0.04     0.26    -0.26          
+    ## upperchest  -0.98***   -0.07   0.30       0.27   0.44**  -0.35**   0.65**
 
 LEX RECALL and REVERSED. Face-looking correlated with increased accuracy in reversed stories. Nice. r = 0.23, p &lt;= 0.05.
 
@@ -1549,39 +1713,163 @@ LEX RECALL and REVERSED. Face-looking correlated with increased accuracy in reve
 gaze_lex_rv<- data %>% 
   filter(direction == "reversed") %>%
   spread(aoi,percent) %>%
-  select(-(id:aoasl)) %>%
-  select(-gist)
+  dplyr::select(-(id:aoasl)) %>%
+  dplyr::select(-gist)
 
 corstarsl(gaze_lex_rv)
 ```
 
-    ##                acc  belly    chest     chin     eyes     face facechest
-    ## acc                                                                    
-    ## belly        0.13                                                      
-    ## chest       -0.15   0.23                                               
-    ## chin         0.04  -0.09   0.28**                                      
-    ## eyes        -0.13   0.02    -0.15  -0.46***                            
-    ## face        0.23*  -0.30  -0.80***   -0.11    -0.14                    
-    ## facechest    0.17  -0.24  -1.00*** -0.27**     0.14   0.82***          
-    ## forehead    -0.22  -0.26    -0.10    -0.22   0.44**  -0.71***     0.05 
-    ## left        -0.12  -0.42     0.32     0.13    -0.18    -0.33     -0.35 
-    ## lowerchest  -0.13   0.38   0.44**     0.06     0.12  -0.47**   -0.44** 
-    ## midchest     0.00   0.18   0.83***    0.06    -0.10  -0.68***  -0.82***
-    ## mouth        0.14  -0.11  -0.40*** -0.44*** -0.63***  0.60***   0.41***
-    ## right       -0.30   0.40    0.39*    -0.03     0.11  -0.64***   -0.42* 
-    ## upperchest  -0.21   0.18   0.94***    0.23    -0.21  -0.83***  -0.94***
-    ##            forehead   left lowerchest midchest    mouth  right
-    ## acc                                                           
-    ## belly                                                         
-    ## chest                                                         
-    ## chin                                                          
-    ## eyes                                                          
-    ## face                                                          
-    ## facechest                                                     
-    ## forehead                                                      
-    ## left         -0.14                                            
-    ## lowerchest    0.34   0.11                                     
-    ## midchest     -0.17  -0.03       0.23                          
-    ## mouth      -0.62*** -0.15     -0.33*   -0.30*                 
-    ## right         0.47   0.27      0.57*   0.66**   -0.43*        
-    ## upperchest    0.11   0.31      0.34*   0.59*** -0.37**   0.38
+    ##                acc moutheye  belly    chest     chin     eyes     face
+    ## acc                                                                   
+    ## moutheye     0.21                                                     
+    ## belly        0.13    -0.06                                            
+    ## chest       -0.15     0.03   0.23                                     
+    ## chin         0.04   0.40*** -0.09   0.28**                            
+    ## eyes        -0.13  -0.96***  0.02    -0.15  -0.46***                  
+    ## face        0.23*   0.35*** -0.30  -0.80***   -0.11    -0.14          
+    ## facechest    0.17     0.00  -0.24  -1.00*** -0.27**     0.14   0.82***
+    ## forehead    -0.22  -0.65*** -0.26    -0.10    -0.22   0.44**  -0.71***
+    ## left        -0.12     0.05  -0.42     0.32     0.13    -0.18    -0.33 
+    ## lowerchest  -0.13    -0.23   0.38   0.44**     0.06     0.12  -0.47** 
+    ## midchest     0.00    -0.02   0.18   0.83***    0.06    -0.10  -0.68***
+    ## mouth        0.14   0.71*** -0.11  -0.40*** -0.44*** -0.63***  0.60***
+    ## right       -0.30    -0.31   0.40    0.39*    -0.03     0.11  -0.64***
+    ## upperchest  -0.21     0.08   0.18   0.94***    0.23    -0.21  -0.83***
+    ##            facechest forehead   left lowerchest midchest    mouth  right
+    ## acc                                                                     
+    ## moutheye                                                                
+    ## belly                                                                   
+    ## chest                                                                   
+    ## chin                                                                    
+    ## eyes                                                                    
+    ## face                                                                    
+    ## facechest                                                               
+    ## forehead       0.05                                                     
+    ## left          -0.35    -0.14                                            
+    ## lowerchest  -0.44**     0.34   0.11                                     
+    ## midchest    -0.82***   -0.17  -0.03       0.23                          
+    ## mouth        0.41*** -0.62*** -0.15     -0.33*   -0.30*                 
+    ## right        -0.42*     0.47   0.27      0.57*   0.66**   -0.43*        
+    ## upperchest  -0.94***    0.11   0.31      0.34*   0.59*** -0.37**   0.38
+
+Moutheye Ratio
+==============
+
+Checking out moutheye ratio. Okay I think this is interesting. HearingLate has much more variance for moutheye, quite low (a lot of eye looking).
+
+``` r
+me_data <- data %>%
+  dplyr::select(-aoi, -percent, -gist) %>%
+  distinct()
+
+ggplot(me_data, aes(x = maingroup, y = moutheye, fill = direction)) + geom_boxplot()
+```
+
+    ## Warning: Removed 17 rows containing non-finite values (stat_boxplot).
+
+![](08gist_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-19-1.png)
+
+Is there an AoA effect on moutheye ratio? Nope...
+
+``` r
+me_aoa <- lmer(moutheye ~ maingroup * direction + (1|id) + (1|story), data = me_data)
+summary(me_aoa)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: moutheye ~ maingroup * direction + (1 | id) + (1 | story)
+    ##    Data: me_data
+    ## 
+    ## REML criterion at convergence: 225.9
+    ## 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -3.4580 -0.3873  0.1157  0.4878  2.3411 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.17430  0.4175  
+    ##  story    (Intercept) 0.01054  0.1026  
+    ##  Residual             0.11269  0.3357  
+    ## Number of obs: 176, groups:  id, 52; story, 4
+    ## 
+    ## Fixed effects:
+    ##                                           Estimate Std. Error        df
+    ## (Intercept)                                0.66189    0.15078  49.90000
+    ## maingroupDeafEarly                        -0.06799    0.21916  62.15000
+    ## maingroupDeafLate                         -0.08352    0.22279  58.35000
+    ## maingroupHearingLate                      -0.30332    0.20134  60.49000
+    ## maingroupHearingNovice                    -0.11024    0.20349  58.11000
+    ## directionreversed                          0.03394    0.10922 119.16000
+    ## maingroupDeafEarly:directionreversed      -0.20519    0.17847 120.94000
+    ## maingroupDeafLate:directionreversed       -0.01744    0.16481 117.54000
+    ## maingroupHearingLate:directionreversed    -0.27633    0.15441 118.60000
+    ## maingroupHearingNovice:directionreversed  -0.04244    0.15152 118.09000
+    ##                                          t value Pr(>|t|)    
+    ## (Intercept)                                4.390 5.89e-05 ***
+    ## maingroupDeafEarly                        -0.310   0.7574    
+    ## maingroupDeafLate                         -0.375   0.7091    
+    ## maingroupHearingLate                      -1.506   0.1371    
+    ## maingroupHearingNovice                    -0.542   0.5901    
+    ## directionreversed                          0.311   0.7566    
+    ## maingroupDeafEarly:directionreversed      -1.150   0.2525    
+    ## maingroupDeafLate:directionreversed       -0.106   0.9159    
+    ## maingroupHearingLate:directionreversed    -1.790   0.0761 .  
+    ## maingroupHearingNovice:directionreversed  -0.280   0.7799    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) mngrDE mngrDL mngrHL mngrHN drctnr mngDE: mngDL: mngHL:
+    ## mngrpDfErly -0.607                                                        
+    ## maingrpDfLt -0.598  0.410                                                 
+    ## mngrpHrngLt -0.662  0.454  0.449                                          
+    ## mngrpHrngNv -0.655  0.449  0.444  0.491                                   
+    ## dirctnrvrsd -0.335  0.228  0.225  0.251  0.248                            
+    ## mngrpDfErl:  0.202 -0.346 -0.136 -0.151 -0.149 -0.609                     
+    ## mngrpDfLt:d  0.223 -0.150 -0.358 -0.168 -0.167 -0.661  0.399              
+    ## mngrpHrngL:  0.236 -0.161 -0.159 -0.357 -0.175 -0.707  0.431  0.467       
+    ## mngrpHrngN:  0.242 -0.162 -0.166 -0.183 -0.358 -0.720  0.435  0.485  0.509
+
+AoA effect for reversed stories only? Yes, HearingLate.
+
+``` r
+me_aoa_r <- lmer(moutheye ~ maingroup + (1|id) + (1|story), data = filter(me_data, direction=="reversed"))
+summary(me_aoa_r)
+```
+
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: moutheye ~ maingroup + (1 | id) + (1 | story)
+    ##    Data: filter(me_data, direction == "reversed")
+    ## 
+    ## REML criterion at convergence: 125.7
+    ## 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -2.8324 -0.3429  0.1118  0.5167  1.9635 
+    ## 
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  id       (Intercept) 0.17695  0.4207  
+    ##  story    (Intercept) 0.05434  0.2331  
+    ##  Residual             0.10590  0.3254  
+    ## Number of obs: 85, groups:  id, 48; story, 4
+    ## 
+    ## Fixed effects:
+    ##                        Estimate Std. Error       df t value Pr(>|t|)   
+    ## (Intercept)             0.65506    0.18894 10.33000   3.467  0.00577 **
+    ## maingroupDeafEarly     -0.27016    0.24126 41.29000  -1.120  0.26928   
+    ## maingroupDeafLate      -0.08894    0.22731 38.55000  -0.391  0.69775   
+    ## maingroupHearingLate   -0.59487    0.20996 39.50000  -2.833  0.00722 **
+    ## maingroupHearingNovice -0.14273    0.20863 38.55000  -0.684  0.49799   
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) mngrDE mngrDL mngrHL
+    ## mngrpDfErly -0.486                     
+    ## maingrpDfLt -0.513  0.398              
+    ## mngrpHrngLt -0.557  0.437  0.461       
+    ## mngrpHrngNv -0.559  0.434  0.469  0.503

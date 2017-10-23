@@ -188,11 +188,12 @@ And I will save this as `cleanpercentdata.csv.` Now here's the boxplots for each
 # data2 uses percentage data!
 data2 <- data %>%
   mutate_at(vars(forehead:right), funs(./total)) %>%
-  select(-total, -quarter, -half) %>%
+  dplyr::select(-total, -quarter, -half) %>%
   group_by(participant,story) %>%
   mutate(face = sum(eyes,mouth,chin,na.rm=TRUE),
          chest = sum(upperchest,midchest,lowerchest,na.rm=TRUE),
-         facechest = (face-chest)/(face+chest)) %>%
+         facechest = (face-chest)/(face+chest),
+         moutheye = (mouth-eyes)/(mouth+eyes)) %>%
   gather(aoi,percent,forehead:facechest)
 
 write.csv(data2,"cleanpercentdata.csv",row.names=FALSE)
