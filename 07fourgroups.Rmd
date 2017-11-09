@@ -80,12 +80,12 @@ data <- data %>%
     str_detect(maingroup,"HearingLateASL") ~ "HearingLate",
     str_detect(maingroup,"HearingNoviceASL") ~ "HearingNovice"
   )) %>%
-  mutate(maingroup = if_else(hearing=="Deaf" & aoasl < 7, "DeafEarly", maingroup)) %>% 
-  mutate(maingroup = if_else(hearing=="Deaf" & aoasl > 7, "DeafLate", maingroup)) %>%
+  mutate(maingroup = if_else(hearing=="Deaf" & aoasl < 4, "DeafNative", maingroup)) %>% 
+  mutate(maingroup = if_else(hearing=="Deaf" & aoasl >= 4, "DeafLate", maingroup)) %>%
   mutate(maingroup = as.factor(maingroup))
 
 # Set reference levels for maingroup
-data$maingroup <- relevel(data$maingroup, ref="DeafEarly")
+data$maingroup <- relevel(data$maingroup, ref="DeafNative")
 
 dataoriginal <- data # Save item-level data just in case
 
@@ -179,7 +179,7 @@ subjectinfo <- data %>%
   distinct()
 
 # Participant Characteristics Table (using cleanlexdata because it's more complete)
-groupmeans <- cleanlexdata %>%
+groupmeans <- data %>%
   ungroup() %>%
   select(id,participant,maingroup,age,selfrate,signyrs,aoasl) %>%
   distinct() %>%
@@ -193,7 +193,7 @@ groupmeans <- cleanlexdata %>%
             signyrs.sd = sd(signyrs),
             aoasl.m = mean(aoasl),
             aoasl.sd = sd(aoasl)) %>%
-  mutate(maingroup =  factor(maingroup, levels = c("DeafEarly","DeafLate",
+  mutate(maingroup =  factor(maingroup, levels = c("DeafNative","DeafLate",
                                                    "HearingLate","HearingNovice"))) %>%
   arrange(maingroup)    
 kable(groupmeans, digits=1) %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"))

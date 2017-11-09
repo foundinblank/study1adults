@@ -1,0 +1,346 @@
+---
+title: "The Last Data Analysis to Rule Them All? (study1adults)"
+author: "Adam Stone, PhD" 
+date: '`r format(Sys.Date(), "%m-%d-%Y")`'
+output:
+  github_document:
+    toc: yes
+    toc_depth: 2
+  html_notebook:
+    code_folding: hide
+    theme: paper
+    highlight: tango
+    toc: yes
+    toc_depth: 2
+    toc_float: yes
+    df_print: paged
+---
+
+# Putting It All Back Together
+
+Throughout all the data analysis we've done, the datasets have become more fragmented - lexical recall, gist, and eye tracking datasets. I want to put them all together in one whole dataset again so we can perform some analyses more efficiently (particularly correlations). The only thing I need to remember is we'll have a new column called `eye_exclude` and if it is set to `TRUE` it means we can't include that row in any analysis relating to eye gaze (usually because that trial was less than 25% looking). 
+
+```{r smash data together, message=FALSE, warning=FALSE}
+# Libraries
+library(tidyverse)
+library(stringr)
+library(lme4)
+library(lmerTest)
+library(scales)
+
+# Load lex and eye data
+cleanlexdata <- read_csv("cleandata.csv") %>%
+  select(-(forehead:total))
+
+cleaneyedata <- read_csv("cleanpercentdata.csv") %>%
+  spread(aoi,percent) %>%
+  add_column(eye_exclude = FALSE)
+
+# What rows were removed from the eye data back in 03eyegaze? Let's add back in
+# With a new column - eye_exclude
+removed <- anti_join(cleanlexdata, cleaneyedata) %>%
+  add_column(eye_exclude = TRUE)
+eyelexdata <- bind_rows(cleaneyedata, removed)
+
+# Load gist data
+gist <- read_csv('gist_indiv.csv', col_types = cols(
+  participant = col_character(),
+  gist.fw1 = col_integer(),
+  gist.rv2 = col_integer(),
+  gist.fw3 = col_integer(),
+  gist.rv4 = col_integer()
+)) %>%
+  gather(video, gist, gist.fw1:gist.rv4) %>%
+  mutate(video = str_sub(video,6,8))
+
+# Presto, our full reunified dataset - 'fulldata'
+fulldata <- left_join(eyelexdata, gist)
+```
+
+# Group Changes and Participant Tables
+
+We have some changes to make to the groups. First, fix Josh as learning ASL when he was 6. Next, drop the DeafNative Group and reclassify all who learned ASL < 3.9 as DeafEarly and ASL => 4.0 as DeafLate. 
+
+```{r groups and participant tables}
+# Change Josh's AoASL to 6
+fulldata <- fulldata %>%
+  mutate(aoasl = as.double(aoasl)) %>%
+  mutate(aoasl = case_when(
+    participant == "Josh" ~ 6,
+    TRUE ~ aoasl
+  ))
+
+# Reclassify Groups
+fulldata <- fulldata %>%
+  mutate(maingroup = case_when(
+    hearing == "Deaf" & aoasl < 4 ~ "DeafEarly",
+    hearing == "Deaf" & aoasl >= 4 ~ "DeafLate",
+    maingroup == "HearingLateASL" ~ "HearingLate",
+    maingroup == "HearingNoviceASL" ~ "HearingNovice"
+  ))
+
+# Create Participant Demographics Table
+participant_info <- fulldata %>%
+  select(-(acc:gist)) %>%
+  select(-(video:direction)) %>%
+  distinct() %>% 
+  group_by(maingroup) %>%
+  summarise(n = n(),
+            age_mean = mean(age),
+            age_sd = sd(age),
+            aoasl_mean = mean(aoasl),
+            aoasl_sd = sd(aoasl),
+            signyrs_mean = mean(signyrs),
+            signyrs_sd = sd(signyrs),
+            selfrate_mean = mean(selfrate),
+            selfrate_sd = sd(selfrate)) %>%
+  ungroup() %>%
+  mutate_if(is.double, funs(round(., 2))) %>%
+  mutate(age = paste(age_mean, "±", age_sd, sep = " "),
+         aoasl = paste(aoasl_mean, "±", aoasl_sd, sep = " "),
+         signyrs = paste(signyrs_mean, "±", signyrs_sd, sep = " "),
+         selfrate = paste(selfrate_mean, "±", selfrate_sd, sep = " ")) %>%
+  select(-(age_mean:selfrate_sd)) %>%
+  print()
+```
+
+# Gist & Lexical Recall Data
+
+## Tables & Charts
+
+Let's generate a table for lexical recall and gist for forward vs. reversed stories. 
+
+```{r lex & gist table}
+lexgist_info <- fulldata %>%
+  group_by(maingroup, direction) %>%
+  summarise(lex_mean = mean(acc, na.rm = TRUE),
+            lex_sd = sd(acc, na.rm = TRUE),
+            gist_mean = mean(gist),
+            gist_sd = sd(gist)) %>%
+  ungroup() %>%
+  mutate_if(is.double, funs(round(., 2))) %>% 
+  mutate(lex = paste(lex_mean, "±", lex_sd, sep = " "),
+         gist = paste(gist_mean, "±", gist_sd, sep = " ")) %>%
+  select(-(lex_mean:gist_sd)) %>%
+  gather(metric, value, lex:gist) %>%
+  unite("metric", c(metric, direction), sep = "_") %>%
+  spread(metric, value) %>%
+  print()
+```
+
+And then bar charts too after that with error bars. 
+
+```{r lex and gist bar charts}
+# Gist bar chart
+gist_bar <- fulldata %>% select(participant, maingroup, direction, gist) %>%
+  group_by(maingroup, participant, direction) %>%
+  summarise(gist = mean(gist)) %>%
+  group_by(maingroup, direction) %>%
+  summarise(mean = mean(gist),
+            sd = sd(gist),
+            count = n(),
+            se = sd/sqrt(count))
+
+ggplot(gist_bar, aes(x = maingroup, y = mean, fill = direction)) +
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.9), width = 0.5) +
+  labs(title = "Story Comprehension (Gist)", subtitle = "Error bars represent SE", x = "", y = "mean gist") +
+  scale_y_continuous(labels = percent)
+
+# Gist bar chart
+lex_bar <- fulldata %>% select(participant, maingroup, direction, acc) %>%
+  group_by(maingroup, participant, direction) %>%
+  summarise(acc = mean(acc, na.rm = TRUE)) %>%
+  group_by(maingroup, direction) %>%
+  summarise(mean = mean(acc, na.rm = TRUE),
+            sd = sd(acc, na.rm = TRUE),
+            count = n(),
+            se = sd/sqrt(count))
+
+ggplot(lex_bar, aes(x = maingroup, y = mean, fill = direction)) +
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.9), width = 0.5) +
+  labs(title = "Lexical Recall", subtitle = "Error bars represent SE", x = "", y = "mean accuracy") +
+  scale_y_continuous(labels = percent, limits = c(0,1))
+```
+
+## ANOVAs
+
+Here, ANOVAs are done with **Direction Included.** Gist first, with Tukey's comparisons. 
+
+```{r gist anova}
+# Gist ANOVA. We have to make participant-level means first. 
+gist_aov <- fulldata %>%
+  group_by(maingroup, participant, direction) %>%
+  summarise(gist = mean(gist, na.rm = TRUE)) %>%
+#  filter(direction != "reversed") %>%
+  lm(gist ~ maingroup * direction, data = .)
+summary(aov(gist_aov))
+TukeyHSD(aov(gist_aov))
+```
+
+And Lexical Recall ANOVA with Tukey's comparisons. 
+
+```{r lex anova}
+# Lex ANOVA. We have to make participant-level means first. 
+lex_aov <- fulldata %>%
+  group_by(maingroup, participant, direction) %>%
+  summarise(acc = mean(acc, na.rm = TRUE)) %>%
+#  filter(direction != "reversed") %>%
+  lm(acc ~ maingroup * direction, data = .)
+summary(aov(lex_aov))
+TukeyHSD(aov(lex_aov))
+```
+
+## AoA Correlations
+
+Next, we want to look at correlations between AoA and Gist, and betwen AoA and Lexical Recall. Rain asked for forward and reversed separately (1) deaf only, (2) hearing only, and (3) both. Let's make it work. 
+
+```{r repackage data for correlations, message=FALSE, warning=FALSE}
+# Let's make participant-level data, and have forward/reversed in separate columns
+lexgist_data <- fulldata %>%
+  group_by(maingroup, participant, direction) %>%
+  mutate(gist = mean(gist, na.rm = TRUE),
+         lex = mean(acc, na.rm = TRUE)) %>%
+  ungroup() %>%
+  select(maingroup, participant, hearing, direction, aoasl, gist, lex) %>%
+  distinct() %>%
+  gather(metric, value, gist:lex) %>%
+  unite(metricvalue, c(metric, direction), sep = "_") %>%
+  spread(metricvalue, value) %>%
+  select(-participant, -maingroup)
+
+lexgist_deaf <- lexgist_data %>% filter(hearing == "Deaf") %>% select(-hearing)
+lexgist_hearing <- lexgist_data %>% filter(hearing == "Hearing") %>% select(-hearing)
+lexgist_all <- lexgist_data %>% select(-hearing)
+
+# Load awesome function to make correlation tables with stars for significance
+# From: https://myowelt.blogspot.co.uk/2008/04/beautiful-correlation-tables-in-r.html
+corstarsl <- function(x){ 
+require(Hmisc) 
+x <- as.matrix(x) 
+R <- Hmisc::rcorr(x)$r 
+p <- Hmisc::rcorr(x)$P 
+## define notions for significance levels; spacing is important.
+mystars <- ifelse(p < .001, "***", ifelse(p < .01, "** ", ifelse(p < .05, "* ", " ")))
+## trunctuate the matrix that holds the correlations to two decimal
+R <- format(round(cbind(rep(-1.11, ncol(x)), R), 2))[,-1] 
+## build a new matrix that includes the correlations with their apropriate stars 
+Rnew <- matrix(paste(R, mystars, sep=""), ncol=ncol(x)) 
+diag(Rnew) <- paste(diag(R), " ", sep="") 
+rownames(Rnew) <- colnames(x) 
+colnames(Rnew) <- paste(colnames(x), "", sep="") 
+## remove upper triangle
+Rnew <- as.matrix(Rnew)
+Rnew[upper.tri(Rnew, diag = TRUE)] <- ""
+Rnew <- as.data.frame(Rnew) 
+## remove last column and return the matrix (which is now a data frame)
+Rnew <- cbind(Rnew[1:length(Rnew)-1])
+return(Rnew) 
+}
+
+# Correlations for Deaf
+print("DEAF Correlations - Pearson's r")
+#corstarsl(lexgist_deaf)
+Hmisc::rcorr(as.matrix(lexgist_deaf))$r
+print("DEAF Correlations - P-values")
+Hmisc::rcorr(as.matrix(lexgist_deaf))$P
+cat(paste("","\n",""))
+
+# Correlations for Hearing
+print("HEARING Correlations - Pearson's r")
+#corstarsl(lexgist_hearing)
+Hmisc::rcorr(as.matrix(lexgist_hearing))$r
+print("HEARING Correlations - P-values")
+Hmisc::rcorr(as.matrix(lexgist_hearing))$P
+cat(paste("","\n",""))
+
+# Correlations for All
+print("ALL Correlations - Pearson's r")
+#corstarsl(lexgist_all)
+Hmisc::rcorr(as.matrix(lexgist_all))$r
+print("ALL Correlations - P-values")
+Hmisc::rcorr(as.matrix(lexgist_all))$P
+
+```
+
+I'm also including nicely formatted tables with *** indicators of significance for quick referencing. Order: Deaf, Hearing, All. 
+
+```{r pretty correlations}
+corstarsl(lexgist_deaf)
+corstarsl(lexgist_hearing)
+corstarsl(lexgist_all)
+```
+
+# Eye Gaze Data
+
+Now eye gaze data. Boxplots first. Also here, we're renaming "chin" to "neck" because that's what it actually is! 
+```{r eye gaze boxplot}
+# rename chin to neck
+fulldata <- fulldata %>%
+  rename(neck = chin)
+
+fulldata %>%
+  filter(eye_exclude == FALSE) %>%
+  select(direction, moutheye:upperchest) %>%
+  select(-moutheye, -facechest, -face, -chest) %>%
+  gather(aoi, percent, belly:upperchest) %>%
+  ggplot(aes(x = aoi, y = percent, fill = direction)) + geom_boxplot()
+```
+
+## ANOVAS
+We have three big AOIs. Eyes, Mouth, and Neck. To some extent we also have Forehead and UpperChest. Let's run ANOVAs on all those five AOIs and see if either direction or group membership affect looking behavior for any of those AOIs. 
+
+```{r}
+# Define the 5 AOIs
+aoi5 <- c('forehead','eyes','mouth','neck','upperchest')
+
+# Organize the data by those AOIs (but again we need participant-level first)
+aoi5_data <- fulldata %>%
+  filter(eye_exclude == FALSE) %>%
+  select(id, maingroup, direction, belly:upperchest) %>%
+  gather(aoi, percent, belly:upperchest) %>%
+  group_by(id, direction, aoi) %>%
+  mutate(percent = mean(percent, na.rm = TRUE)) %>%
+  ungroup () %>%
+  distinct() %>%
+  filter(aoi %in% aoi5) %>%
+  spread(aoi, percent)
+
+print("Forehead ANOVA")
+forehead_aov <- lm(forehead ~ maingroup * direction, data = aoi5_data)
+summary(aov(forehead_aov))
+cat(paste("","\n",""))
+
+print("Eyes ANOVA")
+eyes_aov <- lm(eyes ~ maingroup * direction, data = aoi5_data)
+summary(aov(eyes_aov))
+cat(paste("","\n",""))
+
+print("Mouth ANOVA")
+mouth_aov <- lm(mouth ~ maingroup * direction, data = aoi5_data)
+summary(aov(mouth_aov))
+cat(paste("","\n",""))
+
+print("Neck ANOVA")
+neck_aov <- lm(neck ~ maingroup * direction, data = aoi5_data)
+summary(aov(neck_aov))
+cat(paste("","\n",""))
+
+print("UpperChest ANOVA")
+upperchest_aov <- lm(upperchest ~ maingroup * direction, data = aoi5_data)
+summary(aov(upperchest_aov))
+cat(paste("","\n",""))
+```
+
+## FaceChest
+
+# Rain's Notes
+About Adults:
+
+-I think I want to write it up as an ANCOVA, with direction included.  And LSD comparisons instead of Tukey.  (I will do my own corrections)
+-You often have one liners summarizing results, in all tabs, those are nice, keep them coming.
+-(If you have reasons to present anything other than the ANCOVA, put that in your results tab)
+ 
+I think if we do it this way then we get a really important story to tell:  That the *critical* AoA cutoff is below 4 vs above 4 years of age (two groups 0-4 vs 4-13).  This suggest early ASL is important.  
+ 
