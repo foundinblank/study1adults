@@ -335,6 +335,64 @@ cat(paste("","\n",""))
 
 ## FaceChest
 
+We originally defined FaceChest such that
+
+1. Face = eyes + mouth + chin
+1. Chest = upperchest + midchest + lowerchest
+
+BUT. Chin is actually neck. It's not even part of the face if you think about it. So I'm redefining FaceChest as:
+
+1. Face = forehead + eyes + mouth
+1. Chest = neck + upperchest + midchest + lowerchest
+
+So let's do this. Then see what's happening across groups for FaceChest. First I want a boxplot to comapre the new and old FaceChest variables. 
+
+```{r}
+# Redefine face, chest, and facechest
+fulldata <- fulldata %>%
+  ungroup() %>%
+  rename(facechest_old = facechest) %>%
+  rowwise() %>%
+  mutate(face = sum(forehead, eyes, mouth, na.rm = TRUE),
+         chest = sum(neck, upperchest, midchest, lowerchest, na.rm = TRUE),
+         facechest = (face - chest)/(face + chest)) %>%
+  ungroup()
+
+fulldata %>% 
+  gather(metric, value, c(facechest_old, facechest)) %>%
+  ggplot(aes(x = maingroup, y = value, fill = direction)) + geom_boxplot() + facet_wrap("metric")
+```
+
+Cool. Next we'll do error bar charts using the new FaceChest across groups. 
+
+```{r message=FALSE, warning=FALSE}
+facechest_info <- fulldata %>%
+  filter(eye_exclude == FALSE) %>%
+  group_by(maingroup, direction, participant) %>%
+  summarise(facechest = mean(facechest, na.rm = TRUE)) %>%
+  group_by(maingroup, direction) %>%
+  summarise(mean = mean(facechest),
+            sd = sd(facechest),
+            n = n(),
+            se = sd/sqrt(n))
+
+ggplot(facechest_info, aes(x = maingroup, y = mean, fill = direction, color = direction)) +
+  geom_point(stat = "identity", position = position_dodge(0.5)) + 
+  geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.5), width = 0.5) +
+  labs(title = "FaceChest Ratio", subtitle = "Error bars represent SE", x = "", y = "facechest ratio") +
+  scale_y_continuous(limits = c(-1,1))
+
+```
+
+
+Now let's do the ANOVA. 
+```{r}
+fc_aov <- lm(facechest ~ maingroup * direction, data = fulldata)
+summary(aov(fc_aov))
+TukeyHSD(aov(fc_aov))
+```
+
+
 # Rain's Notes
 About Adults:
 
