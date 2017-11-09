@@ -12,6 +12,9 @@ Adam Stone, PhD
 -   [Eye Gaze Data](#eye-gaze-data)
     -   [ANOVAS](#anovas-1)
     -   [FaceChest](#facechest)
+    -   [MouthEye](#moutheye)
+-   [Heat Maps](#heat-maps)
+-   [Summary](#summary)
 -   [Rain's Notes](#rains-notes)
 
 Putting It All Back Together
@@ -22,10 +25,10 @@ Throughout all the data analysis we've done, the datasets have become more fragm
 ``` r
 # Libraries
 library(tidyverse)
-library(stringr)
 library(lme4)
 library(lmerTest)
 library(scales)
+library(viridis)
 
 # Load lex and eye data
 cleanlexdata <- read_csv("cleandata.csv") %>%
@@ -191,7 +194,7 @@ ggplot(lex_bar, aes(x = maingroup, y = mean, fill = direction)) +
 ANOVAs
 ------
 
-Here, ANOVAs are done with **Direction Included.** Gist first, with Tukey's comparisons.
+Here, ANOVAs are done with **direction Included.** Gist first, with Tukey's comparisons.
 
 ``` r
 # Gist ANOVA. We have to make participant-level means first. 
@@ -199,8 +202,8 @@ gist_aov <- fulldata %>%
   group_by(maingroup, participant, direction) %>%
   summarise(gist = mean(gist, na.rm = TRUE)) %>%
 #  filter(direction != "reversed") %>%
-  lm(gist ~ maingroup * direction, data = .)
-summary(aov(gist_aov))
+  aov(gist ~ maingroup * direction, data = .)
+summary(gist_aov)
 ```
 
     ##                     Df Sum Sq Mean Sq F value   Pr(>F)    
@@ -212,13 +215,13 @@ summary(aov(gist_aov))
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 ``` r
-TukeyHSD(aov(gist_aov))
+TukeyHSD(gist_aov)
 ```
 
     ##   Tukey multiple comparisons of means
     ##     95% family-wise confidence level
     ## 
-    ## Fit: aov(formula = gist_aov)
+    ## Fit: aov(formula = gist ~ maingroup * direction, data = .)
     ## 
     ## $maingroup
     ##                                 diff        lwr         upr     p adj
@@ -301,8 +304,8 @@ lex_aov <- fulldata %>%
   group_by(maingroup, participant, direction) %>%
   summarise(acc = mean(acc, na.rm = TRUE)) %>%
 #  filter(direction != "reversed") %>%
-  lm(acc ~ maingroup * direction, data = .)
-summary(aov(lex_aov))
+  aov(acc ~ maingroup * direction, data = .)
+summary(lex_aov)
 ```
 
     ##                     Df Sum Sq Mean Sq F value   Pr(>F)    
@@ -314,13 +317,13 @@ summary(aov(lex_aov))
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 ``` r
-TukeyHSD(aov(lex_aov))
+TukeyHSD(lex_aov)
 ```
 
     ##   Tukey multiple comparisons of means
     ##     95% family-wise confidence level
     ## 
-    ## Fit: aov(formula = lex_aov)
+    ## Fit: aov(formula = acc ~ maingroup * direction, data = .)
     ## 
     ## $maingroup
     ##                                   diff         lwr          upr     p adj
@@ -697,8 +700,8 @@ print("Forehead ANOVA")
     ## [1] "Forehead ANOVA"
 
 ``` r
-forehead_aov <- lm(forehead ~ maingroup * direction, data = aoi5_data)
-summary(aov(forehead_aov))
+forehead_aov <- aov(forehead ~ maingroup * direction, data = aoi5_data)
+summary(forehead_aov)
 ```
 
     ##                     Df  Sum Sq  Mean Sq F value Pr(>F)
@@ -719,8 +722,8 @@ print("Eyes ANOVA")
     ## [1] "Eyes ANOVA"
 
 ``` r
-eyes_aov <- lm(eyes ~ maingroup * direction, data = aoi5_data)
-summary(aov(eyes_aov))
+eyes_aov <- aov(eyes ~ maingroup * direction, data = aoi5_data)
+summary(eyes_aov)
 ```
 
     ##                     Df Sum Sq Mean Sq F value Pr(>F)
@@ -741,8 +744,8 @@ print("Mouth ANOVA")
     ## [1] "Mouth ANOVA"
 
 ``` r
-mouth_aov <- lm(mouth ~ maingroup * direction, data = aoi5_data)
-summary(aov(mouth_aov))
+mouth_aov <- aov(mouth ~ maingroup * direction, data = aoi5_data)
+summary(mouth_aov)
 ```
 
     ##                     Df Sum Sq Mean Sq F value Pr(>F)  
@@ -764,8 +767,8 @@ print("Neck ANOVA")
     ## [1] "Neck ANOVA"
 
 ``` r
-neck_aov <- lm(neck ~ maingroup * direction, data = aoi5_data)
-summary(aov(neck_aov))
+neck_aov <- aov(neck ~ maingroup * direction, data = aoi5_data)
+summary(neck_aov)
 ```
 
     ##                     Df Sum Sq Mean Sq F value Pr(>F)
@@ -786,8 +789,8 @@ print("UpperChest ANOVA")
     ## [1] "UpperChest ANOVA"
 
 ``` r
-upperchest_aov <- lm(upperchest ~ maingroup * direction, data = aoi5_data)
-summary(aov(upperchest_aov))
+upperchest_aov <- aov(upperchest ~ maingroup * direction, data = aoi5_data)
+summary(upperchest_aov)
 ```
 
     ##                     Df  Sum Sq  Mean Sq F value  Pr(>F)   
@@ -798,6 +801,88 @@ summary(aov(upperchest_aov))
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 13 observations deleted due to missingness
+
+``` r
+TukeyHSD(upperchest_aov)
+```
+
+    ##   Tukey multiple comparisons of means
+    ##     95% family-wise confidence level
+    ## 
+    ## Fit: aov(formula = upperchest ~ maingroup * direction, data = aoi5_data)
+    ## 
+    ## $maingroup
+    ##                                    diff          lwr        upr     p adj
+    ## DeafLate-DeafEarly        -0.0007914082 -0.032259263 0.03067645 0.9998962
+    ## HearingLate-DeafEarly      0.0066520381 -0.026065452 0.03936953 0.9507319
+    ## HearingNovice-DeafEarly    0.0450163736  0.012298883 0.07773386 0.0029190
+    ## HearingLate-DeafLate       0.0074434462 -0.026463076 0.04134997 0.9390764
+    ## HearingNovice-DeafLate     0.0458077818  0.011901259 0.07971430 0.0036014
+    ## HearingNovice-HearingLate  0.0383643355  0.003294968 0.07343370 0.0263890
+    ## 
+    ## $direction
+    ##                       diff          lwr        upr  p adj
+    ## reversed-forward 0.0125832 -0.005169066 0.03033547 0.1623
+    ## 
+    ## $`maingroup:direction`
+    ##                                                      diff           lwr
+    ## DeafLate:forward-DeafEarly:forward           -0.011893305 -0.0636402067
+    ## HearingLate:forward-DeafEarly:forward        -0.002333292 -0.0567953337
+    ## HearingNovice:forward-DeafEarly:forward       0.024450757 -0.0285475455
+    ## DeafEarly:reversed-DeafEarly:forward         -0.007367995 -0.0580318820
+    ## DeafLate:reversed-DeafEarly:forward           0.003902141 -0.0490961618
+    ## HearingLate:reversed-DeafEarly:forward        0.008542261 -0.0459197805
+    ## HearingNovice:reversed-DeafEarly:forward      0.062268675  0.0060693679
+    ## HearingLate:forward-DeafLate:forward          0.009560013 -0.0467613339
+    ## HearingNovice:forward-DeafLate:forward        0.036344062 -0.0185631342
+    ## DeafEarly:reversed-DeafLate:forward           0.004525310 -0.0481321640
+    ## DeafLate:reversed-DeafLate:forward            0.015795446 -0.0391117505
+    ## HearingLate:reversed-DeafLate:forward         0.020435567 -0.0358857807
+    ## HearingNovice:reversed-DeafLate:forward       0.074161980  0.0161590297
+    ## HearingNovice:forward-HearingLate:forward     0.026784049 -0.0306891833
+    ## DeafEarly:reversed-HearingLate:forward       -0.005034703 -0.0603626509
+    ## DeafLate:reversed-HearingLate:forward         0.006235433 -0.0512377997
+    ## HearingLate:reversed-HearingLate:forward      0.010875553 -0.0479501755
+    ## HearingNovice:reversed-HearingLate:forward    0.064601967  0.0041642761
+    ## DeafEarly:reversed-HearingNovice:forward     -0.031818752 -0.0857064861
+    ## DeafLate:reversed-HearingNovice:forward      -0.020548616 -0.0766367480
+    ## HearingLate:reversed-HearingNovice:forward   -0.015908496 -0.0733817282
+    ## HearingNovice:reversed-HearingNovice:forward  0.037817918 -0.0213041638
+    ## DeafLate:reversed-DeafEarly:reversed          0.011270136 -0.0426175978
+    ## HearingLate:reversed-DeafEarly:reversed       0.015910257 -0.0394176910
+    ## HearingNovice:reversed-DeafEarly:reversed     0.069636670  0.0125978247
+    ## HearingLate:reversed-DeafLate:reversed        0.004640121 -0.0528331118
+    ## HearingNovice:reversed-DeafLate:reversed      0.058366534 -0.0007555475
+    ## HearingNovice:reversed-HearingLate:reversed   0.053726414 -0.0067112771
+    ##                                                     upr     p adj
+    ## DeafLate:forward-DeafEarly:forward           0.03985360 0.9963279
+    ## HearingLate:forward-DeafEarly:forward        0.05212875 1.0000000
+    ## HearingNovice:forward-DeafEarly:forward      0.07744906 0.8382449
+    ## DeafEarly:reversed-DeafEarly:forward         0.04329589 0.9998114
+    ## DeafLate:reversed-DeafEarly:forward          0.05690044 0.9999982
+    ## HearingLate:reversed-DeafEarly:forward       0.06300430 0.9996881
+    ## HearingNovice:reversed-DeafEarly:forward     0.11846798 0.0193600
+    ## HearingLate:forward-DeafLate:forward         0.06588136 0.9994745
+    ## HearingNovice:forward-DeafLate:forward       0.09125126 0.4498466
+    ## DeafEarly:reversed-DeafLate:forward          0.05718278 0.9999947
+    ## DeafLate:reversed-DeafLate:forward           0.07070264 0.9857605
+    ## HearingLate:reversed-DeafLate:forward        0.07675691 0.9485852
+    ## HearingNovice:reversed-DeafLate:forward      0.13216493 0.0035884
+    ## HearingNovice:forward-HearingLate:forward    0.08425728 0.8311284
+    ## DeafEarly:reversed-HearingLate:forward       0.05029324 0.9999922
+    ## DeafLate:reversed-HearingLate:forward        0.06370866 0.9999740
+    ## HearingLate:reversed-HearingLate:forward     0.06970128 0.9990820
+    ## HearingNovice:reversed-HearingLate:forward   0.12503966 0.0276122
+    ## DeafEarly:reversed-HearingNovice:forward     0.02206898 0.5974009
+    ## DeafLate:reversed-HearingNovice:forward      0.03553952 0.9459416
+    ## HearingLate:reversed-HearingNovice:forward   0.04156474 0.9886403
+    ## HearingNovice:reversed-HearingNovice:forward 0.09694000 0.4950600
+    ## DeafLate:reversed-DeafEarly:reversed         0.06515787 0.9979722
+    ## HearingLate:reversed-DeafEarly:reversed      0.07123820 0.9857929
+    ## HearingNovice:reversed-DeafEarly:reversed    0.12667552 0.0064964
+    ## HearingLate:reversed-DeafLate:reversed       0.06211335 0.9999966
+    ## HearingNovice:reversed-DeafLate:reversed     0.11748862 0.0555578
+    ## HearingNovice:reversed-HearingLate:reversed  0.11416410 0.1184488
 
 ``` r
 cat(paste("","\n",""))
@@ -863,100 +948,305 @@ ggplot(facechest_info, aes(x = maingroup, y = mean, fill = direction, color = di
 Now let's do the ANOVA.
 
 ``` r
-fc_aov <- lm(facechest ~ maingroup * direction, data = fulldata)
-summary(aov(fc_aov))
+# FaceChest ANOVA but remember, participant-level first!
+fc_aov <- fulldata %>%
+  group_by(maingroup, participant, direction) %>%
+  summarise(facechest = mean(facechest, na.rm = TRUE)) %>%
+  aov(facechest ~ maingroup * direction, data = .)
+summary(fc_aov)
 ```
 
-    ##                      Df Sum Sq Mean Sq F value Pr(>F)  
-    ## maingroup             3   2.77  0.9226   3.821 0.0109 *
-    ## direction             1   1.14  1.1439   4.737 0.0308 *
-    ## maingroup:direction   3   0.61  0.2036   0.843 0.4719  
-    ## Residuals           185  44.67  0.2415                 
+    ##                     Df Sum Sq Mean Sq F value Pr(>F)  
+    ## maingroup            3  1.317  0.4389   2.111 0.1040  
+    ## direction            1  0.712  0.7116   3.422 0.0674 .
+    ## maingroup:direction  3  0.283  0.0942   0.453 0.7157  
+    ## Residuals           95 19.754  0.2079                 
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 15 observations deleted due to missingness
+    ## 1 observation deleted due to missingness
 
 ``` r
-TukeyHSD(aov(fc_aov))
+TukeyHSD(fc_aov)
 ```
 
     ##   Tukey multiple comparisons of means
     ##     95% family-wise confidence level
     ## 
-    ## Fit: aov(formula = fc_aov)
+    ## Fit: aov(formula = facechest ~ maingroup * direction, data = .)
     ## 
     ## $maingroup
-    ##                                 diff         lwr         upr     p adj
-    ## DeafLate-DeafEarly         0.2275151 -0.02307314  0.47810338 0.0898745
-    ## HearingLate-DeafEarly      0.1034579 -0.15158847  0.35850421 0.7192408
-    ## HearingNovice-DeafEarly   -0.1006275 -0.35727581  0.15602071 0.7400035
-    ## HearingLate-DeafLate      -0.1240572 -0.38840357  0.14028907 0.6170652
-    ## HearingNovice-DeafLate    -0.3281427 -0.59403489 -0.06225045 0.0087288
-    ## HearingNovice-HearingLate -0.2040854 -0.47418324  0.06601240 0.2074817
+    ##                                  diff        lwr        upr     p adj
+    ## DeafLate-DeafEarly         0.21402505 -0.1023072 0.53035734 0.2944823
+    ## HearingLate-DeafEarly      0.12217507 -0.2043972 0.44874728 0.7620918
+    ## HearingNovice-DeafEarly   -0.08754118 -0.4222586 0.24717623 0.9029764
+    ## HearingLate-DeafLate      -0.09184998 -0.4263885 0.24268858 0.8897151
+    ## HearingNovice-DeafLate    -0.30156623 -0.6440606 0.04092812 0.1046612
+    ## HearingNovice-HearingLate -0.20971625 -0.5616902 0.14225773 0.4074069
     ## 
     ## $direction
-    ##                        diff        lwr         upr     p adj
-    ## reversed-forward -0.1539427 -0.2935269 -0.01435846 0.0308372
+    ##                        diff        lwr        upr     p adj
+    ## reversed-forward -0.1662271 -0.3446328 0.01217867 0.0674613
     ## 
     ## $`maingroup:direction`
     ##                                                     diff        lwr
-    ## DeafLate:forward-DeafEarly:forward            0.22110616 -0.1900693
-    ## HearingLate:forward-DeafEarly:forward         0.11426978 -0.3116953
-    ## HearingNovice:forward-DeafEarly:forward       0.03495039 -0.3910147
-    ## DeafEarly:reversed-DeafEarly:forward         -0.09239338 -0.4953074
-    ## DeafLate:reversed-DeafEarly:forward           0.14151413 -0.2791525
-    ## HearingLate:reversed-DeafEarly:forward        0.00595924 -0.4147074
-    ## HearingNovice:reversed-DeafEarly:forward     -0.32529911 -0.7512642
-    ## HearingLate:forward-DeafLate:forward         -0.10683637 -0.5472562
-    ## HearingNovice:forward-DeafLate:forward       -0.18615577 -0.6265756
-    ## DeafEarly:reversed-DeafLate:forward          -0.31349954 -0.7316659
-    ## DeafLate:reversed-DeafLate:forward           -0.07959203 -0.5148893
-    ## HearingLate:reversed-DeafLate:forward        -0.21514692 -0.6504442
-    ## HearingNovice:reversed-DeafLate:forward      -0.54640526 -0.9868251
-    ## HearingNovice:forward-HearingLate:forward    -0.07931939 -0.5335778
-    ## DeafEarly:reversed-HearingLate:forward       -0.20666317 -0.6393803
-    ## DeafLate:reversed-HearingLate:forward         0.02724435 -0.4220493
-    ## HearingLate:reversed-HearingLate:forward     -0.10831054 -0.5576042
-    ## HearingNovice:reversed-HearingLate:forward   -0.43956889 -0.8938273
-    ## DeafEarly:reversed-HearingNovice:forward     -0.12734377 -0.5600609
-    ## DeafLate:reversed-HearingNovice:forward       0.10656374 -0.3427299
-    ## HearingLate:reversed-HearingNovice:forward   -0.02899115 -0.4782848
-    ## HearingNovice:reversed-HearingNovice:forward -0.36024950 -0.8145079
-    ## DeafLate:reversed-DeafEarly:reversed          0.23390751 -0.1935948
-    ## HearingLate:reversed-DeafEarly:reversed       0.09835262 -0.3291497
-    ## HearingNovice:reversed-DeafEarly:reversed    -0.23290572 -0.6656229
-    ## HearingLate:reversed-DeafLate:reversed       -0.13555489 -0.5798284
-    ## HearingNovice:reversed-DeafLate:reversed     -0.46681324 -0.9161069
-    ## HearingNovice:reversed-HearingLate:reversed  -0.33125835 -0.7805520
-    ##                                                      upr     p adj
-    ## DeafLate:forward-DeafEarly:forward            0.63228160 0.7199713
-    ## HearingLate:forward-DeafEarly:forward         0.54023490 0.9916615
-    ## HearingNovice:forward-DeafEarly:forward       0.46091551 0.9999967
-    ## DeafEarly:reversed-DeafEarly:forward          0.31052068 0.9968275
-    ## DeafLate:reversed-DeafEarly:forward           0.56218074 0.9690807
-    ## HearingLate:reversed-DeafEarly:forward        0.42662585 1.0000000
-    ## HearingNovice:reversed-DeafEarly:forward      0.10066601 0.2771436
-    ## HearingLate:forward-DeafLate:forward          0.33358347 0.9954939
-    ## HearingNovice:forward-DeafLate:forward        0.25426407 0.8994321
-    ## DeafEarly:reversed-DeafLate:forward           0.10466680 0.3000481
-    ## DeafLate:reversed-DeafLate:forward            0.35570529 0.9992581
-    ## HearingLate:reversed-DeafLate:forward         0.22015040 0.7983608
-    ## HearingNovice:reversed-DeafLate:forward      -0.10598543 0.0046967
-    ## HearingNovice:forward-HearingLate:forward     0.37493899 0.9994515
-    ## DeafEarly:reversed-HearingLate:forward        0.22605398 0.8252818
-    ## DeafLate:reversed-HearingLate:forward         0.47653800 0.9999996
-    ## HearingLate:reversed-HearingLate:forward      0.34098311 0.9956651
-    ## HearingNovice:reversed-HearingLate:forward    0.01468949 0.0656973
-    ## DeafEarly:reversed-HearingNovice:forward      0.30537338 0.9855488
-    ## DeafLate:reversed-HearingNovice:forward       0.55585740 0.9960820
-    ## HearingLate:reversed-HearingNovice:forward    0.42030251 0.9999994
-    ## HearingNovice:reversed-HearingNovice:forward  0.09400888 0.2325766
-    ## DeafLate:reversed-DeafEarly:reversed          0.66140985 0.7017358
-    ## HearingLate:reversed-DeafEarly:reversed       0.52585496 0.9967617
-    ## HearingNovice:reversed-DeafEarly:reversed     0.19981142 0.7190148
-    ## HearingLate:reversed-DeafLate:reversed        0.30871857 0.9821777
-    ## HearingNovice:reversed-DeafLate:reversed     -0.01751958 0.0354385
-    ## HearingNovice:reversed-HearingLate:reversed   0.11803531 0.3212719
+    ## DeafLate:forward-DeafEarly:forward            0.18128134 -0.3439484
+    ## HearingLate:forward-DeafEarly:forward         0.12525665 -0.4221444
+    ## HearingNovice:forward-DeafEarly:forward       0.02624201 -0.5348120
+    ## DeafEarly:reversed-DeafEarly:forward         -0.13268312 -0.6487778
+    ## DeafLate:reversed-DeafEarly:forward           0.11150119 -0.4240755
+    ## HearingLate:reversed-DeafEarly:forward       -0.01358964 -0.5609907
+    ## HearingNovice:reversed-DeafEarly:forward     -0.33400749 -0.8950615
+    ## HearingLate:forward-DeafLate:forward         -0.05602469 -0.6120467
+    ## HearingNovice:forward-DeafLate:forward       -0.15503933 -0.7245077
+    ## DeafEarly:reversed-DeafLate:forward          -0.31396446 -0.8391942
+    ## DeafLate:reversed-DeafLate:forward           -0.06978014 -0.6141652
+    ## HearingLate:reversed-DeafLate:forward        -0.19487097 -0.7508930
+    ## HearingNovice:reversed-DeafLate:forward      -0.51528883 -1.0847572
+    ## HearingNovice:forward-HearingLate:forward    -0.09901464 -0.6889942
+    ## DeafEarly:reversed-HearingLate:forward       -0.25793977 -0.8053408
+    ## DeafLate:reversed-HearingLate:forward        -0.01375545 -0.5795616
+    ## HearingLate:reversed-HearingLate:forward     -0.13884628 -0.7158576
+    ## HearingNovice:reversed-HearingLate:forward   -0.45926414 -1.0492436
+    ## DeafEarly:reversed-HearingNovice:forward     -0.15892513 -0.7199791
+    ## DeafLate:reversed-HearingNovice:forward       0.08525919 -0.4937662
+    ## HearingLate:reversed-HearingNovice:forward   -0.03983164 -0.6298112
+    ## HearingNovice:reversed-HearingNovice:forward -0.36024950 -0.9629182
+    ## DeafLate:reversed-DeafEarly:reversed          0.24418431 -0.2913924
+    ## HearingLate:reversed-DeafEarly:reversed       0.11909348 -0.4283075
+    ## HearingNovice:reversed-DeafEarly:reversed    -0.20132437 -0.7623784
+    ## HearingLate:reversed-DeafLate:reversed       -0.12509083 -0.6908970
+    ## HearingNovice:reversed-DeafLate:reversed     -0.44550869 -1.0245340
+    ## HearingNovice:reversed-HearingLate:reversed  -0.32041786 -0.9103974
+    ##                                                     upr     p adj
+    ## DeafLate:forward-DeafEarly:forward           0.70651110 0.9614976
+    ## HearingLate:forward-DeafEarly:forward        0.67265767 0.9965412
+    ## HearingNovice:forward-DeafEarly:forward      0.58729603 0.9999999
+    ## DeafEarly:reversed-DeafEarly:forward         0.38341151 0.9929145
+    ## DeafLate:reversed-DeafEarly:forward          0.64707791 0.9980947
+    ## HearingLate:reversed-DeafEarly:forward       0.53381139 1.0000000
+    ## HearingNovice:reversed-DeafEarly:forward     0.22704653 0.5913057
+    ## HearingLate:forward-DeafLate:forward         0.49999735 0.9999849
+    ## HearingNovice:forward-DeafLate:forward       0.41442906 0.9900034
+    ## DeafEarly:reversed-DeafLate:forward          0.21126530 0.5862038
+    ## DeafLate:reversed-DeafLate:forward           0.47460487 0.9999221
+    ## HearingLate:reversed-DeafLate:forward        0.36115107 0.9582064
+    ## HearingNovice:reversed-DeafLate:forward      0.05417956 0.1060821
+    ## HearingNovice:forward-HearingLate:forward    0.49096487 0.9995291
+    ## DeafEarly:reversed-HearingLate:forward       0.28946126 0.8260434
+    ## DeafLate:reversed-HearingLate:forward        0.55205072 1.0000000
+    ## HearingLate:reversed-HearingLate:forward     0.43816506 0.9952726
+    ## HearingNovice:reversed-HearingLate:forward   0.13071537 0.2473425
+    ## DeafEarly:reversed-HearingNovice:forward     0.40212889 0.9873632
+    ## DeafLate:reversed-HearingNovice:forward      0.66428454 0.9998023
+    ## HearingLate:reversed-HearingNovice:forward   0.55014787 0.9999990
+    ## HearingNovice:reversed-HearingNovice:forward 0.24241919 0.5862222
+    ## DeafLate:reversed-DeafEarly:reversed         0.77976103 0.8490339
+    ## HearingLate:reversed-DeafEarly:reversed      0.66649451 0.9974807
+    ## HearingNovice:reversed-DeafEarly:reversed    0.35972965 0.9526484
+    ## HearingLate:reversed-DeafLate:reversed       0.44071534 0.9972122
+    ## HearingNovice:reversed-DeafLate:reversed     0.13351667 0.2608580
+    ## HearingNovice:reversed-HearingLate:reversed  0.26956165 0.6978317
+
+MouthEye
+--------
+
+We've also got a moutheye ratio! Maybe something there, too.
+
+``` r
+moutheye_info <- fulldata %>%
+  filter(eye_exclude == FALSE) %>%
+  group_by(maingroup, direction, participant) %>%
+  summarise(moutheye = mean(moutheye, na.rm = TRUE)) %>%
+  group_by(maingroup, direction) %>%
+  summarise(mean = mean(moutheye, na.rm = TRUE),
+            sd = sd(moutheye, na.rm = TRUE),
+            n = n(),
+            se = sd/sqrt(n))
+
+ggplot(moutheye_info, aes(x = maingroup, y = mean, fill = direction, color = direction)) +
+  geom_point(stat = "identity", position = position_dodge(0.5)) + 
+  geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.5), width = 0.5) +
+  labs(title = "MouthEye Ratio", subtitle = "Error bars represent SE", x = "", y = "moutheye ratio") +
+  scale_y_continuous(limits = c(-1,1))
+```
+
+![](09finaldata_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-5-1.png)
+
+And Moutheye ANOVA.
+
+``` r
+# MouthEye ANOVA but remember, participant-level first!
+me_aov <- fulldata %>%
+  group_by(maingroup, participant, direction) %>%
+  summarise(moutheye = mean(moutheye, na.rm = TRUE)) %>%
+  aov(moutheye ~ maingroup * direction, data = .)
+summary(me_aov)
+```
+
+    ##                     Df Sum Sq Mean Sq F value Pr(>F)  
+    ## maingroup            3  2.165  0.7218   2.652 0.0533 .
+    ## direction            1  0.131  0.1312   0.482 0.4892  
+    ## maingroup:direction  3  0.241  0.0804   0.296 0.8286  
+    ## Residuals           92 25.035  0.2721                 
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 4 observations deleted due to missingness
+
+``` r
+TukeyHSD(me_aov)
+```
+
+    ##   Tukey multiple comparisons of means
+    ##     95% family-wise confidence level
+    ## 
+    ## Fit: aov(formula = moutheye ~ maingroup * direction, data = .)
+    ## 
+    ## $maingroup
+    ##                                   diff         lwr          upr     p adj
+    ## DeafLate-DeafEarly        -0.058776004 -0.42742730  0.309875290 0.9754099
+    ## HearingLate-DeafEarly     -0.381706457 -0.76282392 -0.000588997 0.0494956
+    ## HearingNovice-DeafEarly   -0.061136623 -0.44705445  0.324781203 0.9758569
+    ## HearingLate-DeafLate      -0.322930453 -0.71365216  0.067791253 0.1415325
+    ## HearingNovice-DeafLate    -0.002360619 -0.39776611  0.393044871 0.9999986
+    ## HearingNovice-HearingLate  0.320569834 -0.08648329  0.727622955 0.1738594
+    ## 
+    ## $direction
+    ##                        diff        lwr       upr     p adj
+    ## reversed-forward -0.0724788 -0.2798536 0.1348961 0.4893376
+    ## 
+    ## $`maingroup:direction`
+    ##                                                     diff        lwr
+    ## DeafLate:forward-DeafEarly:forward           -0.02323934 -0.6245312
+    ## HearingLate:forward-DeafEarly:forward        -0.27511698 -0.9017909
+    ## HearingNovice:forward-DeafEarly:forward      -0.08352026 -0.7258243
+    ## DeafEarly:reversed-DeafEarly:forward         -0.01110222 -0.6123941
+    ## DeafLate:reversed-DeafEarly:forward          -0.11184810 -0.7385220
+    ## HearingLate:reversed-DeafEarly:forward       -0.50919251 -1.1514966
+    ## HearingNovice:reversed-DeafEarly:forward     -0.04947236 -0.6917764
+    ## HearingLate:forward-DeafLate:forward         -0.25187764 -0.8884210
+    ## HearingNovice:forward-DeafLate:forward       -0.06028092 -0.7122179
+    ## DeafEarly:reversed-DeafLate:forward           0.01213713 -0.5994340
+    ## DeafLate:reversed-DeafLate:forward           -0.08860876 -0.7251521
+    ## HearingLate:reversed-DeafLate:forward        -0.48595316 -1.1378902
+    ## HearingNovice:reversed-DeafLate:forward      -0.02623302 -0.6781700
+    ## HearingNovice:forward-HearingLate:forward     0.19159672 -0.4838217
+    ## DeafEarly:reversed-HearingLate:forward        0.26401477 -0.3725286
+    ## DeafLate:reversed-HearingLate:forward         0.16326888 -0.4973034
+    ## HearingLate:reversed-HearingLate:forward     -0.23407552 -0.9094940
+    ## HearingNovice:reversed-HearingLate:forward    0.22564462 -0.4497738
+    ## DeafEarly:reversed-HearingNovice:forward      0.07241805 -0.5795189
+    ## DeafLate:reversed-HearingNovice:forward      -0.02832784 -0.7037463
+    ## HearingLate:reversed-HearingNovice:forward   -0.42567224 -1.1156175
+    ## HearingNovice:reversed-HearingNovice:forward  0.03404790 -0.6558974
+    ## DeafLate:reversed-DeafEarly:reversed         -0.10074589 -0.7372893
+    ## HearingLate:reversed-DeafEarly:reversed      -0.49809029 -1.1500273
+    ## HearingNovice:reversed-DeafEarly:reversed    -0.03837015 -0.6903071
+    ## HearingLate:reversed-DeafLate:reversed       -0.39734440 -1.0727629
+    ## HearingNovice:reversed-DeafLate:reversed      0.06237574 -0.6130427
+    ## HearingNovice:reversed-HearingLate:reversed   0.45972015 -0.2302251
+    ##                                                    upr     p adj
+    ## DeafLate:forward-DeafEarly:forward           0.5780525 1.0000000
+    ## HearingLate:forward-DeafEarly:forward        0.3515569 0.8719243
+    ## HearingNovice:forward-DeafEarly:forward      0.5587838 0.9999136
+    ## DeafEarly:reversed-DeafEarly:forward         0.5901897 1.0000000
+    ## DeafLate:reversed-DeafEarly:forward          0.5148258 0.9992899
+    ## HearingLate:reversed-DeafEarly:forward       0.1331116 0.2264623
+    ## HearingNovice:reversed-DeafEarly:forward     0.5928317 0.9999976
+    ## HearingLate:forward-DeafLate:forward         0.3846657 0.9216637
+    ## HearingNovice:forward-DeafLate:forward       0.5916561 0.9999915
+    ## DeafEarly:reversed-DeafLate:forward          0.6237082 1.0000000
+    ## DeafLate:reversed-DeafLate:forward           0.5479346 0.9998633
+    ## HearingLate:reversed-DeafLate:forward        0.1659838 0.2984707
+    ## HearingNovice:reversed-DeafLate:forward      0.6257040 1.0000000
+    ## HearingNovice:forward-HearingLate:forward    0.8670152 0.9871789
+    ## DeafEarly:reversed-HearingLate:forward       0.9005582 0.9016148
+    ## DeafLate:reversed-HearingLate:forward        0.8238412 0.9943902
+    ## HearingLate:reversed-HearingLate:forward     0.4413429 0.9604359
+    ## HearingNovice:reversed-HearingLate:forward   0.9010631 0.9675629
+    ## DeafEarly:reversed-HearingNovice:forward     0.7243550 0.9999703
+    ## DeafLate:reversed-HearingNovice:forward      0.6470906 1.0000000
+    ## HearingLate:reversed-HearingNovice:forward   0.2642730 0.5452564
+    ## HearingNovice:reversed-HearingNovice:forward 0.7239932 0.9999999
+    ## DeafLate:reversed-DeafEarly:reversed         0.5357975 0.9996780
+    ## HearingLate:reversed-DeafEarly:reversed      0.1538467 0.2686661
+    ## HearingNovice:reversed-DeafEarly:reversed    0.6135668 0.9999996
+    ## HearingLate:reversed-DeafLate:reversed       0.2780741 0.6051160
+    ## HearingNovice:reversed-DeafLate:reversed     0.7377942 0.9999916
+    ## HearingNovice:reversed-HearingLate:reversed  1.1496654 0.4439614
+
+Heat Maps
+=========
+
+And finally, we're going to do heat maps.
+
+``` r
+eyegaze_heat <- fulldata %>%
+  ungroup() %>%
+  filter(eye_exclude == FALSE) %>%
+  select(id:direction, belly, lowerchest, midchest, upperchest, neck, mouth, eyes, forehead) %>%
+  gather(aoi, percent, belly:forehead) %>%
+  group_by(maingroup, participant, direction, aoi) %>%
+  summarise(percent = mean(percent, na.rm=TRUE)) %>%
+  group_by(maingroup,direction,aoi) %>%
+  summarise(percent = mean(percent, na.rm=TRUE)) %>%
+  ungroup() %>%
+  filter(!is.na(aoi)) %>%
+  mutate(aoi = factor(aoi,levels=c("belly","lowerchest","midchest",
+                                   "upperchest","neck","mouth","eyes","forehead")))
+
+eyegaze_heat_all <- fulldata %>%
+  ungroup() %>%
+  filter(eye_exclude == FALSE) %>%
+  select(id:direction, belly, lowerchest, midchest, upperchest, neck, mouth, eyes, forehead) %>%
+  gather(aoi, percent, belly:forehead) %>%
+  group_by(maingroup,participant,direction,aoi) %>%
+  dplyr::summarize(percent = mean(percent, na.rm=TRUE)) %>%
+  group_by(maingroup,direction,aoi) %>%
+  dplyr::summarize(percent = mean(percent, na.rm=TRUE)) %>%
+  group_by(maingroup,aoi) %>%
+  dplyr::summarize(percent = mean(percent, na.rm=TRUE)) %>%
+  ungroup() %>%
+  filter(!is.na(aoi)) %>%
+  mutate(aoi = factor(aoi,levels=c("belly","lowerchest","midchest",
+                                   "upperchest","neck","mouth","eyes","forehead")))
+
+ggplot(eyegaze_heat, aes(x = maingroup, y = aoi)) +
+  geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
+#  scale_fill_gradient(low = "lightblue",high = "steelblue") +
+#  scale_fill_distiller(type="div", palette = "RdYlBu") +
+  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,1)) +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) + facet_grid(. ~ direction) +
+  ylab("") + xlab("") + ggtitle("Eye Gaze Heat Map, by Direction")
+```
+
+![](09finaldata_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-1.png)
+
+``` r
+ggplot(eyegaze_heat_all, aes(x = maingroup, y = aoi)) +
+  geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
+#  scale_fill_gradient(low = "lightblue",high = "steelblue") +
+#  scale_fill_distiller(type="div", palette = "RdYlBu") +
+  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,1)) +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) +
+  ylab("") + xlab("") + ggtitle("Eye Gaze Heat Map (Direction Collapsed)")
+```
+
+![](09finaldata_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-2.png)
+
+Summary
+=======
+
+1.  For **gist**, there are significant main effects of group and direction. The effect of group is driven by HearingNovice doing poorly. Also, all groups do worse with reversed stories. There is also a significant group x direction interaction which we need to sort out.
+
+2.  For **lexical recall**, there are significant main effects of group and direction. The group effect is driven again by HearingNovice. All groups perform poorly when asked to recall signs from reversed stories. There is no group x direction interaction.
+
+3.  For **AoA correlations** there are no significant correlations for deaf and hearing groups separately. When we combine them all in one dataset, there are significant correlations between AoASL and Forward Gist, Reversed Gist, and Reversed Lexical Recall. I worry those may just be driven by HearingNovice, however.
+
+4.  For **eye gaze** there are no significant effects of group or direction on looking at the forehead, eyes, mouth, or neck AOIs. There is a significant effect of group on looking at the upperchest AOI which is driven by HearingNovice.
+
+5.  I modified the **FaceChest** ratio so that the neck AOI is now in Chest, instead of Face (similar to how we do it with babies/children). This significantly changes the variability of the FaceChest measure. However, an ANOVA showed no significant effects of direction or group on this metric. Similar ANOVA outcome for **MouthEye**.
+
+6.  These analysis does not give us any concrete differences between early and late AoA for any of the above measurements...it's not finding the critical AoA cutoff.
 
 Rain's Notes
 ============

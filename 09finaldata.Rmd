@@ -23,10 +23,10 @@ Throughout all the data analysis we've done, the datasets have become more fragm
 ```{r smash data together, message=FALSE, warning=FALSE}
 # Libraries
 library(tidyverse)
-library(stringr)
 library(lme4)
 library(lmerTest)
 library(scales)
+library(viridis)
 
 # Load lex and eye data
 cleanlexdata <- read_csv("cleandata.csv") %>%
@@ -166,7 +166,7 @@ ggplot(lex_bar, aes(x = maingroup, y = mean, fill = direction)) +
 
 ## ANOVAs
 
-Here, ANOVAs are done with **Direction Included.** Gist first, with Tukey's comparisons. 
+Here, ANOVAs are done with **direction Included.** Gist first, with Tukey's comparisons. 
 
 ```{r gist anova}
 # Gist ANOVA. We have to make participant-level means first. 
@@ -174,9 +174,9 @@ gist_aov <- fulldata %>%
   group_by(maingroup, participant, direction) %>%
   summarise(gist = mean(gist, na.rm = TRUE)) %>%
 #  filter(direction != "reversed") %>%
-  lm(gist ~ maingroup * direction, data = .)
-summary(aov(gist_aov))
-TukeyHSD(aov(gist_aov))
+  aov(gist ~ maingroup * direction, data = .)
+summary(gist_aov)
+TukeyHSD(gist_aov)
 ```
 
 And Lexical Recall ANOVA with Tukey's comparisons. 
@@ -187,9 +187,9 @@ lex_aov <- fulldata %>%
   group_by(maingroup, participant, direction) %>%
   summarise(acc = mean(acc, na.rm = TRUE)) %>%
 #  filter(direction != "reversed") %>%
-  lm(acc ~ maingroup * direction, data = .)
-summary(aov(lex_aov))
-TukeyHSD(aov(lex_aov))
+  aov(acc ~ maingroup * direction, data = .)
+summary(lex_aov)
+TukeyHSD(lex_aov)
 ```
 
 ## AoA Correlations
@@ -308,28 +308,29 @@ aoi5_data <- fulldata %>%
   spread(aoi, percent)
 
 print("Forehead ANOVA")
-forehead_aov <- lm(forehead ~ maingroup * direction, data = aoi5_data)
-summary(aov(forehead_aov))
+forehead_aov <- aov(forehead ~ maingroup * direction, data = aoi5_data)
+summary(forehead_aov)
 cat(paste("","\n",""))
 
 print("Eyes ANOVA")
-eyes_aov <- lm(eyes ~ maingroup * direction, data = aoi5_data)
-summary(aov(eyes_aov))
+eyes_aov <- aov(eyes ~ maingroup * direction, data = aoi5_data)
+summary(eyes_aov)
 cat(paste("","\n",""))
 
 print("Mouth ANOVA")
-mouth_aov <- lm(mouth ~ maingroup * direction, data = aoi5_data)
-summary(aov(mouth_aov))
+mouth_aov <- aov(mouth ~ maingroup * direction, data = aoi5_data)
+summary(mouth_aov)
 cat(paste("","\n",""))
 
 print("Neck ANOVA")
-neck_aov <- lm(neck ~ maingroup * direction, data = aoi5_data)
-summary(aov(neck_aov))
+neck_aov <- aov(neck ~ maingroup * direction, data = aoi5_data)
+summary(neck_aov)
 cat(paste("","\n",""))
 
 print("UpperChest ANOVA")
-upperchest_aov <- lm(upperchest ~ maingroup * direction, data = aoi5_data)
-summary(aov(upperchest_aov))
+upperchest_aov <- aov(upperchest ~ maingroup * direction, data = aoi5_data)
+summary(upperchest_aov)
+TukeyHSD(upperchest_aov)
 cat(paste("","\n",""))
 ```
 
@@ -381,17 +382,113 @@ ggplot(facechest_info, aes(x = maingroup, y = mean, fill = direction, color = di
   geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.5), width = 0.5) +
   labs(title = "FaceChest Ratio", subtitle = "Error bars represent SE", x = "", y = "facechest ratio") +
   scale_y_continuous(limits = c(-1,1))
-
 ```
-
 
 Now let's do the ANOVA. 
 ```{r}
-fc_aov <- lm(facechest ~ maingroup * direction, data = fulldata)
-summary(aov(fc_aov))
-TukeyHSD(aov(fc_aov))
+# FaceChest ANOVA but remember, participant-level first!
+fc_aov <- fulldata %>%
+  group_by(maingroup, participant, direction) %>%
+  summarise(facechest = mean(facechest, na.rm = TRUE)) %>%
+  aov(facechest ~ maingroup * direction, data = .)
+summary(fc_aov)
+TukeyHSD(fc_aov)
 ```
 
+## MouthEye
+We've also got a moutheye ratio! Maybe something there, too.
+```{r}
+moutheye_info <- fulldata %>%
+  filter(eye_exclude == FALSE) %>%
+  group_by(maingroup, direction, participant) %>%
+  summarise(moutheye = mean(moutheye, na.rm = TRUE)) %>%
+  group_by(maingroup, direction) %>%
+  summarise(mean = mean(moutheye, na.rm = TRUE),
+            sd = sd(moutheye, na.rm = TRUE),
+            n = n(),
+            se = sd/sqrt(n))
+
+ggplot(moutheye_info, aes(x = maingroup, y = mean, fill = direction, color = direction)) +
+  geom_point(stat = "identity", position = position_dodge(0.5)) + 
+  geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.5), width = 0.5) +
+  labs(title = "MouthEye Ratio", subtitle = "Error bars represent SE", x = "", y = "moutheye ratio") +
+  scale_y_continuous(limits = c(-1,1))
+```
+
+And Moutheye ANOVA.
+```{r}
+# MouthEye ANOVA but remember, participant-level first!
+me_aov <- fulldata %>%
+  group_by(maingroup, participant, direction) %>%
+  summarise(moutheye = mean(moutheye, na.rm = TRUE)) %>%
+  aov(moutheye ~ maingroup * direction, data = .)
+summary(me_aov)
+TukeyHSD(me_aov)
+```
+
+# Heat Maps
+And finally, we're going to do heat maps. 
+```{r}
+eyegaze_heat <- fulldata %>%
+  ungroup() %>%
+  filter(eye_exclude == FALSE) %>%
+  select(id:direction, belly, lowerchest, midchest, upperchest, neck, mouth, eyes, forehead) %>%
+  gather(aoi, percent, belly:forehead) %>%
+  group_by(maingroup, participant, direction, aoi) %>%
+  summarise(percent = mean(percent, na.rm=TRUE)) %>%
+  group_by(maingroup,direction,aoi) %>%
+  summarise(percent = mean(percent, na.rm=TRUE)) %>%
+  ungroup() %>%
+  filter(!is.na(aoi)) %>%
+  mutate(aoi = factor(aoi,levels=c("belly","lowerchest","midchest",
+                                   "upperchest","neck","mouth","eyes","forehead")))
+
+eyegaze_heat_all <- fulldata %>%
+  ungroup() %>%
+  filter(eye_exclude == FALSE) %>%
+  select(id:direction, belly, lowerchest, midchest, upperchest, neck, mouth, eyes, forehead) %>%
+  gather(aoi, percent, belly:forehead) %>%
+  group_by(maingroup,participant,direction,aoi) %>%
+  dplyr::summarize(percent = mean(percent, na.rm=TRUE)) %>%
+  group_by(maingroup,direction,aoi) %>%
+  dplyr::summarize(percent = mean(percent, na.rm=TRUE)) %>%
+  group_by(maingroup,aoi) %>%
+  dplyr::summarize(percent = mean(percent, na.rm=TRUE)) %>%
+  ungroup() %>%
+  filter(!is.na(aoi)) %>%
+  mutate(aoi = factor(aoi,levels=c("belly","lowerchest","midchest",
+                                   "upperchest","neck","mouth","eyes","forehead")))
+
+ggplot(eyegaze_heat, aes(x = maingroup, y = aoi)) +
+  geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
+#  scale_fill_gradient(low = "lightblue",high = "steelblue") +
+#  scale_fill_distiller(type="div", palette = "RdYlBu") +
+  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,1)) +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) + facet_grid(. ~ direction) +
+  ylab("") + xlab("") + ggtitle("Eye Gaze Heat Map, by Direction")
+
+ggplot(eyegaze_heat_all, aes(x = maingroup, y = aoi)) +
+  geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
+#  scale_fill_gradient(low = "lightblue",high = "steelblue") +
+#  scale_fill_distiller(type="div", palette = "RdYlBu") +
+  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,1)) +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) +
+  ylab("") + xlab("") + ggtitle("Eye Gaze Heat Map (Direction Collapsed)")
+```
+
+# Summary
+
+1. For **gist**, there are significant main effects of group and direction. The effect of group is driven by HearingNovice doing poorly. Also, all groups do worse with reversed stories. There is also a significant group x direction interaction which we need to sort out. 
+
+1. For **lexical recall**, there are significant main effects of group and direction. The group effect is driven again by HearingNovice. All groups perform poorly when asked to recall signs from reversed stories. There is no group x direction interaction. 
+
+1. For **AoA correlations** there are no significant correlations for deaf and hearing groups separately. When we combine them all in one dataset, there are significant correlations between AoASL and Forward Gist, Reversed Gist, and Reversed Lexical Recall. I worry those may just be driven by HearingNovice, however. 
+
+1. For **eye gaze** there are no significant effects of group or direction on looking at the forehead, eyes, mouth, or neck AOIs. There is a significant effect of group on looking at the upperchest AOI which is driven by HearingNovice. 
+
+1. I modified the **FaceChest** ratio so that the neck AOI is now in Chest, instead of Face (similar to how we do it with babies/children). This significantly changes the variability of the FaceChest measure. However, an ANOVA showed no significant effects of direction or group on this metric. Similar ANOVA outcome for **MouthEye**. 
+
+1. These analysis does not give us any concrete differences between early and late AoA for any of the above measurements...it's not finding the critical AoA cutoff.  
 
 # Rain's Notes
 About Adults:
