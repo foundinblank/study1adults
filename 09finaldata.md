@@ -9,10 +9,8 @@ Adam Stone, PhD
     -   [Tables & Charts](#tables-charts)
     -   [ANOVA Plan](#anova-plan)
     -   [Gist ANOVAs](#gist-anovas)
-    -   [Summary of Gist ANOVAs](#summary-of-gist-anovas)
     -   [Lexical Recall ANOVAs](#lexical-recall-anovas)
-    -   [Summary of Lexical Recall ANOVAs](#summary-of-lexical-recall-anovas)
-    -   [AoA Correlations](#aoa-correlations)
+-   [AoA Correlations](#aoa-correlations)
 -   [Eye Gaze Data](#eye-gaze-data)
     -   [Forehead](#forehead)
     -   [Eyes](#eyes)
@@ -24,7 +22,6 @@ Adam Stone, PhD
 -   [Heat Maps](#heat-maps)
 -   [Summary](#summary)
 -   [Rain's Notes](#rains-notes)
--   [Gist as binomial logit-link function model](#gist-as-binomial-logit-link-function-model)
 
 Putting It All Back Together
 ============================
@@ -353,9 +350,6 @@ Gist ANOVAs
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-Summary of Gist ANOVAs
-----------------------
-
 Lexical Recall ANOVAs
 ---------------------
 
@@ -492,11 +486,8 @@ Lexical Recall ANOVAs
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-Summary of Lexical Recall ANOVAs
---------------------------------
-
 AoA Correlations
-----------------
+================
 
 Next, we want to look at correlations between AoA and Gist, and betwen AoA and Lexical Recall. Rain asked for forward and reversed separately (1) deaf only, (2) hearing only, and (3) both. Let's make it work.
 
@@ -961,6 +952,21 @@ Mouth
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
+    ##                              difference pvalue signif.         LCL
+    ## DeafEarly - DeafLate        -0.06025012 0.3776         -0.19516772
+    ## DeafEarly - HearingLate      0.11851495 0.0945       . -0.02077004
+    ## DeafEarly - HearingNovice    0.08382286 0.2467         -0.05893611
+    ## DeafLate - HearingLate       0.17876508 0.0146       *  0.03608239
+    ## DeafLate - HearingNovice     0.14407298 0.0532       . -0.00200290
+    ## HearingLate - HearingNovice -0.03469210 0.6474         -0.18481109
+    ##                                    UCL
+    ## DeafEarly - DeafLate        0.07466748
+    ## DeafEarly - HearingLate     0.25779995
+    ## DeafEarly - HearingNovice   0.22658183
+    ## DeafLate - HearingLate      0.32144776
+    ## DeafLate - HearingNovice    0.29014886
+    ## HearingLate - HearingNovice 0.11542690
+
 1.  ANOVA with factor MainGroup, for Forward only.
 
 <!-- -->
@@ -1136,6 +1142,21 @@ Upperchest
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 13 observations deleted due to missingness
 
+    ##                                difference pvalue signif.         LCL
+    ## DeafEarly - DeafLate         0.0007914082 0.9476         -0.02307873
+    ## DeafEarly - HearingLate     -0.0066520381 0.5953         -0.03147010
+    ## DeafEarly - HearingNovice   -0.0450163736 0.0005     *** -0.06983443
+    ## DeafLate - HearingLate      -0.0074434462 0.5664         -0.03316345
+    ## DeafLate - HearingNovice    -0.0458077818 0.0007     *** -0.07152779
+    ## HearingLate - HearingNovice -0.0383643355 0.0052      ** -0.06496643
+    ##                                     UCL
+    ## DeafEarly - DeafLate         0.02466155
+    ## DeafEarly - HearingLate      0.01816602
+    ## DeafEarly - HearingNovice   -0.02019831
+    ## DeafLate - HearingLate       0.01827656
+    ## DeafLate - HearingNovice    -0.02008777
+    ## HearingLate - HearingNovice -0.01176224
+
 1.  ANOVA with factor MainGroup, for Forward only.
 
 <!-- -->
@@ -1155,6 +1176,21 @@ Upperchest
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 8 observations deleted due to missingness
+
+    ##                               difference pvalue signif.         LCL
+    ## DeafEarly - DeafLate        -0.011270136 0.5274         -0.04701509
+    ## DeafEarly - HearingLate     -0.015910257 0.3859         -0.05261053
+    ## DeafEarly - HearingNovice   -0.069636670 0.0006     *** -0.10747183
+    ## DeafLate - HearingLate      -0.004640121 0.8068         -0.04276341
+    ## DeafLate - HearingNovice    -0.058366534 0.0046      ** -0.09758355
+    ## HearingLate - HearingNovice -0.053726414 0.0099      ** -0.09381610
+    ##                                     UCL
+    ## DeafEarly - DeafLate         0.02447482
+    ## DeafEarly - HearingLate      0.02079002
+    ## DeafEarly - HearingNovice   -0.03180151
+    ## DeafLate - HearingLate       0.03348317
+    ## DeafLate - HearingNovice    -0.01914952
+    ## HearingLate - HearingNovice -0.01363673
 
 1.  ANCOVA with factors Hearing & Direction, and covariate AoASL and Age.
 
@@ -1380,6 +1416,21 @@ And Moutheye ANOVAs. Also skipping LSDs here.
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 3 observations deleted due to missingness
 
+    ##                               difference pvalue signif.         LCL
+    ## DeafEarly - DeafLate         0.058776004 0.6775         -0.22104096
+    ## DeafEarly - HearingLate      0.381706457 0.0103       *  0.09242731
+    ## DeafEarly - HearingNovice    0.061136623 0.6795         -0.23178614
+    ## DeafLate - HearingLate       0.322930453 0.0332       *  0.02636140
+    ## DeafLate - HearingNovice     0.002360619 0.9876         -0.29776356
+    ## HearingLate - HearingNovice -0.320569834 0.0422       * -0.62953490
+    ##                                     UCL
+    ## DeafEarly - DeafLate         0.33859297
+    ## DeafEarly - HearingLate      0.67098561
+    ## DeafEarly - HearingNovice    0.35405939
+    ## DeafLate - HearingLate       0.61949950
+    ## DeafLate - HearingNovice     0.30248479
+    ## HearingLate - HearingNovice -0.01160477
+
 1.  ANOVA with factor MainGroup, for Forward only.
 
 <!-- -->
@@ -1498,7 +1549,7 @@ ggplot(eyegaze_heat, aes(x = maingroup, y = aoi)) +
   ylab("") + xlab("") + ggtitle("Eye Gaze Heat Map, by Direction")
 ```
 
-![](09finaldata_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-1-1.png)
+![](09finaldata_files/figure-markdown_github-ascii_identifiers/heat%20map-1.png)
 
 ``` r
 ggplot(eyegaze_heat_all, aes(x = maingroup, y = aoi)) +
@@ -1510,22 +1561,97 @@ ggplot(eyegaze_heat_all, aes(x = maingroup, y = aoi)) +
   ylab("") + xlab("") + ggtitle("Eye Gaze Heat Map (Direction Collapsed)")
 ```
 
-![](09finaldata_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-1-2.png)
+![](09finaldata_files/figure-markdown_github-ascii_identifiers/heat%20map-2.png)
 
 Summary
 =======
 
-1.  For **gist**, there are significant main effects of group and direction. The effect of group is driven by HearingNovice doing poorly. Also, all groups do worse with reversed stories. There is also a significant group x direction interaction which we need to sort out.
+Below are the p-values from the ANOVAs with 4 MainGroups. I never included Age as a covariate because it never improved the model. I included all ANOVAs for Gist and Lex Recall, and ANOVAs for any eye AOI or ratio was included only if either maingroup or direction was significant. Deafearly-Deaflate shows the LSD p-value for that comparison.
 
-2.  For **lexical recall**, there are significant main effects of group and direction. The group effect is driven again by HearingNovice. All groups perform poorly when asked to recall signs from reversed stories. There is no group x direction interaction.
+``` r
+results1 <- structure(list(model = c("gist-maingroup-both", "gist-maingroup-fw", 
+"gist-maingroup-rv", "lexrecall-maingroup-both", "lexrecall-maingroup-fw", 
+"lexrecall-maingroup-rv", "mouth-maingroup-both", "upperchest-maingroup-both", 
+"upperchest-maingroup-rv", "facechest-maingroup-both", "moutheye-maingroup-both"
+), maingroup = c(0, 0, 0.01, 0, 0.04, 0.02, 0.06, 0, 0.01, 0.1, 
+0.05), direction = c(0, NA, NA, 0, NA, NA, 0.06, 0.16, NA, 0.07, 
+0.48), `deafearly-deaflate` = c(0.1, 0.69, 0.02, 0.11, 0.95, 
+0.06, 0.38, 0.94, 0.52, 0.08, 0.68)), .Names = c("model", "maingroup", 
+"direction", "deafearly-deaflate"), class = c("tbl_df", "tbl", 
+"data.frame"), row.names = c(NA, -11L))
 
-3.  For **AoA correlations** there are no significant correlations for deaf and hearing groups separately. When we combine them all in one dataset, there are significant correlations between AoASL and Forward Gist, Reversed Gist, and Reversed Lexical Recall. I worry those may just be driven by HearingNovice, however.
+results1
+```
 
-4.  For **eye gaze** there are no significant effects of group or direction on looking at the forehead, eyes, mouth, or neck AOIs. There is a significant effect of group on looking at the upperchest AOI which is driven by HearingNovice.
+    ## # A tibble: 11 x 4
+    ##                        model maingroup direction `deafearly-deaflate`
+    ##                        <chr>     <dbl>     <dbl>                <dbl>
+    ##  1       gist-maingroup-both      0.00      0.00                 0.10
+    ##  2         gist-maingroup-fw      0.00        NA                 0.69
+    ##  3         gist-maingroup-rv      0.01        NA                 0.02
+    ##  4  lexrecall-maingroup-both      0.00      0.00                 0.11
+    ##  5    lexrecall-maingroup-fw      0.04        NA                 0.95
+    ##  6    lexrecall-maingroup-rv      0.02        NA                 0.06
+    ##  7      mouth-maingroup-both      0.06      0.06                 0.38
+    ##  8 upperchest-maingroup-both      0.00      0.16                 0.94
+    ##  9   upperchest-maingroup-rv      0.01        NA                 0.52
+    ## 10  facechest-maingroup-both      0.10      0.07                 0.08
+    ## 11   moutheye-maingroup-both      0.05      0.48                 0.68
 
-5.  I modified the **FaceChest** ratio so that the neck AOI is now in Chest, instead of Face (similar to how we do it with babies/children). This significantly changes the variability of the FaceChest measure. However, an ANOVA showed no significant effects of direction or group on this metric. Similar ANOVA outcome for **MouthEye**.
+And below are the p-values from the ANCOVAs with Hearing & AoASL. I included all ANCOVAs for Gist and Lex Recall, and ANCOVAs for any eye AOI or ratio was included only if either maingroup or direction was significant. LSD comparisons are not needed because there's only 2 levels in each group!
 
-6.  These analysis does not give us any concrete differences between early and late AoA for any of the above measurements...it's not finding the critical AoA cutoff.
+``` r
+results2 <- structure(list(model = c("gist-both", "gist-fw", "gist-rv", "lex-both", 
+"lex-fw", "lex-rv", "forehead-fw", "mouth-both", "mouth-rv", 
+"upperchest-both", "upperchest-rv", "facechest-both", "moutheye-both"
+), hearing = c(0, 0.00, 0.01, 0.01, 0.22, 0.03, 0.06, 0.01, 
+0.04, 0.01, 0.01, 0.35, 0.07), direction = c(0, NA, NA, 0, NA, 
+NA, NA, 0.05, NA, 0.21, NA, 0.05, 0.52), aoasl = c(0.22, 0.77, 
+0.19, 0.56, 0.58, 0.25, 0.08, 0.06, 0.12, 0.68, 0.95, 0.12, 0.44
+), age = c(0.08, 0.01, 0.86, 0.09, 0.02, 0.7, 0.68, 0.28, 0.5, 
+0.02, 0.08, 0.00, 0.21)), .Names = c("model", "hearing", "direction", 
+"aoasl", "age"), class = c("tbl_df", "tbl", "data.frame"), row.names = c(NA, 
+-13L))
+results2
+```
+
+    ## # A tibble: 13 x 5
+    ##              model hearing direction aoasl   age
+    ##              <chr>   <dbl>     <dbl> <dbl> <dbl>
+    ##  1       gist-both    0.00      0.00  0.22  0.08
+    ##  2         gist-fw    0.00        NA  0.77  0.01
+    ##  3         gist-rv    0.01        NA  0.19  0.86
+    ##  4        lex-both    0.01      0.00  0.56  0.09
+    ##  5          lex-fw    0.22        NA  0.58  0.02
+    ##  6          lex-rv    0.03        NA  0.25  0.70
+    ##  7     forehead-fw    0.06        NA  0.08  0.68
+    ##  8      mouth-both    0.01      0.05  0.06  0.28
+    ##  9        mouth-rv    0.04        NA  0.12  0.50
+    ## 10 upperchest-both    0.01      0.21  0.68  0.02
+    ## 11   upperchest-rv    0.01        NA  0.95  0.08
+    ## 12  facechest-both    0.35      0.05  0.12  0.00
+    ## 13   moutheye-both    0.07      0.52  0.44  0.21
+
+Finally, the correlations for Deaf and Hearing separately are not significant. But there are significant correlations across all participants. I worry it is caused by HearingNovice, though...
+
+``` r
+results3 <- tribble(
+  ~ metric, ~ AoASLcorrelationRvalue, ~ Pvalue,
+  "gist-fw", -0.32, 0.019,
+  "gist-rv", -0.39, 0.004,
+  "lex-fw", -0.08, 0.567,
+  "lex-rv", -0.34, 0.014
+)
+results3
+```
+
+    ## # A tibble: 4 x 3
+    ##    metric AoASLcorrelationRvalue Pvalue
+    ##     <chr>                  <dbl>  <dbl>
+    ## 1 gist-fw                  -0.32  0.019
+    ## 2 gist-rv                  -0.39  0.004
+    ## 3  lex-fw                  -0.08  0.567
+    ## 4  lex-rv                  -0.34  0.014
 
 Rain's Notes
 ============
@@ -1535,71 +1661,3 @@ About Adults:
 -I think I want to write it up as an ANCOVA, with direction included. And LSD comparisons instead of Tukey. (I will do my own corrections) -You often have one liners summarizing results, in all tabs, those are nice, keep them coming. -(If you have reasons to present anything other than the ANCOVA, put that in your results tab)
 
 I think if we do it this way then we get a really important story to tell: That the *critical* AoA cutoff is below 4 vs above 4 years of age (two groups 0-4 vs 4-13). This suggest early ASL is important.
-
-Gist as binomial logit-link function model
-==========================================
-
-``` r
-gist_glmm <- glmer(gist ~ direction * maingroup + (1|id) + (1|story), data = fulldata, family=binomial (link="logit"))
-```
-
-    ## Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv, : Model is nearly unidentifiable: large eigenvalue ratio
-    ##  - Rescale variables?
-
-``` r
-summary(gist_glmm)
-```
-
-    ## Generalized linear mixed model fit by maximum likelihood (Laplace
-    ##   Approximation) [glmerMod]
-    ##  Family: binomial  ( logit )
-    ## Formula: gist ~ direction * maingroup + (1 | id) + (1 | story)
-    ##    Data: fulldata
-    ## 
-    ##      AIC      BIC   logLik deviance df.resid 
-    ##    167.6    200.9    -73.8    147.6      198 
-    ## 
-    ## Scaled residuals: 
-    ##     Min      1Q  Median      3Q     Max 
-    ## -3.3261 -0.3017  0.0000  0.2294  1.4668 
-    ## 
-    ## Random effects:
-    ##  Groups Name        Variance Std.Dev.
-    ##  id     (Intercept) 1.745    1.321   
-    ##  story  (Intercept) 1.952    1.397   
-    ## Number of obs: 208, groups:  id, 52; story, 4
-    ## 
-    ## Fixed effects:
-    ##                                          Estimate Std. Error z value
-    ## (Intercept)                                 4.696      1.492   3.147
-    ## directionreversed                          -3.490      1.259  -2.773
-    ## maingroupDeafLate                          16.931    286.428   0.059
-    ## maingroupHearingLate                       16.229    276.008   0.059
-    ## maingroupHearingNovice                     -4.926      1.512  -3.258
-    ## directionreversed:maingroupDeafLate       -18.937    286.427  -0.066
-    ## directionreversed:maingroupHearingLate    -18.605    276.009  -0.067
-    ## directionreversed:maingroupHearingNovice    1.606      1.484   1.082
-    ##                                          Pr(>|z|)   
-    ## (Intercept)                               0.00165 **
-    ## directionreversed                         0.00556 **
-    ## maingroupDeafLate                         0.95286   
-    ## maingroupHearingLate                      0.95311   
-    ## maingroupHearingNovice                    0.00112 **
-    ## directionreversed:maingroupDeafLate       0.94729   
-    ## directionreversed:maingroupHearingLate    0.94626   
-    ## directionreversed:maingroupHearingNovice  0.27934   
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 
-    ## Correlation of Fixed Effects:
-    ##             (Intr) drctnr mngrDL mngrHL mngrHN drc:DL drc:HL
-    ## dirctnrvrsd -0.772                                          
-    ## maingrpDfLt -0.002  0.001                                   
-    ## mngrpHrngLt  0.001 -0.001 -0.130                            
-    ## mngrpHrngNv -0.785  0.776  0.002 -0.001                     
-    ## drctnrvr:DL  0.001 -0.001 -1.000  0.130 -0.001              
-    ## drctnrvr:HL -0.002  0.001  0.130 -1.000  0.002 -0.130       
-    ## drctnrvr:HN  0.546 -0.774  0.000  0.002 -0.690  0.001 -0.001
-    ## convergence code: 0
-    ## Model is nearly unidentifiable: large eigenvalue ratio
-    ##  - Rescale variables?

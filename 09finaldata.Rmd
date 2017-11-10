@@ -243,8 +243,6 @@ gist_aov6 <- aov(gist ~ hearing * aoasl * age, data = filter(participant_data, d
 summary(gist_aov6)
 ```
 
-## Summary of Gist ANOVAs
-
 ## Lexical Recall ANOVAs
 
 1. ANOVA with factors MainGroup & Direction.
@@ -301,10 +299,8 @@ acc_aov6 <- aov(acc ~ hearing * aoasl * age, data = filter(participant_data, dir
 summary(acc_aov6)
 ```
 
-## Summary of Lexical Recall ANOVAs
 
-
-## AoA Correlations
+# AoA Correlations
 
 Next, we want to look at correlations between AoA and Gist, and betwen AoA and Lexical Recall. Rain asked for forward and reversed separately (1) deaf only, (2) hearing only, and (3) both. Let's make it work. 
 
@@ -538,8 +534,8 @@ summary(eyes_aov6)
 # mouth ANCOVA 1
 mouth_aov1 <- aov(mouth ~ maingroup * direction, data = aoi5_data)
 summary(mouth_aov1)
-# mouth_lsd1 <- LSD.test(mouth_aov1, "maingroup", group = FALSE)
-# mouth_lsd1$comparison
+mouth_lsd1 <- LSD.test(mouth_aov1, "maingroup", group = FALSE)
+mouth_lsd1$comparison
 ```
 
 2. ANOVA with factor MainGroup, for Forward only.
@@ -652,8 +648,8 @@ summary(neck_aov6)
 # upperchest ANCOVA 1
 upperchest_aov1 <- aov(upperchest ~ maingroup * direction, data = aoi5_data)
 summary(upperchest_aov1)
-# upperchest_lsd1 <- LSD.test(upperchest_aov1, "maingroup", group = FALSE)
-# upperchest_lsd1$comparison
+upperchest_lsd1 <- LSD.test(upperchest_aov1, "maingroup", group = FALSE)
+upperchest_lsd1$comparison
 ```
 
 2. ANOVA with factor MainGroup, for Forward only.
@@ -672,8 +668,8 @@ summary(upperchest_aov2)
 # upperchest ANOVA 3
 upperchest_aov3 <- aov(upperchest ~ maingroup, data = filter(aoi5_data, direction == "reversed"))
 summary(upperchest_aov3)
-# upperchest_lsd3 <- LSD.test(upperchest_aov3, "maingroup", group = FALSE)
-# upperchest_lsd3$comparison
+upperchest_lsd3 <- LSD.test(upperchest_aov3, "maingroup", group = FALSE)
+upperchest_lsd3$comparison
 ```
 
 4. ANCOVA with factors Hearing & Direction, and covariate AoASL and Age.
@@ -845,8 +841,8 @@ And Moutheye ANOVAs. Also skipping LSDs here.
 # moutheye ANCOVA 1
 moutheye_aov1 <- aov(moutheye ~ maingroup * direction, data = fc_data)
 summary(moutheye_aov1)
-# moutheye_lsd1 <- LSD.test(moutheye_aov1, "maingroup", group = FALSE)
-# moutheye_lsd1$comparison
+moutheye_lsd1 <- LSD.test(moutheye_aov1, "maingroup", group = FALSE)
+moutheye_lsd1$comparison
 ```
 
 2. ANOVA with factor MainGroup, for Forward only.
@@ -895,7 +891,7 @@ summary(moutheye_aov6)
 
 # Heat Maps
 And finally, we're going to do heat maps. 
-```{r}
+```{r heat map}
 eyegaze_heat <- fulldata %>%
   ungroup() %>%
   filter(eye_exclude == FALSE) %>%
@@ -945,17 +941,51 @@ ggplot(eyegaze_heat_all, aes(x = maingroup, y = aoi)) +
 
 # Summary
 
-1. For **gist**, there are significant main effects of group and direction. The effect of group is driven by HearingNovice doing poorly. Also, all groups do worse with reversed stories. There is also a significant group x direction interaction which we need to sort out. 
+Below are the p-values from the ANOVAs with 4 MainGroups. I never included Age as a covariate because it never improved the model. I included all ANOVAs for Gist and Lex Recall, and ANOVAs for any eye AOI or ratio was included only if either maingroup or direction was significant. Deafearly-Deaflate shows the LSD p-value for that comparison.
+```{r results1, rows.print = 20}
+results1 <- structure(list(model = c("gist-maingroup-both", "gist-maingroup-fw", 
+"gist-maingroup-rv", "lexrecall-maingroup-both", "lexrecall-maingroup-fw", 
+"lexrecall-maingroup-rv", "mouth-maingroup-both", "upperchest-maingroup-both", 
+"upperchest-maingroup-rv", "facechest-maingroup-both", "moutheye-maingroup-both"
+), maingroup = c(0, 0, 0.01, 0, 0.04, 0.02, 0.06, 0, 0.01, 0.1, 
+0.05), direction = c(0, NA, NA, 0, NA, NA, 0.06, 0.16, NA, 0.07, 
+0.48), `deafearly-deaflate` = c(0.1, 0.69, 0.02, 0.11, 0.95, 
+0.06, 0.38, 0.94, 0.52, 0.08, 0.68)), .Names = c("model", "maingroup", 
+"direction", "deafearly-deaflate"), class = c("tbl_df", "tbl", 
+"data.frame"), row.names = c(NA, -11L))
 
-1. For **lexical recall**, there are significant main effects of group and direction. The group effect is driven again by HearingNovice. All groups perform poorly when asked to recall signs from reversed stories. There is no group x direction interaction. 
+results1
+```
 
-1. For **AoA correlations** there are no significant correlations for deaf and hearing groups separately. When we combine them all in one dataset, there are significant correlations between AoASL and Forward Gist, Reversed Gist, and Reversed Lexical Recall. I worry those may just be driven by HearingNovice, however. 
+And below are the p-values from the ANCOVAs with Hearing & AoASL. I included all ANCOVAs for Gist and Lex Recall, and ANCOVAs for any eye AOI or ratio was included only if either maingroup or direction was significant. LSD comparisons are not needed because there's only 2 levels in each group!
 
-1. For **eye gaze** there are no significant effects of group or direction on looking at the forehead, eyes, mouth, or neck AOIs. There is a significant effect of group on looking at the upperchest AOI which is driven by HearingNovice. 
+```{r results2, rows.print = 25}
+results2 <- structure(list(model = c("gist-both", "gist-fw", "gist-rv", "lex-both", 
+"lex-fw", "lex-rv", "forehead-fw", "mouth-both", "mouth-rv", 
+"upperchest-both", "upperchest-rv", "facechest-both", "moutheye-both"
+), hearing = c(0, 0.00, 0.01, 0.01, 0.22, 0.03, 0.06, 0.01, 
+0.04, 0.01, 0.01, 0.35, 0.07), direction = c(0, NA, NA, 0, NA, 
+NA, NA, 0.05, NA, 0.21, NA, 0.05, 0.52), aoasl = c(0.22, 0.77, 
+0.19, 0.56, 0.58, 0.25, 0.08, 0.06, 0.12, 0.68, 0.95, 0.12, 0.44
+), age = c(0.08, 0.01, 0.86, 0.09, 0.02, 0.7, 0.68, 0.28, 0.5, 
+0.02, 0.08, 0.00, 0.21)), .Names = c("model", "hearing", "direction", 
+"aoasl", "age"), class = c("tbl_df", "tbl", "data.frame"), row.names = c(NA, 
+-13L))
+results2
+```
 
-1. I modified the **FaceChest** ratio so that the neck AOI is now in Chest, instead of Face (similar to how we do it with babies/children). This significantly changes the variability of the FaceChest measure. However, an ANOVA showed no significant effects of direction or group on this metric. Similar ANOVA outcome for **MouthEye**. 
+Finally, the correlations for Deaf and Hearing separately are not significant. But there are significant correlations across all participants. I worry it is caused by HearingNovice, though...
 
-1. These analysis does not give us any concrete differences between early and late AoA for any of the above measurements...it's not finding the critical AoA cutoff.  
+```{r correlation table}
+results3 <- tribble(
+  ~ metric, ~ AoASLcorrelationRvalue, ~ Pvalue,
+  "gist-fw", -0.32, 0.019,
+  "gist-rv", -0.39, 0.004,
+  "lex-fw", -0.08, 0.567,
+  "lex-rv", -0.34, 0.014
+)
+results3
+```
 
 # Rain's Notes
 About Adults:
@@ -966,8 +996,8 @@ About Adults:
  
 I think if we do it this way then we get a really important story to tell:  That the *critical* AoA cutoff is below 4 vs above 4 years of age (two groups 0-4 vs 4-13).  This suggest early ASL is important.  
 
+```{r eval=FALSE, include=FALSE}
 # Gist as binomial logit-link function model
-```{r}
 gist_glmm <- glmer(gist ~ direction * maingroup + (1|id) + (1|story), data = fulldata, family=binomial (link="logit"))
 summary(gist_glmm)
 ```
