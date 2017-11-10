@@ -27,6 +27,7 @@ library(lme4)
 library(lmerTest)
 library(scales)
 library(viridis)
+library(agricolae)
 
 # Load lex and eye data
 cleanlexdata <- read_csv("cleandata.csv") %>%
@@ -145,9 +146,9 @@ ggplot(gist_bar, aes(x = maingroup, y = mean, fill = direction)) +
   geom_bar(stat = "identity", position = position_dodge()) + 
   geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.9), width = 0.5) +
   labs(title = "Story Comprehension (Gist)", subtitle = "Error bars represent SE", x = "", y = "mean gist") +
-  scale_y_continuous(labels = percent)
+  scale_y_continuous(labels = percent, limits = c(0,1))
 
-# Gist bar chart
+# Lex bar chart
 lex_bar <- fulldata %>% select(participant, maingroup, direction, acc) %>%
   group_by(maingroup, participant, direction) %>%
   summarise(acc = mean(acc, na.rm = TRUE)) %>%
@@ -161,36 +162,147 @@ ggplot(lex_bar, aes(x = maingroup, y = mean, fill = direction)) +
   geom_bar(stat = "identity", position = position_dodge()) + 
   geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.9), width = 0.5) +
   labs(title = "Lexical Recall", subtitle = "Error bars represent SE", x = "", y = "mean accuracy") +
-  scale_y_continuous(labels = percent, limits = c(0,1))
+  scale_y_continuous(labels = percent, limits = c(0,1)) +
+  geom_hline(yintercept = .5, linetype = "dotted") +
+  coord_cartesian(ylim = c(.5,1))
 ```
 
-## ANOVAs
+## ANOVA Plan
+Next, we're going to do ANOVAs and ANCOVAs. We'll always do it in this order. The first three ANOVAs will be followed by LSD of the four maingroups with *uncorrected p-values.* 
 
-Here, ANOVAs are done with **direction Included.** Gist first, with Tukey's comparisons. 
+1. ANOVA with factors MainGroup & Direction
+2. ANOVA with factor MainGroup, for Forward only
+3. ANOVA with factor MainGroup, for Reverse only 
+4. ANCOVA with factors Hearing & Direction, and covariate AoASL and Age
+5. ANCOVA with factor Hearing and covariates AoASL and Age, for Forward only
+6. ANCOVA with factor Hearing and covariates AoASL and Age, for Reverse only. 
 
-```{r gist anova}
-# Gist ANOVA. We have to make participant-level means first. 
-gist_aov <- fulldata %>%
+I did not include Age as a covariate in the first 3 ANOVAs because they did not add to or change the model in any significant way. 
+
+## Gist ANOVAs
+
+1. ANOVA with factors MainGroup & Direction.
+
+```{r gist anova1, echo=FALSE, results = 'markup'}
+# First let's make the participant-level dataset with which we'll do our ANCOVAs. 
+participant_data <- fulldata %>%
   group_by(maingroup, participant, direction) %>%
-  summarise(gist = mean(gist, na.rm = TRUE)) %>%
-#  filter(direction != "reversed") %>%
-  aov(gist ~ maingroup * direction, data = .)
-summary(gist_aov)
-TukeyHSD(gist_aov)
+  mutate(gist = mean(gist, na.rm = TRUE),
+         acc = mean(acc, na.rm = TRUE)) %>%
+  select(id, participant, hearing, maingroup, direction, age, aoasl, acc, gist) %>%
+  distinct()
+
+# Gist ANCOVA 1
+gist_aov1 <- aov(gist ~ maingroup * direction, data = participant_data)
+summary(gist_aov1)
+gist_lsd1 <- LSD.test(gist_aov1, "maingroup", group = FALSE)
+gist_lsd1$comparison
 ```
 
-And Lexical Recall ANOVA with Tukey's comparisons. 
+2. ANOVA with factor MainGroup, for Forward only.
 
-```{r lex anova}
-# Lex ANOVA. We have to make participant-level means first. 
-lex_aov <- fulldata %>%
-  group_by(maingroup, participant, direction) %>%
-  summarise(acc = mean(acc, na.rm = TRUE)) %>%
-#  filter(direction != "reversed") %>%
-  aov(acc ~ maingroup * direction, data = .)
-summary(lex_aov)
-TukeyHSD(lex_aov)
+```{r gist anova2, echo=FALSE, results = 'markup'}
+# Gist ANOVA 2
+gist_aov2 <- aov(gist ~ maingroup, data = filter(participant_data, direction == "forward"))
+summary(gist_aov2)
+gist_lsd2 <- LSD.test(gist_aov2, "maingroup", group = FALSE)
+gist_lsd2$comparison
 ```
+
+3. ANOVA with factor MainGroup, for Reverse only. 
+
+```{r gist anova3, echo=FALSE, results = 'markup'}
+# Gist ANOVA 3
+gist_aov3 <- aov(gist ~ maingroup, data = filter(participant_data, direction == "reversed"))
+summary(gist_aov3)
+gist_lsd3 <- LSD.test(gist_aov3, "maingroup", group = FALSE)
+gist_lsd3$comparison
+```
+
+4. ANCOVA with factors Hearing & Direction, and covariate AoASL and Age.
+
+```{r gist anova4, echo=FALSE, results = 'markup'}
+# Gist ANOVA 4
+gist_aov4 <- aov(gist ~ hearing * direction * aoasl * age, data = participant_data)
+summary(gist_aov4)
+```
+
+5. ANCOVA with factor Hearing and covariates Age and AoASL, for Forward only
+
+```{r gist anova5, echo=FALSE, results = 'markup'}
+# Gist ANOVA 5
+gist_aov5 <- aov(gist ~ hearing * aoasl * age, data = filter(participant_data, direction == "forward"))
+summary(gist_aov5)
+```
+
+6. ANCOVA with factor Hearing and covariates AoASL and Age, for Reverse only. 
+
+```{r gist anova6, echo=FALSE, results = 'markup'}
+# Gist ANOVA 6
+gist_aov6 <- aov(gist ~ hearing * aoasl * age, data = filter(participant_data, direction == "reversed"))
+summary(gist_aov6)
+```
+
+## Summary of Gist ANOVAs
+
+## Lexical Recall ANOVAs
+
+1. ANOVA with factors MainGroup & Direction.
+
+```{r acc anova1, echo=FALSE, results = 'markup'}
+# Lexical Recall ANCOVA 1
+acc_aov1 <- aov(acc ~ maingroup * direction, data = participant_data)
+summary(acc_aov1)
+acc_lsd1 <- LSD.test(acc_aov1, "maingroup", group = FALSE)
+acc_lsd1$comparison
+```
+
+2. ANOVA with factor MainGroup, for Forward only.
+
+```{r acc anova2, echo=FALSE, results = 'markup'}
+# Lexical Recall ANOVA 2
+acc_aov2 <- aov(acc ~ maingroup, data = filter(participant_data, direction == "forward"))
+summary(acc_aov2)
+acc_lsd2 <- LSD.test(acc_aov2, "maingroup", group = FALSE)
+acc_lsd2$comparison
+```
+
+3. ANOVA with factor MainGroup, for Reverse only. 
+
+```{r acc anova3, echo=FALSE, results = 'markup'}
+# Lexical Recall ANOVA 3
+acc_aov3 <- aov(acc ~ maingroup, data = filter(participant_data, direction == "reversed"))
+summary(acc_aov3)
+acc_lsd3 <- LSD.test(acc_aov3, "maingroup", group = FALSE)
+acc_lsd3$comparison
+```
+
+4. ANCOVA with factors Hearing & Direction, and covariate AoASL and Age.
+
+```{r acc anova4, echo=FALSE, results = 'markup'}
+# Lexical Recall ANOVA 4
+acc_aov4 <- aov(acc ~ hearing * direction * aoasl * age, data = participant_data)
+summary(acc_aov4)
+```
+
+5. ANCOVA with factor Hearing and covariates Age and AoASL, for Forward only
+
+```{r acc anova5, echo=FALSE, results = 'markup'}
+# Lexical Recall ANOVA 5
+acc_aov5 <- aov(acc ~ hearing * aoasl * age, data = filter(participant_data, direction == "forward"))
+summary(acc_aov5)
+```
+
+6. ANCOVA with factor Hearing and covariates AoASL and Age, for Reverse only. 
+
+```{r acc anova6, echo=FALSE, results = 'markup'}
+# Lexical Recall ANOVA 6
+acc_aov6 <- aov(acc ~ hearing * aoasl * age, data = filter(participant_data, direction == "reversed"))
+summary(acc_aov6)
+```
+
+## Summary of Lexical Recall ANOVAs
+
 
 ## AoA Correlations
 
@@ -288,17 +400,19 @@ fulldata %>%
   ggplot(aes(x = aoi, y = percent, fill = direction)) + geom_boxplot()
 ```
 
-## ANOVAS
-We have three big AOIs. Eyes, Mouth, and Neck. To some extent we also have Forehead and UpperChest. Let's run ANOVAs on all those five AOIs and see if either direction or group membership affect looking behavior for any of those AOIs. 
+## Forehead
+This is going to get complicated - we need to run all 6 ANOVAs/ANCOVAs on 5 AOIs. That's 30 models. Thank goodness for find-and-replace! I'm going to skip the LSD comparisons for now, to make it easier to just scroll through. 
 
-```{r}
-# Define the 5 AOIs
+1. ANOVA with factors MainGroup & Direction.
+
+```{r forehead anova1, echo=FALSE, results="markup"}
+# First, we've got to set up the dataset. Define the 5 AOIs
 aoi5 <- c('forehead','eyes','mouth','neck','upperchest')
 
 # Organize the data by those AOIs (but again we need participant-level first)
 aoi5_data <- fulldata %>%
   filter(eye_exclude == FALSE) %>%
-  select(id, maingroup, direction, belly:upperchest) %>%
+  select(id, maingroup, hearing, aoasl, age, direction, belly:upperchest) %>%
   gather(aoi, percent, belly:upperchest) %>%
   group_by(id, direction, aoi) %>%
   mutate(percent = mean(percent, na.rm = TRUE)) %>%
@@ -307,31 +421,283 @@ aoi5_data <- fulldata %>%
   filter(aoi %in% aoi5) %>%
   spread(aoi, percent)
 
-print("Forehead ANOVA")
-forehead_aov <- aov(forehead ~ maingroup * direction, data = aoi5_data)
-summary(forehead_aov)
-cat(paste("","\n",""))
+# forehead ANCOVA 1
+forehead_aov1 <- aov(forehead ~ maingroup * direction, data = aoi5_data)
+summary(forehead_aov1)
+# forehead_lsd1 <- LSD.test(forehead_aov1, "maingroup", group = FALSE)
+# forehead_lsd1$comparison
+```
 
-print("Eyes ANOVA")
-eyes_aov <- aov(eyes ~ maingroup * direction, data = aoi5_data)
-summary(eyes_aov)
-cat(paste("","\n",""))
+2. ANOVA with factor MainGroup, for Forward only.
 
-print("Mouth ANOVA")
-mouth_aov <- aov(mouth ~ maingroup * direction, data = aoi5_data)
-summary(mouth_aov)
-cat(paste("","\n",""))
+```{r forehead anova2, echo=FALSE, results="markup"}
+# forehead ANOVA 2
+forehead_aov2 <- aov(forehead ~ maingroup, data = filter(aoi5_data, direction == "forward"))
+summary(forehead_aov2)
+# forehead_lsd2 <- LSD.test(forehead_aov2, "maingroup", group = FALSE)
+# forehead_lsd2$comparison
+```
 
-print("Neck ANOVA")
-neck_aov <- aov(neck ~ maingroup * direction, data = aoi5_data)
-summary(neck_aov)
-cat(paste("","\n",""))
+3. ANOVA with factor MainGroup, for Reverse only. 
 
-print("UpperChest ANOVA")
-upperchest_aov <- aov(upperchest ~ maingroup * direction, data = aoi5_data)
-summary(upperchest_aov)
-TukeyHSD(upperchest_aov)
-cat(paste("","\n",""))
+```{r forehead anova3, echo=FALSE, results="markup"}
+# forehead ANOVA 3
+forehead_aov3 <- aov(forehead ~ maingroup, data = filter(aoi5_data, direction == "reversed"))
+summary(forehead_aov3)
+# forehead_lsd3 <- LSD.test(forehead_aov3, "maingroup", group = FALSE)
+# forehead_lsd3$comparison
+```
+
+4. ANCOVA with factors Hearing & Direction, and covariate AoASL and Age.
+
+```{r forehead anova4, echo=FALSE, results="markup"}
+# forehead ANOVA 4
+forehead_aov4 <- aov(forehead ~ hearing * direction * aoasl * age, data = aoi5_data)
+summary(forehead_aov4)
+```
+
+5. ANCOVA with factor Hearing and covariates Age and AoASL, for Forward only
+
+```{r forehead anova5, echo=FALSE, results="markup"}
+# forehead ANOVA 5
+forehead_aov5 <- aov(forehead ~ hearing * aoasl * age, data = filter(aoi5_data, direction == "forward"))
+summary(forehead_aov5)
+```
+
+6. ANCOVA with factor Hearing and covariates AoASL and Age, for Reverse only. 
+
+```{r forehead anova6, echo=FALSE, results="markup"}
+# forehead ANOVA 6
+forehead_aov6 <- aov(forehead ~ hearing * aoasl * age, data = filter(aoi5_data, direction == "reversed"))
+summary(forehead_aov6)
+```
+
+## Eyes
+
+1. ANOVA with factors MainGroup & Direction.
+
+```{r eyes anova1, echo=FALSE, results = 'markup'}
+
+# eyes ANCOVA 1
+eyes_aov1 <- aov(eyes ~ maingroup * direction, data = aoi5_data)
+summary(eyes_aov1)
+# eyes_lsd1 <- LSD.test(eyes_aov1, "maingroup", group = FALSE)
+# eyes_lsd1$comparison
+```
+
+2. ANOVA with factor MainGroup, for Forward only.
+
+```{r eyes anova2, echo=FALSE, results = 'markup'}
+# eyes ANOVA 2
+eyes_aov2 <- aov(eyes ~ maingroup, data = filter(aoi5_data, direction == "forward"))
+summary(eyes_aov2)
+# eyes_lsd2 <- LSD.test(eyes_aov2, "maingroup", group = FALSE)
+# eyes_lsd2$comparison
+```
+
+3. ANOVA with factor MainGroup, for Reverse only. 
+
+```{r eyes anova3, echo=FALSE, results = 'markup'}
+# eyes ANOVA 3
+eyes_aov3 <- aov(eyes ~ maingroup, data = filter(aoi5_data, direction == "reversed"))
+summary(eyes_aov3)
+# eyes_lsd3 <- LSD.test(eyes_aov3, "maingroup", group = FALSE)
+# eyes_lsd3$comparison
+```
+
+4. ANCOVA with factors Hearing & Direction, and covariate AoASL and Age.
+
+```{r eyes anova4, echo=FALSE, results = 'markup'}
+# eyes ANOVA 4
+eyes_aov4 <- aov(eyes ~ hearing * direction * aoasl * age, data = aoi5_data)
+summary(eyes_aov4)
+```
+
+5. ANCOVA with factor Hearing and covariates Age and AoASL, for Forward only
+
+```{r eyes anova5, echo=FALSE, results = 'markup'}
+# eyes ANOVA 5
+eyes_aov5 <- aov(eyes ~ hearing * aoasl * age, data = filter(aoi5_data, direction == "forward"))
+summary(eyes_aov5)
+```
+
+6. ANCOVA with factor Hearing and covariates AoASL and Age, for Reverse only. 
+
+```{r eyes anova6, echo=FALSE, results = 'markup'}
+# eyes ANOVA 6
+eyes_aov6 <- aov(eyes ~ hearing * aoasl * age, data = filter(aoi5_data, direction == "reversed"))
+summary(eyes_aov6)
+```
+
+## Mouth
+
+1. ANOVA with factors MainGroup & Direction.
+
+```{r mouth anova1, echo=FALSE, results = 'markup'}
+
+# mouth ANCOVA 1
+mouth_aov1 <- aov(mouth ~ maingroup * direction, data = aoi5_data)
+summary(mouth_aov1)
+# mouth_lsd1 <- LSD.test(mouth_aov1, "maingroup", group = FALSE)
+# mouth_lsd1$comparison
+```
+
+2. ANOVA with factor MainGroup, for Forward only.
+
+```{r mouth anova2, echo=FALSE, results = 'markup'}
+# mouth ANOVA 2
+mouth_aov2 <- aov(mouth ~ maingroup, data = filter(aoi5_data, direction == "forward"))
+summary(mouth_aov2)
+# mouth_lsd2 <- LSD.test(mouth_aov2, "maingroup", group = FALSE)
+# mouth_lsd2$comparison
+```
+
+3. ANOVA with factor MainGroup, for Reverse only. 
+
+```{r mouth anova3, echo=FALSE, results = 'markup'}
+# mouth ANOVA 3
+mouth_aov3 <- aov(mouth ~ maingroup, data = filter(aoi5_data, direction == "reversed"))
+summary(mouth_aov3)
+# mouth_lsd3 <- LSD.test(mouth_aov3, "maingroup", group = FALSE)
+# mouth_lsd3$comparison
+```
+
+4. ANCOVA with factors Hearing & Direction, and covariate AoASL and Age.
+
+```{r mouth anova4, echo=FALSE, results = 'markup'}
+# mouth ANOVA 4
+mouth_aov4 <- aov(mouth ~ hearing * direction * aoasl * age, data = aoi5_data)
+summary(mouth_aov4)
+```
+
+5. ANCOVA with factor Hearing and covariates Age and AoASL, for Forward only
+
+```{r mouth anova5, echo=FALSE, results = 'markup'}
+# mouth ANOVA 5
+mouth_aov5 <- aov(mouth ~ hearing * aoasl * age, data = filter(aoi5_data, direction == "forward"))
+summary(mouth_aov5)
+```
+
+6. ANCOVA with factor Hearing and covariates AoASL and Age, for Reverse only. 
+
+```{r mouth anova6, echo=FALSE, results = 'markup'}
+# mouth ANOVA 6
+mouth_aov6 <- aov(mouth ~ hearing * aoasl * age, data = filter(aoi5_data, direction == "reversed"))
+summary(mouth_aov6)
+```
+
+## Neck
+
+1. ANOVA with factors MainGroup & Direction.
+
+```{r neck anova1, echo=FALSE, results = 'markup'}
+
+# neck ANCOVA 1
+neck_aov1 <- aov(neck ~ maingroup * direction, data = aoi5_data)
+summary(neck_aov1)
+# neck_lsd1 <- LSD.test(neck_aov1, "maingroup", group = FALSE)
+# neck_lsd1$comparison
+```
+
+2. ANOVA with factor MainGroup, for Forward only.
+
+```{r neck anova2, echo=FALSE, results = 'markup'}
+# neck ANOVA 2
+neck_aov2 <- aov(neck ~ maingroup, data = filter(aoi5_data, direction == "forward"))
+summary(neck_aov2)
+# neck_lsd2 <- LSD.test(neck_aov2, "maingroup", group = FALSE)
+# neck_lsd2$comparison
+```
+
+3. ANOVA with factor MainGroup, for Reverse only. 
+
+```{r neck anova3, echo=FALSE, results = 'markup'}
+# neck ANOVA 3
+neck_aov3 <- aov(neck ~ maingroup, data = filter(aoi5_data, direction == "reversed"))
+summary(neck_aov3)
+# neck_lsd3 <- LSD.test(neck_aov3, "maingroup", group = FALSE)
+# neck_lsd3$comparison
+```
+
+4. ANCOVA with factors Hearing & Direction, and covariate AoASL and Age.
+
+```{r neck anova4, echo=FALSE, results = 'markup'}
+# neck ANOVA 4
+neck_aov4 <- aov(neck ~ hearing * direction * aoasl * age, data = aoi5_data)
+summary(neck_aov4)
+```
+
+5. ANCOVA with factor Hearing and covariates Age and AoASL, for Forward only
+
+```{r neck anova5, echo=FALSE, results = 'markup'}
+# neck ANOVA 5
+neck_aov5 <- aov(neck ~ hearing * aoasl * age, data = filter(aoi5_data, direction == "forward"))
+summary(neck_aov5)
+```
+
+6. ANCOVA with factor Hearing and covariates AoASL and Age, for Reverse only. 
+
+```{r neck anova6, echo=FALSE, results = 'markup'}
+# neck ANOVA 6
+neck_aov6 <- aov(neck ~ hearing * aoasl * age, data = filter(aoi5_data, direction == "reversed"))
+summary(neck_aov6)
+```
+
+## Upperchest
+
+1. ANOVA with factors MainGroup & Direction.
+
+```{r upperchest anova1, echo=FALSE, results = 'markup'}
+
+# upperchest ANCOVA 1
+upperchest_aov1 <- aov(upperchest ~ maingroup * direction, data = aoi5_data)
+summary(upperchest_aov1)
+# upperchest_lsd1 <- LSD.test(upperchest_aov1, "maingroup", group = FALSE)
+# upperchest_lsd1$comparison
+```
+
+2. ANOVA with factor MainGroup, for Forward only.
+
+```{r upperchest anova2, echo=FALSE, results = 'markup'}
+# upperchest ANOVA 2
+upperchest_aov2 <- aov(upperchest ~ maingroup, data = filter(aoi5_data, direction == "forward"))
+summary(upperchest_aov2)
+# upperchest_lsd2 <- LSD.test(upperchest_aov2, "maingroup", group = FALSE)
+# upperchest_lsd2$comparison
+```
+
+3. ANOVA with factor MainGroup, for Reverse only. 
+
+```{r upperchest anova3, echo=FALSE, results = 'markup'}
+# upperchest ANOVA 3
+upperchest_aov3 <- aov(upperchest ~ maingroup, data = filter(aoi5_data, direction == "reversed"))
+summary(upperchest_aov3)
+# upperchest_lsd3 <- LSD.test(upperchest_aov3, "maingroup", group = FALSE)
+# upperchest_lsd3$comparison
+```
+
+4. ANCOVA with factors Hearing & Direction, and covariate AoASL and Age.
+
+```{r upperchest anova4, echo=FALSE, results = 'markup'}
+# upperchest ANOVA 4
+upperchest_aov4 <- aov(upperchest ~ hearing * direction * aoasl * age, data = aoi5_data)
+summary(upperchest_aov4)
+```
+
+5. ANCOVA with factor Hearing and covariates Age and AoASL, for Forward only
+
+```{r upperchest anova5, echo=FALSE, results = 'markup'}
+# upperchest ANOVA 5
+upperchest_aov5 <- aov(upperchest ~ hearing * aoasl * age, data = filter(aoi5_data, direction == "forward"))
+summary(upperchest_aov5)
+```
+
+6. ANCOVA with factor Hearing and covariates AoASL and Age, for Reverse only. 
+
+```{r upperchest anova6, echo=FALSE, results = 'markup'}
+# upperchest ANOVA 6
+upperchest_aov6 <- aov(upperchest ~ hearing * aoasl * age, data = filter(aoi5_data, direction == "reversed"))
+summary(upperchest_aov6)
 ```
 
 ## FaceChest
@@ -348,7 +714,7 @@ BUT. Chin is actually neck. It's not even part of the face if you think about it
 
 So let's do this. Then see what's happening across groups for FaceChest. First I want a boxplot to comapre the new and old FaceChest variables. 
 
-```{r}
+```{r recalculate facechest, echo=FALSE, results = 'markup'}
 # Redefine face, chest, and facechest
 fulldata <- fulldata %>%
   ungroup() %>%
@@ -366,7 +732,7 @@ fulldata %>%
 
 Cool. Next we'll do error bar charts using the new FaceChest across groups. 
 
-```{r message=FALSE, warning=FALSE}
+```{r facechest bars, message=FALSE, warning=FALSE}
 facechest_info <- fulldata %>%
   filter(eye_exclude == FALSE) %>%
   group_by(maingroup, direction, participant) %>%
@@ -378,26 +744,82 @@ facechest_info <- fulldata %>%
             se = sd/sqrt(n))
 
 ggplot(facechest_info, aes(x = maingroup, y = mean, fill = direction, color = direction)) +
-  geom_point(stat = "identity", position = position_dodge(0.5)) + 
-  geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.5), width = 0.5) +
+  geom_point(stat = "identity", position = position_dodge(0.5), size = 2) + 
+  geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.5), width = 0.3, size = 1) +
   labs(title = "FaceChest Ratio", subtitle = "Error bars represent SE", x = "", y = "facechest ratio") +
   scale_y_continuous(limits = c(-1,1))
 ```
 
-Now let's do the ANOVA. 
-```{r}
-# FaceChest ANOVA but remember, participant-level first!
-fc_aov <- fulldata %>%
-  group_by(maingroup, participant, direction) %>%
-  summarise(facechest = mean(facechest, na.rm = TRUE)) %>%
-  aov(facechest ~ maingroup * direction, data = .)
-summary(fc_aov)
-TukeyHSD(fc_aov)
+Now let's do the ANOVAs. Also skipping LSDs here. 
+
+1. ANOVA with factors MainGroup & Direction.
+
+```{r facechest anova 1, echo=FALSE, results = 'markup'}
+# Create the participant-level db (let's also pop moutheye in this too)
+fc_data <- fulldata %>%
+  filter(eye_exclude == FALSE) %>%
+  select(id, maingroup, hearing, aoasl, age, direction, facechest, moutheye) %>%
+  group_by(id, direction) %>%
+  mutate(facechest = mean(facechest, na.rm = TRUE),
+         moutheye = mean(moutheye, na.rm = TRUE)) %>%
+  ungroup() %>%
+  distinct()
+
+# facechest ANCOVA 1
+facechest_aov1 <- aov(facechest ~ maingroup * direction, data = fc_data)
+summary(facechest_aov1)
+# facechest_lsd1 <- LSD.test(facechest_aov1, "maingroup", group = FALSE)
+# facechest_lsd1$comparison
 ```
+
+2. ANOVA with factor MainGroup, for Forward only.
+
+```{r facechest anova2, echo=FALSE, results = 'markup'}
+# facechest ANOVA 2
+facechest_aov2 <- aov(facechest ~ maingroup, data = filter(fc_data, direction == "forward"))
+summary(facechest_aov2)
+# facechest_lsd2 <- LSD.test(facechest_aov2, "maingroup", group = FALSE)
+# facechest_lsd2$comparison
+```
+
+3. ANOVA with factor MainGroup, for Reverse only. 
+
+```{r facechest anova3, echo=FALSE, results = 'markup'}
+# facechest ANOVA 3
+facechest_aov3 <- aov(facechest ~ maingroup, data = filter(fc_data, direction == "reversed"))
+summary(facechest_aov3)
+# facechest_lsd3 <- LSD.test(facechest_aov3, "maingroup", group = FALSE)
+# facechest_lsd3$comparison
+```
+
+4. ANCOVA with factors Hearing & Direction, and covariate AoASL and Age.
+
+```{r facechest anova4, echo=FALSE, results = 'markup'}
+# facechest ANOVA 4
+facechest_aov4 <- aov(facechest ~ hearing * direction * aoasl * age, data = fc_data)
+summary(facechest_aov4)
+```
+
+5. ANCOVA with factor Hearing and covariates Age and AoASL, for Forward only
+
+```{r facechest anova5, echo=FALSE, results = 'markup'}
+# facechest ANOVA 5
+facechest_aov5 <- aov(facechest ~ hearing * aoasl * age, data = filter(fc_data, direction == "forward"))
+summary(facechest_aov5)
+```
+
+6. ANCOVA with factor Hearing and covariates AoASL and Age, for Reverse only. 
+
+```{r facechest anova6, echo=FALSE, results = 'markup'}
+# facechest ANOVA 6
+facechest_aov6 <- aov(facechest ~ hearing * aoasl * age, data = filter(fc_data, direction == "reversed"))
+summary(facechest_aov6)
+```
+
 
 ## MouthEye
 We've also got a moutheye ratio! Maybe something there, too.
-```{r}
+```{r moutheye bar chart}
 moutheye_info <- fulldata %>%
   filter(eye_exclude == FALSE) %>%
   group_by(maingroup, direction, participant) %>%
@@ -409,21 +831,66 @@ moutheye_info <- fulldata %>%
             se = sd/sqrt(n))
 
 ggplot(moutheye_info, aes(x = maingroup, y = mean, fill = direction, color = direction)) +
-  geom_point(stat = "identity", position = position_dodge(0.5)) + 
-  geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.5), width = 0.5) +
+  geom_point(stat = "identity", position = position_dodge(0.5), size = 2) + 
+  geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.5), width = 0.3, size = 1) +
   labs(title = "MouthEye Ratio", subtitle = "Error bars represent SE", x = "", y = "moutheye ratio") +
   scale_y_continuous(limits = c(-1,1))
 ```
 
-And Moutheye ANOVA.
-```{r}
-# MouthEye ANOVA but remember, participant-level first!
-me_aov <- fulldata %>%
-  group_by(maingroup, participant, direction) %>%
-  summarise(moutheye = mean(moutheye, na.rm = TRUE)) %>%
-  aov(moutheye ~ maingroup * direction, data = .)
-summary(me_aov)
-TukeyHSD(me_aov)
+And Moutheye ANOVAs. Also skipping LSDs here. 
+
+1. ANOVA with factors MainGroup & Direction.
+
+```{r moutheye anova 1, echo=FALSE, results = 'markup'}
+# moutheye ANCOVA 1
+moutheye_aov1 <- aov(moutheye ~ maingroup * direction, data = fc_data)
+summary(moutheye_aov1)
+# moutheye_lsd1 <- LSD.test(moutheye_aov1, "maingroup", group = FALSE)
+# moutheye_lsd1$comparison
+```
+
+2. ANOVA with factor MainGroup, for Forward only.
+
+```{r moutheye anova2, echo=FALSE, results = 'markup'}
+# moutheye ANOVA 2
+moutheye_aov2 <- aov(moutheye ~ maingroup, data = filter(fc_data, direction == "forward"))
+summary(moutheye_aov2)
+# moutheye_lsd2 <- LSD.test(moutheye_aov2, "maingroup", group = FALSE)
+# moutheye_lsd2$comparison
+```
+
+3. ANOVA with factor MainGroup, for Reverse only. 
+
+```{r moutheye anova3, echo=FALSE, results = 'markup'}
+# moutheye ANOVA 3
+moutheye_aov3 <- aov(moutheye ~ maingroup, data = filter(fc_data, direction == "reversed"))
+summary(moutheye_aov3)
+# moutheye_lsd3 <- LSD.test(moutheye_aov3, "maingroup", group = FALSE)
+# moutheye_lsd3$comparison
+```
+
+4. ANCOVA with factors Hearing & Direction, and covariate AoASL and Age.
+
+```{r moutheye anova4, echo=FALSE, results = 'markup'}
+# moutheye ANOVA 4
+moutheye_aov4 <- aov(moutheye ~ hearing * direction * aoasl * age, data = fc_data)
+summary(moutheye_aov4)
+```
+
+5. ANCOVA with factor Hearing and covariates Age and AoASL, for Forward only
+
+```{r moutheye anova5, echo=FALSE, results = 'markup'}
+# moutheye ANOVA 5
+moutheye_aov5 <- aov(moutheye ~ hearing * aoasl * age, data = filter(fc_data, direction == "forward"))
+summary(moutheye_aov5)
+```
+
+6. ANCOVA with factor Hearing and covariates AoASL and Age, for Reverse only. 
+
+```{r moutheye anova6, echo=FALSE, results = 'markup'}
+# moutheye ANOVA 6
+moutheye_aov6 <- aov(moutheye ~ hearing * aoasl * age, data = filter(fc_data, direction == "reversed"))
+summary(moutheye_aov6)
 ```
 
 # Heat Maps
@@ -498,4 +965,11 @@ About Adults:
 -(If you have reasons to present anything other than the ANCOVA, put that in your results tab)
  
 I think if we do it this way then we get a really important story to tell:  That the *critical* AoA cutoff is below 4 vs above 4 years of age (two groups 0-4 vs 4-13).  This suggest early ASL is important.  
+
+# Gist as binomial logit-link function model
+```{r}
+gist_glmm <- glmer(gist ~ direction * maingroup + (1|id) + (1|story), data = fulldata, family=binomial (link="logit"))
+summary(gist_glmm)
+```
+
  

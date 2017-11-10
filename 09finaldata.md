@@ -1,21 +1,30 @@
 The Last Data Analysis to Rule Them All? (study1adults)
 ================
 Adam Stone, PhD
-11-09-2017
+11-10-2017
 
 -   [Putting It All Back Together](#putting-it-all-back-together)
 -   [Group Changes and Participant Tables](#group-changes-and-participant-tables)
 -   [Gist & Lexical Recall Data](#gist-lexical-recall-data)
     -   [Tables & Charts](#tables-charts)
-    -   [ANOVAs](#anovas)
+    -   [ANOVA Plan](#anova-plan)
+    -   [Gist ANOVAs](#gist-anovas)
+    -   [Summary of Gist ANOVAs](#summary-of-gist-anovas)
+    -   [Lexical Recall ANOVAs](#lexical-recall-anovas)
+    -   [Summary of Lexical Recall ANOVAs](#summary-of-lexical-recall-anovas)
     -   [AoA Correlations](#aoa-correlations)
 -   [Eye Gaze Data](#eye-gaze-data)
-    -   [ANOVAS](#anovas-1)
+    -   [Forehead](#forehead)
+    -   [Eyes](#eyes)
+    -   [Mouth](#mouth)
+    -   [Neck](#neck)
+    -   [Upperchest](#upperchest)
     -   [FaceChest](#facechest)
     -   [MouthEye](#moutheye)
 -   [Heat Maps](#heat-maps)
 -   [Summary](#summary)
 -   [Rain's Notes](#rains-notes)
+-   [Gist as binomial logit-link function model](#gist-as-binomial-logit-link-function-model)
 
 Putting It All Back Together
 ============================
@@ -29,6 +38,7 @@ library(lme4)
 library(lmerTest)
 library(scales)
 library(viridis)
+library(agricolae)
 
 # Load lex and eye data
 cleanlexdata <- read_csv("cleandata.csv") %>%
@@ -166,13 +176,13 @@ ggplot(gist_bar, aes(x = maingroup, y = mean, fill = direction)) +
   geom_bar(stat = "identity", position = position_dodge()) + 
   geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.9), width = 0.5) +
   labs(title = "Story Comprehension (Gist)", subtitle = "Error bars represent SE", x = "", y = "mean gist") +
-  scale_y_continuous(labels = percent)
+  scale_y_continuous(labels = percent, limits = c(0,1))
 ```
 
 ![](09finaldata_files/figure-markdown_github-ascii_identifiers/lex%20and%20gist%20bar%20charts-1.png)
 
 ``` r
-# Gist bar chart
+# Lex bar chart
 lex_bar <- fulldata %>% select(participant, maingroup, direction, acc) %>%
   group_by(maingroup, participant, direction) %>%
   summarise(acc = mean(acc, na.rm = TRUE)) %>%
@@ -186,25 +196,33 @@ ggplot(lex_bar, aes(x = maingroup, y = mean, fill = direction)) +
   geom_bar(stat = "identity", position = position_dodge()) + 
   geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.9), width = 0.5) +
   labs(title = "Lexical Recall", subtitle = "Error bars represent SE", x = "", y = "mean accuracy") +
-  scale_y_continuous(labels = percent, limits = c(0,1))
+  scale_y_continuous(labels = percent, limits = c(0,1)) +
+  geom_hline(yintercept = .5, linetype = "dotted") +
+  coord_cartesian(ylim = c(.5,1))
 ```
 
 ![](09finaldata_files/figure-markdown_github-ascii_identifiers/lex%20and%20gist%20bar%20charts-2.png)
 
-ANOVAs
-------
+ANOVA Plan
+----------
 
-Here, ANOVAs are done with **direction Included.** Gist first, with Tukey's comparisons.
+Next, we're going to do ANOVAs and ANCOVAs. We'll always do it in this order. The first three ANOVAs will be followed by LSD of the four maingroups with *uncorrected p-values.*
 
-``` r
-# Gist ANOVA. We have to make participant-level means first. 
-gist_aov <- fulldata %>%
-  group_by(maingroup, participant, direction) %>%
-  summarise(gist = mean(gist, na.rm = TRUE)) %>%
-#  filter(direction != "reversed") %>%
-  aov(gist ~ maingroup * direction, data = .)
-summary(gist_aov)
-```
+1.  ANOVA with factors MainGroup & Direction
+2.  ANOVA with factor MainGroup, for Forward only
+3.  ANOVA with factor MainGroup, for Reverse only
+4.  ANCOVA with factors Hearing & Direction, and covariate AoASL and Age
+5.  ANCOVA with factor Hearing and covariates AoASL and Age, for Forward only
+6.  ANCOVA with factor Hearing and covariates AoASL and Age, for Reverse only.
+
+I did not include Age as a covariate in the first 3 ANOVAs because they did not add to or change the model in any significant way.
+
+Gist ANOVAs
+-----------
+
+1.  ANOVA with factors MainGroup & Direction.
+
+<!-- -->
 
     ##                     Df Sum Sq Mean Sq F value   Pr(>F)    
     ## maingroup            3  3.002   1.001  13.284 2.53e-07 ***
@@ -214,99 +232,136 @@ summary(gist_aov)
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-``` r
-TukeyHSD(gist_aov)
-```
+    ##                             difference pvalue signif.           LCL
+    ## DeafEarly - DeafLate         0.1202381 0.0987       . -0.0229201333
+    ## DeafEarly - HearingLate      0.1500000 0.0488       *  0.0007987047
+    ## DeafEarly - HearingNovice    0.4757576 0.0000     ***  0.3228349784
+    ## DeafLate - HearingLate       0.0297619 0.6975         -0.1217891618
+    ## DeafLate - HearingNovice     0.3555195 0.0000     ***  0.2003034374
+    ## HearingLate - HearingNovice  0.3257576 0.0001     ***  0.1649509584
+    ##                                   UCL
+    ## DeafEarly - DeafLate        0.2633963
+    ## DeafEarly - HearingLate     0.2992013
+    ## DeafEarly - HearingNovice   0.6286802
+    ## DeafLate - HearingLate      0.1813130
+    ## DeafLate - HearingNovice    0.5107355
+    ## HearingLate - HearingNovice 0.4865642
 
-    ##   Tukey multiple comparisons of means
-    ##     95% family-wise confidence level
-    ## 
-    ## Fit: aov(formula = gist ~ maingroup * direction, data = .)
-    ## 
-    ## $maingroup
-    ##                                 diff        lwr         upr     p adj
-    ## DeafLate-DeafEarly        -0.1202381 -0.3088051  0.06832887 0.3466547
-    ## HearingLate-DeafEarly     -0.1500000 -0.3465269  0.04652685 0.1968334
-    ## HearingNovice-DeafEarly   -0.4757576 -0.6771861 -0.27432905 0.0000001
-    ## HearingLate-DeafLate      -0.0297619 -0.2293839  0.16986005 0.9797740
-    ## HearingNovice-DeafLate    -0.3555195 -0.5599689 -0.15107005 0.0000928
-    ## HearingNovice-HearingLate -0.3257576 -0.5375709 -0.11394428 0.0006581
-    ## 
-    ## $direction
-    ##                        diff        lwr        upr p adj
-    ## reversed-forward -0.4519231 -0.5587683 -0.3450778     0
-    ## 
-    ## $`maingroup:direction`
-    ##                                                       diff        lwr
-    ## DeafLate:forward-DeafEarly:forward            3.333333e-02 -0.2827280
-    ## HearingLate:forward-DeafEarly:forward         3.333333e-02 -0.2960697
-    ## HearingNovice:forward-DeafEarly:forward      -5.121212e-01 -0.8497401
-    ## DeafEarly:reversed-DeafEarly:forward         -3.000000e-01 -0.6105642
-    ## DeafLate:reversed-DeafEarly:forward          -5.738095e-01 -0.8898709
-    ## HearingLate:reversed-DeafEarly:forward       -6.333333e-01 -0.9627364
-    ## HearingNovice:reversed-DeafEarly:forward     -7.393939e-01 -1.0770128
-    ## HearingLate:forward-DeafLate:forward          1.110223e-16 -0.3345908
-    ## HearingNovice:forward-DeafLate:forward       -5.454545e-01 -0.8881368
-    ## DeafEarly:reversed-DeafLate:forward          -3.333333e-01 -0.6493947
-    ## DeafLate:reversed-DeafLate:forward           -6.071429e-01 -0.9286073
-    ## HearingLate:reversed-DeafLate:forward        -6.666667e-01 -1.0012575
-    ## HearingNovice:reversed-DeafLate:forward      -7.727273e-01 -1.1154096
-    ## HearingNovice:forward-HearingLate:forward    -5.454545e-01 -0.9004796
-    ## DeafEarly:reversed-HearingLate:forward       -3.333333e-01 -0.6627364
-    ## DeafLate:reversed-HearingLate:forward        -6.071429e-01 -0.9417337
-    ## HearingLate:reversed-HearingLate:forward     -6.666667e-01 -1.0138880
-    ## HearingNovice:reversed-HearingLate:forward   -7.727273e-01 -1.1277523
-    ## DeafEarly:reversed-HearingNovice:forward      2.121212e-01 -0.1254977
-    ## DeafLate:reversed-HearingNovice:forward      -6.168831e-02 -0.4043706
-    ## HearingLate:reversed-HearingNovice:forward   -1.212121e-01 -0.4762371
-    ## HearingNovice:reversed-HearingNovice:forward -2.272727e-01 -0.5899336
-    ## DeafLate:reversed-DeafEarly:reversed         -2.738095e-01 -0.5898709
-    ## HearingLate:reversed-DeafEarly:reversed      -3.333333e-01 -0.6627364
-    ## HearingNovice:reversed-DeafEarly:reversed    -4.393939e-01 -0.7770128
-    ## HearingLate:reversed-DeafLate:reversed       -5.952381e-02 -0.3941146
-    ## HearingNovice:reversed-DeafLate:reversed     -1.655844e-01 -0.5082667
-    ## HearingNovice:reversed-HearingLate:reversed  -1.060606e-01 -0.4610856
-    ##                                                       upr     p adj
-    ## DeafLate:forward-DeafEarly:forward            0.349394663 0.9999794
-    ## HearingLate:forward-DeafEarly:forward         0.362736402 0.9999845
-    ## HearingNovice:forward-DeafEarly:forward      -0.174502341 0.0002270
-    ## DeafEarly:reversed-DeafEarly:forward          0.010564191 0.0661325
-    ## DeafLate:reversed-DeafEarly:forward          -0.257748194 0.0000050
-    ## HearingLate:reversed-DeafEarly:forward       -0.303930265 0.0000012
-    ## HearingNovice:reversed-DeafEarly:forward     -0.401775069 0.0000000
-    ## HearingLate:forward-DeafLate:forward          0.334590838 1.0000000
-    ## HearingNovice:forward-DeafLate:forward       -0.202772260 0.0000904
-    ## DeafEarly:reversed-DeafLate:forward          -0.017272004 0.0311735
-    ## DeafLate:reversed-DeafLate:forward           -0.285678379 0.0000018
-    ## HearingLate:reversed-DeafLate:forward        -0.332075829 0.0000004
-    ## HearingNovice:reversed-DeafLate:forward      -0.430044987 0.0000000
-    ## HearingNovice:forward-HearingLate:forward    -0.190429523 0.0001790
-    ## DeafEarly:reversed-HearingLate:forward       -0.003930265 0.0452077
-    ## DeafLate:reversed-HearingLate:forward        -0.272552020 0.0000050
-    ## HearingLate:reversed-HearingLate:forward     -0.319445345 0.0000012
-    ## HearingNovice:reversed-HearingLate:forward   -0.417702250 0.0000000
-    ## DeafEarly:reversed-HearingNovice:forward      0.549740083 0.5227399
-    ## DeafLate:reversed-HearingNovice:forward       0.280993974 0.9992560
-    ## HearingLate:reversed-HearingNovice:forward    0.233812901 0.9637494
-    ## HearingNovice:reversed-HearingNovice:forward  0.135388115 0.5260785
-    ## DeafLate:reversed-DeafEarly:reversed          0.042251806 0.1400787
-    ## HearingLate:reversed-DeafEarly:reversed      -0.003930265 0.0452077
-    ## HearingNovice:reversed-DeafEarly:reversed    -0.101775069 0.0027006
-    ## HearingLate:reversed-DeafLate:reversed        0.275067028 0.9993113
-    ## HearingNovice:reversed-DeafLate:reversed      0.177097870 0.8070333
-    ## HearingNovice:reversed-HearingLate:reversed   0.248964416 0.9828143
+1.  ANOVA with factor MainGroup, for Forward only.
 
-And Lexical Recall ANOVA with Tukey's comparisons.
+<!-- -->
 
-``` r
-# Lex ANOVA. We have to make participant-level means first. 
-lex_aov <- fulldata %>%
-  group_by(maingroup, participant, direction) %>%
-  summarise(acc = mean(acc, na.rm = TRUE)) %>%
-#  filter(direction != "reversed") %>%
-  aov(acc ~ maingroup * direction, data = .)
-summary(lex_aov)
-```
+    ##             Df Sum Sq Mean Sq F value   Pr(>F)    
+    ## maingroup    3  2.477  0.8256   16.11 2.23e-07 ***
+    ## Residuals   48  2.461  0.0513                     
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+    ##                              difference pvalue signif.        LCL
+    ## DeafEarly - DeafLate        -0.03333333 0.6937         -0.2025032
+    ## DeafEarly - HearingLate     -0.03333333 0.7055         -0.2096443
+    ## DeafEarly - HearingNovice    0.51212121 0.0000     ***  0.3314128
+    ## DeafLate - HearingLate       0.00000000 1.0000         -0.1790877
+    ## DeafLate - HearingNovice     0.54545455 0.0000     ***  0.3620360
+    ## HearingLate - HearingNovice  0.54545455 0.0000     ***  0.3554296
+    ##                                   UCL
+    ## DeafEarly - DeafLate        0.1358365
+    ## DeafEarly - HearingLate     0.1429776
+    ## DeafEarly - HearingNovice   0.6928296
+    ## DeafLate - HearingLate      0.1790877
+    ## DeafLate - HearingNovice    0.7288731
+    ## HearingLate - HearingNovice 0.7354795
+
+1.  ANOVA with factor MainGroup, for Reverse only.
+
+<!-- -->
+
+    ##             Df Sum Sq Mean Sq F value  Pr(>F)   
+    ## maingroup    3  1.421  0.4737   4.766 0.00548 **
+    ## Residuals   48  4.771  0.0994                   
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+    ##                             difference pvalue signif.         LCL
+    ## DeafEarly - DeafLate        0.27380952 0.0237       *  0.03824420
+    ## DeafEarly - HearingLate     0.33333333 0.0088      **  0.08782421
+    ## DeafEarly - HearingNovice   0.43939394 0.0010     ***  0.18776145
+    ## DeafLate - HearingLate      0.05952381 0.6335         -0.18985184
+    ## DeafLate - HearingNovice    0.16558442 0.1986         -0.08982191
+    ## HearingLate - HearingNovice 0.10606061 0.4243         -0.15854495
+    ##                                   UCL
+    ## DeafEarly - DeafLate        0.5093748
+    ## DeafEarly - HearingLate     0.5788425
+    ## DeafEarly - HearingNovice   0.6910264
+    ## DeafLate - HearingLate      0.3088995
+    ## DeafLate - HearingNovice    0.4209907
+    ## HearingLate - HearingNovice 0.3706662
+
+1.  ANCOVA with factors Hearing & Direction, and covariate AoASL and Age.
+
+<!-- -->
+
+    ##                             Df Sum Sq Mean Sq F value   Pr(>F)    
+    ## hearing                      1  1.575   1.575  18.158 5.08e-05 ***
+    ## direction                    1  5.310   5.310  61.234 1.05e-11 ***
+    ## aoasl                        1  0.133   0.133   1.529  0.21961    
+    ## age                          1  0.269   0.269   3.102  0.08169 .  
+    ## hearing:direction            1  0.000   0.000   0.005  0.94363    
+    ## hearing:aoasl                1  0.007   0.007   0.083  0.77329    
+    ## direction:aoasl              1  0.068   0.068   0.783  0.37853    
+    ## hearing:age                  1  0.731   0.731   8.434  0.00465 ** 
+    ## direction:age                1  0.189   0.189   2.185  0.14296    
+    ## aoasl:age                    1  0.013   0.013   0.150  0.69923    
+    ## hearing:direction:aoasl      1  0.212   0.212   2.442  0.12174    
+    ## hearing:direction:age        1  0.069   0.069   0.791  0.37627    
+    ## hearing:aoasl:age            1  0.219   0.219   2.530  0.11530    
+    ## direction:aoasl:age          1  0.004   0.004   0.044  0.83481    
+    ## hearing:direction:aoasl:age  1  0.010   0.010   0.110  0.74132    
+    ## Residuals                   88  7.631   0.087                     
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+1.  ANCOVA with factor Hearing and covariates Age and AoASL, for Forward only
+
+<!-- -->
+
+    ##                   Df Sum Sq Mean Sq F value  Pr(>F)   
+    ## hearing            1 0.7613  0.7613  12.103 0.00115 **
+    ## aoasl              1 0.0054  0.0054   0.085 0.77191   
+    ## age                1 0.4549  0.4549   7.232 0.01008 * 
+    ## hearing:aoasl      1 0.1486  0.1486   2.363 0.13140   
+    ## hearing:age        1 0.6240  0.6240   9.919 0.00294 **
+    ## aoasl:age          1 0.0154  0.0154   0.245 0.62273   
+    ## hearing:aoasl:age  1 0.1601  0.1601   2.545 0.11777   
+    ## Residuals         44 2.7677  0.0629                   
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+1.  ANCOVA with factor Hearing and covariates AoASL and Age, for Reverse only.
+
+<!-- -->
+
+    ##                   Df Sum Sq Mean Sq F value  Pr(>F)   
+    ## hearing            1  0.814  0.8137   7.362 0.00947 **
+    ## aoasl              1  0.195  0.1951   1.765 0.19080   
+    ## age                1  0.003  0.0035   0.031 0.86010   
+    ## hearing:aoasl      1  0.070  0.0703   0.636 0.42934   
+    ## hearing:age        1  0.176  0.1760   1.593 0.21361   
+    ## aoasl:age          1  0.001  0.0014   0.012 0.91151   
+    ## hearing:aoasl:age  1  0.069  0.0688   0.622 0.43448   
+    ## Residuals         44  4.863  0.1105                   
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Summary of Gist ANOVAs
+----------------------
+
+Lexical Recall ANOVAs
+---------------------
+
+1.  ANOVA with factors MainGroup & Direction.
+
+<!-- -->
 
     ##                     Df Sum Sq Mean Sq F value   Pr(>F)    
     ## maingroup            3 0.1175  0.0392   5.348  0.00189 ** 
@@ -316,87 +371,129 @@ summary(lex_aov)
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-``` r
-TukeyHSD(lex_aov)
-```
+    ##                               difference pvalue signif.          LCL
+    ## DeafEarly - DeafLate         0.035439881 0.1183         -0.009198232
+    ## DeafEarly - HearingLate      0.030916667 0.1903         -0.015605732
+    ## DeafEarly - HearingNovice    0.095575758 0.0001     ***  0.047893021
+    ## DeafLate - HearingLate      -0.004523214 0.8497         -0.051778295
+    ## DeafLate - HearingNovice     0.060135877 0.0154       *  0.011738021
+    ## HearingLate - HearingNovice  0.064659091 0.0120       *  0.014518041
+    ##                                    UCL
+    ## DeafEarly - DeafLate        0.08007799
+    ## DeafEarly - HearingLate     0.07743907
+    ## DeafEarly - HearingNovice   0.14325849
+    ## DeafLate - HearingLate      0.04273187
+    ## DeafLate - HearingNovice    0.10853373
+    ## HearingLate - HearingNovice 0.11480014
 
-    ##   Tukey multiple comparisons of means
-    ##     95% family-wise confidence level
-    ## 
-    ## Fit: aov(formula = acc ~ maingroup * direction, data = .)
-    ## 
-    ## $maingroup
-    ##                                   diff         lwr          upr     p adj
-    ## DeafLate-DeafEarly        -0.035439881 -0.09423688  0.023357113 0.3971317
-    ## HearingLate-DeafEarly     -0.030916667 -0.09219563  0.030362296 0.5531130
-    ## HearingNovice-DeafEarly   -0.095575758 -0.15838311 -0.032768407 0.0007654
-    ## HearingLate-DeafLate       0.004523214 -0.05772083  0.066767259 0.9975516
-    ## HearingNovice-DeafLate    -0.060135877 -0.12388518  0.003613423 0.0718133
-    ## HearingNovice-HearingLate -0.064659091 -0.13070451  0.001386332 0.0573100
-    ## 
-    ## $direction
-    ##                        diff        lwr        upr p adj
-    ## reversed-forward -0.1415702 -0.1748856 -0.1082548     0
-    ## 
-    ## $`maingroup:direction`
-    ##                                                      diff         lwr
-    ## DeafLate:forward-DeafEarly:forward           -0.001880952 -0.10043192
-    ## HearingLate:forward-DeafEarly:forward         0.013000000 -0.08971105
-    ## HearingNovice:forward-DeafEarly:forward      -0.071393939 -0.17666675
-    ## DeafEarly:reversed-DeafEarly:forward         -0.093000000 -0.18983690
-    ## DeafLate:reversed-DeafEarly:forward          -0.161998810 -0.26054977
-    ## HearingLate:reversed-DeafEarly:forward       -0.167833333 -0.27054438
-    ## HearingNovice:reversed-DeafEarly:forward     -0.212757576 -0.31803039
-    ## HearingLate:forward-DeafLate:forward          0.014880952 -0.08944769
-    ## HearingNovice:forward-DeafLate:forward       -0.069512987 -0.17636462
-    ## DeafEarly:reversed-DeafLate:forward          -0.091119048 -0.18967001
-    ## DeafLate:reversed-DeafLate:forward           -0.160117857 -0.26035357
-    ## HearingLate:reversed-DeafLate:forward        -0.165952381 -0.27028102
-    ## HearingNovice:reversed-DeafLate:forward      -0.210876623 -0.31772826
-    ## HearingNovice:forward-HearingLate:forward    -0.084393939 -0.19509416
-    ## DeafEarly:reversed-HearingLate:forward       -0.106000000 -0.20871105
-    ## DeafLate:reversed-HearingLate:forward        -0.174998810 -0.27932745
-    ## HearingLate:reversed-HearingLate:forward     -0.180833333 -0.28910028
-    ## HearingNovice:reversed-HearingLate:forward   -0.225757576 -0.33645779
-    ## DeafEarly:reversed-HearingNovice:forward     -0.021606061 -0.12687887
-    ## DeafLate:reversed-HearingNovice:forward      -0.090604870 -0.19745650
-    ## HearingLate:reversed-HearingNovice:forward   -0.096439394 -0.20713961
-    ## HearingNovice:reversed-HearingNovice:forward -0.141363636 -0.25444478
-    ## DeafLate:reversed-DeafEarly:reversed         -0.068998810 -0.16754977
-    ## HearingLate:reversed-DeafEarly:reversed      -0.074833333 -0.17754438
-    ## HearingNovice:reversed-DeafEarly:reversed    -0.119757576 -0.22503039
-    ## HearingLate:reversed-DeafLate:reversed       -0.005834524 -0.11016317
-    ## HearingNovice:reversed-DeafLate:reversed     -0.050758766 -0.15761040
-    ## HearingNovice:reversed-HearingLate:reversed  -0.044924242 -0.15562446
-    ##                                                       upr     p adj
-    ## DeafLate:forward-DeafEarly:forward            0.096670010 1.0000000
-    ## HearingLate:forward-DeafEarly:forward         0.115711045 0.9999287
-    ## HearingNovice:forward-DeafEarly:forward       0.033878872 0.4214465
-    ## DeafEarly:reversed-DeafEarly:forward          0.003836902 0.0691753
-    ## DeafLate:reversed-DeafEarly:forward          -0.063447847 0.0000469
-    ## HearingLate:reversed-DeafEarly:forward       -0.065122288 0.0000531
-    ## HearingNovice:reversed-DeafEarly:forward     -0.107484764 0.0000003
-    ## HearingLate:forward-DeafLate:forward          0.119209594 0.9998406
-    ## HearingNovice:forward-DeafLate:forward        0.037338646 0.4768076
-    ## DeafEarly:reversed-DeafLate:forward           0.007431915 0.0914889
-    ## DeafLate:reversed-DeafLate:forward           -0.059882140 0.0000842
-    ## HearingLate:reversed-DeafLate:forward        -0.061623739 0.0000916
-    ## HearingNovice:reversed-DeafLate:forward      -0.104024990 0.0000006
-    ## HearingNovice:forward-HearingLate:forward     0.026306278 0.2718825
-    ## DeafEarly:reversed-HearingLate:forward       -0.003288955 0.0380371
-    ## DeafLate:reversed-HearingLate:forward        -0.070670168 0.0000305
-    ## HearingLate:reversed-HearingLate:forward     -0.072566385 0.0000335
-    ## HearingNovice:reversed-HearingLate:forward   -0.115057359 0.0000002
-    ## DeafEarly:reversed-HearingNovice:forward      0.083666751 0.9982644
-    ## DeafLate:reversed-HearingNovice:forward       0.016246763 0.1589599
-    ## HearingLate:reversed-HearingNovice:forward    0.014260823 0.1353842
-    ## HearingNovice:reversed-HearingNovice:forward -0.028282497 0.0046665
-    ## DeafLate:reversed-DeafEarly:reversed          0.029552153 0.3792970
-    ## HearingLate:reversed-DeafEarly:reversed       0.027877712 0.3277729
-    ## HearingNovice:reversed-DeafEarly:reversed    -0.014484764 0.0144605
-    ## HearingLate:reversed-DeafLate:reversed        0.098494118 0.9999997
-    ## HearingNovice:reversed-DeafLate:reversed      0.056092867 0.8202120
-    ## HearingNovice:reversed-HearingLate:reversed   0.065775975 0.9118925
+1.  ANOVA with factor MainGroup, for Forward only.
+
+<!-- -->
+
+    ##             Df  Sum Sq  Mean Sq F value Pr(>F)  
+    ## maingroup    3 0.04988 0.016626   2.984 0.0404 *
+    ## Residuals   48 0.26749 0.005573                 
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+    ##                               difference pvalue signif.          LCL
+    ## DeafEarly - DeafLate         0.001880952 0.9462         -0.053895965
+    ## DeafEarly - HearingLate     -0.013000000 0.6550         -0.071131400
+    ## DeafEarly - HearingNovice    0.071393939 0.0199       *  0.011812655
+    ## DeafLate - HearingLate      -0.014880952 0.6147         -0.073927864
+    ## DeafLate - HearingNovice     0.069512987 0.0252       *  0.009038137
+    ## HearingLate - HearingNovice  0.084393939 0.0093      **  0.021740905
+    ##                                    UCL
+    ## DeafEarly - DeafLate        0.05765787
+    ## DeafEarly - HearingLate     0.04513140
+    ## DeafEarly - HearingNovice   0.13097522
+    ## DeafLate - HearingLate      0.04416596
+    ## DeafLate - HearingNovice    0.12998784
+    ## HearingLate - HearingNovice 0.14704697
+
+1.  ANOVA with factor MainGroup, for Reverse only.
+
+<!-- -->
+
+    ##             Df Sum Sq Mean Sq F value Pr(>F)  
+    ## maingroup    3 0.0970 0.03233   3.562 0.0209 *
+    ## Residuals   48 0.4356 0.00908                 
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+    ##                              difference pvalue signif.           LCL
+    ## DeafEarly - DeafLate        0.068998810 0.0571       . -0.0021805250
+    ## DeafEarly - HearingLate     0.074833333 0.0481       *  0.0006493411
+    ## DeafEarly - HearingNovice   0.119757576 0.0027      **  0.0437233245
+    ## DeafLate - HearingLate      0.005834524 0.8769         -0.0695177922
+    ## DeafLate - HearingNovice    0.050758766 0.1923         -0.0264158033
+    ## HearingLate - HearingNovice 0.044924242 0.2642         -0.0350300021
+    ##                                    UCL
+    ## DeafEarly - DeafLate        0.14017814
+    ## DeafEarly - HearingLate     0.14901733
+    ## DeafEarly - HearingNovice   0.19579183
+    ## DeafLate - HearingLate      0.08118684
+    ## DeafLate - HearingNovice    0.12793334
+    ## HearingLate - HearingNovice 0.12487849
+
+1.  ANCOVA with factors Hearing & Direction, and covariate AoASL and Age.
+
+<!-- -->
+
+    ##                             Df Sum Sq Mean Sq F value   Pr(>F)    
+    ## hearing                      1 0.0513  0.0513   6.465   0.0128 *  
+    ## direction                    1 0.5211  0.5211  65.627 2.88e-12 ***
+    ## aoasl                        1 0.0027  0.0027   0.340   0.5610    
+    ## age                          1 0.0237  0.0237   2.991   0.0872 .  
+    ## hearing:direction            1 0.0086  0.0086   1.079   0.3017    
+    ## hearing:aoasl                1 0.0003  0.0003   0.032   0.8575    
+    ## direction:aoasl              1 0.0126  0.0126   1.583   0.2117    
+    ## hearing:age                  1 0.0132  0.0132   1.658   0.2012    
+    ## direction:age                1 0.0099  0.0099   1.243   0.2680    
+    ## aoasl:age                    1 0.0141  0.0141   1.774   0.1864    
+    ## hearing:direction:aoasl      1 0.0027  0.0027   0.336   0.5634    
+    ## hearing:direction:age        1 0.0008  0.0008   0.103   0.7492    
+    ## hearing:aoasl:age            1 0.0092  0.0092   1.164   0.2836    
+    ## direction:aoasl:age          1 0.0001  0.0001   0.015   0.9013    
+    ## hearing:direction:aoasl:age  1 0.0021  0.0021   0.261   0.6106    
+    ## Residuals                   88 0.6987  0.0079                     
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+1.  ANCOVA with factor Hearing and covariates Age and AoASL, for Forward only
+
+<!-- -->
+
+    ##                   Df  Sum Sq Mean Sq F value Pr(>F)  
+    ## hearing            1 0.00898 0.00898   1.553 0.2193  
+    ## aoasl              1 0.00181 0.00181   0.313 0.5789  
+    ## age                1 0.03212 0.03212   5.557 0.0229 *
+    ## hearing:aoasl      1 0.00064 0.00064   0.110 0.7418  
+    ## hearing:age        1 0.00371 0.00371   0.642 0.4271  
+    ## aoasl:age          1 0.00579 0.00579   1.001 0.3225  
+    ## hearing:aoasl:age  1 0.01004 0.01004   1.737 0.1944  
+    ## Residuals         44 0.25430 0.00578                 
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+1.  ANCOVA with factor Hearing and covariates AoASL and Age, for Reverse only.
+
+<!-- -->
+
+    ##                   Df Sum Sq Mean Sq F value Pr(>F)  
+    ## hearing            1 0.0509 0.05092   5.042 0.0298 *
+    ## aoasl              1 0.0135 0.01346   1.333 0.2545  
+    ## age                1 0.0015 0.00150   0.149 0.7018  
+    ## hearing:aoasl      1 0.0023 0.00229   0.227 0.6360  
+    ## hearing:age        1 0.0103 0.01027   1.017 0.3188  
+    ## aoasl:age          1 0.0084 0.00842   0.833 0.3663  
+    ## hearing:aoasl:age  1 0.0013 0.00128   0.127 0.7236  
+    ## Residuals         44 0.4444 0.01010                 
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Summary of Lexical Recall ANOVAs
+--------------------------------
 
 AoA Correlations
 ----------------
@@ -673,36 +770,14 @@ fulldata %>%
 
 ![](09finaldata_files/figure-markdown_github-ascii_identifiers/eye%20gaze%20boxplot-1.png)
 
-ANOVAS
-------
+Forehead
+--------
 
-We have three big AOIs. Eyes, Mouth, and Neck. To some extent we also have Forehead and UpperChest. Let's run ANOVAs on all those five AOIs and see if either direction or group membership affect looking behavior for any of those AOIs.
+This is going to get complicated - we need to run all 6 ANOVAs/ANCOVAs on 5 AOIs. That's 30 models. Thank goodness for find-and-replace! I'm going to skip the LSD comparisons for now, to make it easier to just scroll through.
 
-``` r
-# Define the 5 AOIs
-aoi5 <- c('forehead','eyes','mouth','neck','upperchest')
+1.  ANOVA with factors MainGroup & Direction.
 
-# Organize the data by those AOIs (but again we need participant-level first)
-aoi5_data <- fulldata %>%
-  filter(eye_exclude == FALSE) %>%
-  select(id, maingroup, direction, belly:upperchest) %>%
-  gather(aoi, percent, belly:upperchest) %>%
-  group_by(id, direction, aoi) %>%
-  mutate(percent = mean(percent, na.rm = TRUE)) %>%
-  ungroup () %>%
-  distinct() %>%
-  filter(aoi %in% aoi5) %>%
-  spread(aoi, percent)
-
-print("Forehead ANOVA")
-```
-
-    ## [1] "Forehead ANOVA"
-
-``` r
-forehead_aov <- aov(forehead ~ maingroup * direction, data = aoi5_data)
-summary(forehead_aov)
-```
+<!-- -->
 
     ##                     Df  Sum Sq  Mean Sq F value Pr(>F)
     ## maingroup            3 0.01249 0.004164   0.862  0.468
@@ -711,20 +786,85 @@ summary(forehead_aov)
     ## Residuals           42 0.20287 0.004830               
     ## 53 observations deleted due to missingness
 
-``` r
-cat(paste("","\n",""))
-```
+1.  ANOVA with factor MainGroup, for Forward only.
 
-``` r
-print("Eyes ANOVA")
-```
+<!-- -->
 
-    ## [1] "Eyes ANOVA"
+    ##             Df   Sum Sq   Mean Sq F value Pr(>F)
+    ## maingroup    3 0.003528 0.0011760    1.61  0.217
+    ## Residuals   21 0.015338 0.0007304               
+    ## 27 observations deleted due to missingness
 
-``` r
-eyes_aov <- aov(eyes ~ maingroup * direction, data = aoi5_data)
-summary(eyes_aov)
-```
+1.  ANOVA with factor MainGroup, for Reverse only.
+
+<!-- -->
+
+    ##             Df Sum Sq  Mean Sq F value Pr(>F)
+    ## maingroup    3 0.0228 0.007601   0.851  0.482
+    ## Residuals   21 0.1875 0.008930               
+    ## 26 observations deleted due to missingness
+
+1.  ANCOVA with factors Hearing & Direction, and covariate AoASL and Age.
+
+<!-- -->
+
+    ##                             Df  Sum Sq  Mean Sq F value Pr(>F)
+    ## hearing                      1 0.00222 0.002221   0.469  0.498
+    ## direction                    1 0.00905 0.009055   1.913  0.176
+    ## aoasl                        1 0.00912 0.009124   1.928  0.174
+    ## age                          1 0.00794 0.007942   1.678  0.204
+    ## hearing:direction            1 0.00061 0.000609   0.129  0.722
+    ## hearing:aoasl                1 0.00000 0.000001   0.000  0.989
+    ## direction:aoasl              1 0.00762 0.007618   1.610  0.213
+    ## hearing:age                  1 0.00042 0.000417   0.088  0.768
+    ## direction:age                1 0.00493 0.004932   1.042  0.315
+    ## aoasl:age                    1 0.01179 0.011793   2.492  0.124
+    ## hearing:direction:aoasl      1 0.00771 0.007708   1.629  0.211
+    ## hearing:direction:age        1 0.00287 0.002868   0.606  0.442
+    ## hearing:aoasl:age            1 0.00023 0.000231   0.049  0.826
+    ## direction:aoasl:age          1 0.01285 0.012846   2.715  0.109
+    ## hearing:direction:aoasl:age  1 0.00000 0.000001   0.000  0.988
+    ## Residuals                   34 0.16089 0.004732               
+    ## 53 observations deleted due to missingness
+
+1.  ANCOVA with factor Hearing and covariates Age and AoASL, for Forward only
+
+<!-- -->
+
+    ##                   Df   Sum Sq  Mean Sq F value Pr(>F)  
+    ## hearing            1 0.002672 0.002672   4.210 0.0559 .
+    ## aoasl              1 0.000031 0.000031   0.048 0.8289  
+    ## age                1 0.000105 0.000105   0.165 0.6899  
+    ## hearing:aoasl      1 0.004628 0.004628   7.291 0.0152 *
+    ## hearing:age        1 0.000364 0.000364   0.573 0.4596  
+    ## aoasl:age          1 0.000051 0.000051   0.080 0.7804  
+    ## hearing:aoasl:age  1 0.000224 0.000224   0.353 0.5603  
+    ## Residuals         17 0.010792 0.000635                 
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 27 observations deleted due to missingness
+
+1.  ANCOVA with factor Hearing and covariates AoASL and Age, for Reverse only.
+
+<!-- -->
+
+    ##                   Df  Sum Sq  Mean Sq F value Pr(>F)
+    ## hearing            1 0.00022 0.000224   0.025  0.875
+    ## aoasl              1 0.01679 0.016785   1.901  0.186
+    ## age                1 0.01272 0.012719   1.441  0.247
+    ## hearing:aoasl      1 0.00390 0.003903   0.442  0.515
+    ## hearing:age        1 0.00260 0.002601   0.295  0.594
+    ## aoasl:age          1 0.02370 0.023696   2.684  0.120
+    ## hearing:aoasl:age  1 0.00031 0.000309   0.035  0.854
+    ## Residuals         17 0.15010 0.008829               
+    ## 26 observations deleted due to missingness
+
+Eyes
+----
+
+1.  ANOVA with factors MainGroup & Direction.
+
+<!-- -->
 
     ##                     Df Sum Sq Mean Sq F value Pr(>F)
     ## maingroup            3  0.324 0.10784   1.961  0.125
@@ -733,20 +873,85 @@ summary(eyes_aov)
     ## Residuals           92  5.060 0.05500               
     ## 3 observations deleted due to missingness
 
-``` r
-cat(paste("","\n",""))
-```
+1.  ANOVA with factor MainGroup, for Forward only.
 
-``` r
-print("Mouth ANOVA")
-```
+<!-- -->
 
-    ## [1] "Mouth ANOVA"
+    ##             Df Sum Sq Mean Sq F value Pr(>F)
+    ## maingroup    3 0.1002 0.03339   0.666  0.577
+    ## Residuals   48 2.4060 0.05013
 
-``` r
-mouth_aov <- aov(mouth ~ maingroup * direction, data = aoi5_data)
-summary(mouth_aov)
-```
+1.  ANOVA with factor MainGroup, for Reverse only.
+
+<!-- -->
+
+    ##             Df Sum Sq Mean Sq F value Pr(>F)
+    ## maingroup    3 0.2571 0.08570   1.421  0.249
+    ## Residuals   44 2.6542 0.06032               
+    ## 3 observations deleted due to missingness
+
+1.  ANCOVA with factors Hearing & Direction, and covariate AoASL and Age.
+
+<!-- -->
+
+    ##                             Df Sum Sq Mean Sq F value Pr(>F)  
+    ## hearing                      1  0.131 0.13130   2.335 0.1302  
+    ## direction                    1  0.002 0.00150   0.027 0.8706  
+    ## aoasl                        1  0.022 0.02159   0.384 0.5372  
+    ## age                          1  0.112 0.11159   1.985 0.1626  
+    ## hearing:direction            1  0.000 0.00030   0.005 0.9417  
+    ## hearing:aoasl                1  0.213 0.21335   3.795 0.0548 .
+    ## direction:aoasl              1  0.002 0.00199   0.035 0.8512  
+    ## hearing:age                  1  0.056 0.05552   0.987 0.3232  
+    ## direction:age                1  0.039 0.03933   0.700 0.4053  
+    ## aoasl:age                    1  0.005 0.00518   0.092 0.7622  
+    ## hearing:direction:aoasl      1  0.007 0.00669   0.119 0.7309  
+    ## hearing:direction:age        1  0.018 0.01779   0.316 0.5753  
+    ## hearing:aoasl:age            1  0.065 0.06515   1.159 0.2848  
+    ## direction:aoasl:age          1  0.001 0.00069   0.012 0.9122  
+    ## hearing:direction:aoasl:age  1  0.025 0.02471   0.440 0.5092  
+    ## Residuals                   84  4.723 0.05622                 
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 3 observations deleted due to missingness
+
+1.  ANCOVA with factor Hearing and covariates Age and AoASL, for Forward only
+
+<!-- -->
+
+    ##                   Df Sum Sq Mean Sq F value Pr(>F)  
+    ## hearing            1 0.0625 0.06254   1.265 0.2668  
+    ## aoasl              1 0.0187 0.01868   0.378 0.5420  
+    ## age                1 0.0089 0.00885   0.179 0.6743  
+    ## hearing:aoasl      1 0.1469 0.14694   2.972 0.0918 .
+    ## hearing:age        1 0.0060 0.00598   0.121 0.7297  
+    ## aoasl:age          1 0.0010 0.00096   0.019 0.8898  
+    ## hearing:aoasl:age  1 0.0866 0.08656   1.751 0.1926  
+    ## Residuals         44 2.1757 0.04945                 
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+1.  ANCOVA with factor Hearing and covariates AoASL and Age, for Reverse only.
+
+<!-- -->
+
+    ##                   Df Sum Sq Mean Sq F value Pr(>F)
+    ## hearing            1 0.0685 0.06850   1.076  0.306
+    ## aoasl              1 0.0049 0.00489   0.077  0.783
+    ## age                1 0.1459 0.14589   2.291  0.138
+    ## hearing:aoasl      1 0.0674 0.06735   1.058  0.310
+    ## hearing:age        1 0.0688 0.06877   1.080  0.305
+    ## aoasl:age          1 0.0059 0.00587   0.092  0.763
+    ## hearing:aoasl:age  1 0.0029 0.00292   0.046  0.832
+    ## Residuals         40 2.5471 0.06368               
+    ## 3 observations deleted due to missingness
+
+Mouth
+-----
+
+1.  ANOVA with factors MainGroup & Direction.
+
+<!-- -->
 
     ##                     Df Sum Sq Mean Sq F value Pr(>F)  
     ## maingroup            3  0.499 0.16623   2.533 0.0616 .
@@ -756,20 +961,82 @@ summary(mouth_aov)
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-``` r
-cat(paste("","\n",""))
-```
+1.  ANOVA with factor MainGroup, for Forward only.
 
-``` r
-print("Neck ANOVA")
-```
+<!-- -->
 
-    ## [1] "Neck ANOVA"
+    ##             Df Sum Sq Mean Sq F value Pr(>F)
+    ## maingroup    3 0.1506 0.05021   0.909  0.444
+    ## Residuals   48 2.6511 0.05523
 
-``` r
-neck_aov <- aov(neck ~ maingroup * direction, data = aoi5_data)
-summary(neck_aov)
-```
+1.  ANOVA with factor MainGroup, for Reverse only.
+
+<!-- -->
+
+    ##             Df Sum Sq Mean Sq F value Pr(>F)
+    ## maingroup    3  0.368 0.12263   1.608    0.2
+    ## Residuals   47  3.584 0.07625
+
+1.  ANCOVA with factors Hearing & Direction, and covariate AoASL and Age.
+
+<!-- -->
+
+    ##                             Df Sum Sq Mean Sq F value Pr(>F)  
+    ## hearing                      1  0.433  0.4333   6.621 0.0118 *
+    ## direction                    1  0.249  0.2489   3.803 0.0544 .
+    ## aoasl                        1  0.237  0.2374   3.627 0.0601 .
+    ## age                          1  0.076  0.0764   1.168 0.2828  
+    ## hearing:direction            1  0.027  0.0271   0.414 0.5215  
+    ## hearing:aoasl                1  0.000  0.0000   0.000 0.9918  
+    ## direction:aoasl              1  0.013  0.0133   0.204 0.6528  
+    ## hearing:age                  1  0.004  0.0036   0.055 0.8151  
+    ## direction:age                1  0.000  0.0003   0.004 0.9490  
+    ## aoasl:age                    1  0.215  0.2152   3.288 0.0732 .
+    ## hearing:direction:aoasl      1  0.020  0.0201   0.307 0.5812  
+    ## hearing:direction:age        1  0.000  0.0002   0.004 0.9521  
+    ## hearing:aoasl:age            1  0.006  0.0062   0.095 0.7585  
+    ## direction:aoasl:age          1  0.002  0.0021   0.032 0.8590  
+    ## hearing:direction:aoasl:age  1  0.031  0.0309   0.472 0.4939  
+    ## Residuals                   87  5.693  0.0654                 
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+1.  ANCOVA with factor Hearing and covariates Age and AoASL, for Forward only
+
+<!-- -->
+
+    ##                   Df Sum Sq Mean Sq F value Pr(>F)
+    ## hearing            1 0.1225 0.12247   2.212  0.144
+    ## aoasl              1 0.0697 0.06969   1.259  0.268
+    ## age                1 0.0430 0.04301   0.777  0.383
+    ## hearing:aoasl      1 0.0096 0.00960   0.173  0.679
+    ## hearing:age        1 0.0010 0.00100   0.018  0.893
+    ## aoasl:age          1 0.0876 0.08761   1.582  0.215
+    ## hearing:aoasl:age  1 0.0324 0.03242   0.586  0.448
+    ## Residuals         44 2.4360 0.05536
+
+1.  ANCOVA with factor Hearing and covariates AoASL and Age, for Reverse only.
+
+<!-- -->
+
+    ##                   Df Sum Sq Mean Sq F value Pr(>F)  
+    ## hearing            1  0.331  0.3314   4.374 0.0424 *
+    ## aoasl              1  0.182  0.1816   2.398 0.1288  
+    ## age                1  0.034  0.0339   0.447 0.5071  
+    ## hearing:aoasl      1  0.010  0.0104   0.137 0.7129  
+    ## hearing:age        1  0.003  0.0028   0.037 0.8476  
+    ## aoasl:age          1  0.130  0.1297   1.713 0.1976  
+    ## hearing:aoasl:age  1  0.005  0.0047   0.062 0.8047  
+    ## Residuals         43  3.257  0.0758                 
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Neck
+----
+
+1.  ANOVA with factors MainGroup & Direction.
+
+<!-- -->
 
     ##                     Df Sum Sq Mean Sq F value Pr(>F)
     ## maingroup            3  0.181 0.06038   1.465  0.229
@@ -778,20 +1045,87 @@ summary(neck_aov)
     ## Residuals           94  3.874 0.04121               
     ## 1 observation deleted due to missingness
 
-``` r
-cat(paste("","\n",""))
-```
+1.  ANOVA with factor MainGroup, for Forward only.
 
-``` r
-print("UpperChest ANOVA")
-```
+<!-- -->
 
-    ## [1] "UpperChest ANOVA"
+    ##             Df Sum Sq Mean Sq F value Pr(>F)
+    ## maingroup    3 0.0549 0.01831   0.576  0.633
+    ## Residuals   48 1.5259 0.03179
 
-``` r
-upperchest_aov <- aov(upperchest ~ maingroup * direction, data = aoi5_data)
-summary(upperchest_aov)
-```
+1.  ANOVA with factor MainGroup, for Reverse only.
+
+<!-- -->
+
+    ##             Df Sum Sq Mean Sq F value Pr(>F)
+    ## maingroup    3 0.1561 0.05202   1.019  0.393
+    ## Residuals   46 2.3483 0.05105               
+    ## 1 observation deleted due to missingness
+
+1.  ANCOVA with factors Hearing & Direction, and covariate AoASL and Age.
+
+<!-- -->
+
+    ##                             Df Sum Sq Mean Sq F value  Pr(>F)   
+    ## hearing                      1 0.0004  0.0004   0.012 0.91288   
+    ## direction                    1 0.1098  0.1098   3.058 0.08391 . 
+    ## aoasl                        1 0.1047  0.1047   2.916 0.09131 . 
+    ## age                          1 0.2173  0.2173   6.050 0.01590 * 
+    ## hearing:direction            1 0.0072  0.0072   0.202 0.65446   
+    ## hearing:aoasl                1 0.3381  0.3381   9.415 0.00288 **
+    ## direction:aoasl              1 0.0125  0.0125   0.348 0.55679   
+    ## hearing:age                  1 0.0016  0.0016   0.044 0.83402   
+    ## direction:age                1 0.0071  0.0071   0.199 0.65696   
+    ## aoasl:age                    1 0.2108  0.2108   5.869 0.01751 * 
+    ## hearing:direction:aoasl      1 0.0047  0.0047   0.131 0.71855   
+    ## hearing:direction:age        1 0.0170  0.0170   0.473 0.49330   
+    ## hearing:aoasl:age            1 0.0545  0.0545   1.519 0.22117   
+    ## direction:aoasl:age          1 0.0024  0.0024   0.068 0.79535   
+    ## hearing:direction:aoasl:age  1 0.0176  0.0176   0.490 0.48587   
+    ## Residuals                   86 3.0888  0.0359                   
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 1 observation deleted due to missingness
+
+1.  ANCOVA with factor Hearing and covariates Age and AoASL, for Forward only
+
+<!-- -->
+
+    ##                   Df Sum Sq Mean Sq F value Pr(>F)  
+    ## hearing            1 0.0057 0.00571   0.200  0.657  
+    ## aoasl              1 0.0227 0.02273   0.798  0.377  
+    ## age                1 0.0737 0.07365   2.585  0.115  
+    ## hearing:aoasl      1 0.1319 0.13186   4.628  0.037 *
+    ## hearing:age        1 0.0041 0.00414   0.145  0.705  
+    ## aoasl:age          1 0.0840 0.08401   2.949  0.093 .
+    ## hearing:aoasl:age  1 0.0051 0.00509   0.179  0.675  
+    ## Residuals         44 1.2536 0.02849                 
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+1.  ANCOVA with factor Hearing and covariates AoASL and Age, for Reverse only.
+
+<!-- -->
+
+    ##                   Df Sum Sq Mean Sq F value Pr(>F)  
+    ## hearing            1 0.0015 0.00150   0.034 0.8539  
+    ## aoasl              1 0.0945 0.09454   2.164 0.1488  
+    ## age                1 0.1513 0.15135   3.464 0.0697 .
+    ## hearing:aoasl      1 0.2111 0.21112   4.832 0.0335 *
+    ## hearing:age        1 0.0145 0.01451   0.332 0.5675  
+    ## aoasl:age          1 0.1292 0.12916   2.956 0.0929 .
+    ## hearing:aoasl:age  1 0.0670 0.06704   1.534 0.2223  
+    ## Residuals         42 1.8351 0.04369                 
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 1 observation deleted due to missingness
+
+Upperchest
+----------
+
+1.  ANOVA with factors MainGroup & Direction.
+
+<!-- -->
 
     ##                     Df  Sum Sq  Mean Sq F value  Pr(>F)   
     ## maingroup            3 0.02998 0.009993   5.588 0.00154 **
@@ -802,91 +1136,82 @@ summary(upperchest_aov)
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 13 observations deleted due to missingness
 
-``` r
-TukeyHSD(upperchest_aov)
-```
+1.  ANOVA with factor MainGroup, for Forward only.
 
-    ##   Tukey multiple comparisons of means
-    ##     95% family-wise confidence level
-    ## 
-    ## Fit: aov(formula = upperchest ~ maingroup * direction, data = aoi5_data)
-    ## 
-    ## $maingroup
-    ##                                    diff          lwr        upr     p adj
-    ## DeafLate-DeafEarly        -0.0007914082 -0.032259263 0.03067645 0.9998962
-    ## HearingLate-DeafEarly      0.0066520381 -0.026065452 0.03936953 0.9507319
-    ## HearingNovice-DeafEarly    0.0450163736  0.012298883 0.07773386 0.0029190
-    ## HearingLate-DeafLate       0.0074434462 -0.026463076 0.04134997 0.9390764
-    ## HearingNovice-DeafLate     0.0458077818  0.011901259 0.07971430 0.0036014
-    ## HearingNovice-HearingLate  0.0383643355  0.003294968 0.07343370 0.0263890
-    ## 
-    ## $direction
-    ##                       diff          lwr        upr  p adj
-    ## reversed-forward 0.0125832 -0.005169066 0.03033547 0.1623
-    ## 
-    ## $`maingroup:direction`
-    ##                                                      diff           lwr
-    ## DeafLate:forward-DeafEarly:forward           -0.011893305 -0.0636402067
-    ## HearingLate:forward-DeafEarly:forward        -0.002333292 -0.0567953337
-    ## HearingNovice:forward-DeafEarly:forward       0.024450757 -0.0285475455
-    ## DeafEarly:reversed-DeafEarly:forward         -0.007367995 -0.0580318820
-    ## DeafLate:reversed-DeafEarly:forward           0.003902141 -0.0490961618
-    ## HearingLate:reversed-DeafEarly:forward        0.008542261 -0.0459197805
-    ## HearingNovice:reversed-DeafEarly:forward      0.062268675  0.0060693679
-    ## HearingLate:forward-DeafLate:forward          0.009560013 -0.0467613339
-    ## HearingNovice:forward-DeafLate:forward        0.036344062 -0.0185631342
-    ## DeafEarly:reversed-DeafLate:forward           0.004525310 -0.0481321640
-    ## DeafLate:reversed-DeafLate:forward            0.015795446 -0.0391117505
-    ## HearingLate:reversed-DeafLate:forward         0.020435567 -0.0358857807
-    ## HearingNovice:reversed-DeafLate:forward       0.074161980  0.0161590297
-    ## HearingNovice:forward-HearingLate:forward     0.026784049 -0.0306891833
-    ## DeafEarly:reversed-HearingLate:forward       -0.005034703 -0.0603626509
-    ## DeafLate:reversed-HearingLate:forward         0.006235433 -0.0512377997
-    ## HearingLate:reversed-HearingLate:forward      0.010875553 -0.0479501755
-    ## HearingNovice:reversed-HearingLate:forward    0.064601967  0.0041642761
-    ## DeafEarly:reversed-HearingNovice:forward     -0.031818752 -0.0857064861
-    ## DeafLate:reversed-HearingNovice:forward      -0.020548616 -0.0766367480
-    ## HearingLate:reversed-HearingNovice:forward   -0.015908496 -0.0733817282
-    ## HearingNovice:reversed-HearingNovice:forward  0.037817918 -0.0213041638
-    ## DeafLate:reversed-DeafEarly:reversed          0.011270136 -0.0426175978
-    ## HearingLate:reversed-DeafEarly:reversed       0.015910257 -0.0394176910
-    ## HearingNovice:reversed-DeafEarly:reversed     0.069636670  0.0125978247
-    ## HearingLate:reversed-DeafLate:reversed        0.004640121 -0.0528331118
-    ## HearingNovice:reversed-DeafLate:reversed      0.058366534 -0.0007555475
-    ## HearingNovice:reversed-HearingLate:reversed   0.053726414 -0.0067112771
-    ##                                                     upr     p adj
-    ## DeafLate:forward-DeafEarly:forward           0.03985360 0.9963279
-    ## HearingLate:forward-DeafEarly:forward        0.05212875 1.0000000
-    ## HearingNovice:forward-DeafEarly:forward      0.07744906 0.8382449
-    ## DeafEarly:reversed-DeafEarly:forward         0.04329589 0.9998114
-    ## DeafLate:reversed-DeafEarly:forward          0.05690044 0.9999982
-    ## HearingLate:reversed-DeafEarly:forward       0.06300430 0.9996881
-    ## HearingNovice:reversed-DeafEarly:forward     0.11846798 0.0193600
-    ## HearingLate:forward-DeafLate:forward         0.06588136 0.9994745
-    ## HearingNovice:forward-DeafLate:forward       0.09125126 0.4498466
-    ## DeafEarly:reversed-DeafLate:forward          0.05718278 0.9999947
-    ## DeafLate:reversed-DeafLate:forward           0.07070264 0.9857605
-    ## HearingLate:reversed-DeafLate:forward        0.07675691 0.9485852
-    ## HearingNovice:reversed-DeafLate:forward      0.13216493 0.0035884
-    ## HearingNovice:forward-HearingLate:forward    0.08425728 0.8311284
-    ## DeafEarly:reversed-HearingLate:forward       0.05029324 0.9999922
-    ## DeafLate:reversed-HearingLate:forward        0.06370866 0.9999740
-    ## HearingLate:reversed-HearingLate:forward     0.06970128 0.9990820
-    ## HearingNovice:reversed-HearingLate:forward   0.12503966 0.0276122
-    ## DeafEarly:reversed-HearingNovice:forward     0.02206898 0.5974009
-    ## DeafLate:reversed-HearingNovice:forward      0.03553952 0.9459416
-    ## HearingLate:reversed-HearingNovice:forward   0.04156474 0.9886403
-    ## HearingNovice:reversed-HearingNovice:forward 0.09694000 0.4950600
-    ## DeafLate:reversed-DeafEarly:reversed         0.06515787 0.9979722
-    ## HearingLate:reversed-DeafEarly:reversed      0.07123820 0.9857929
-    ## HearingNovice:reversed-DeafEarly:reversed    0.12667552 0.0064964
-    ## HearingLate:reversed-DeafLate:reversed       0.06211335 0.9999966
-    ## HearingNovice:reversed-DeafLate:reversed     0.11748862 0.0555578
-    ## HearingNovice:reversed-HearingLate:reversed  0.11416410 0.1184488
+<!-- -->
 
-``` r
-cat(paste("","\n",""))
-```
+    ##             Df  Sum Sq  Mean Sq F value Pr(>F)
+    ## maingroup    3 0.00810 0.002701   1.568  0.211
+    ## Residuals   43 0.07406 0.001722               
+    ## 5 observations deleted due to missingness
+
+1.  ANOVA with factor MainGroup, for Reverse only.
+
+<!-- -->
+
+    ##             Df  Sum Sq  Mean Sq F value  Pr(>F)   
+    ## maingroup    3 0.02832 0.009441   5.074 0.00462 **
+    ## Residuals   39 0.07257 0.001861                   
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 8 observations deleted due to missingness
+
+1.  ANCOVA with factors Hearing & Direction, and covariate AoASL and Age.
+
+<!-- -->
+
+    ##                             Df  Sum Sq  Mean Sq F value  Pr(>F)   
+    ## hearing                      1 0.01525 0.015252   7.887 0.00636 **
+    ## direction                    1 0.00309 0.003090   1.598 0.21017   
+    ## aoasl                        1 0.00034 0.000336   0.174 0.67789   
+    ## age                          1 0.01102 0.011018   5.698 0.01954 * 
+    ## hearing:direction            1 0.00233 0.002328   1.204 0.27608   
+    ## hearing:aoasl                1 0.00001 0.000007   0.003 0.95380   
+    ## direction:aoasl              1 0.00037 0.000367   0.190 0.66441   
+    ## hearing:age                  1 0.00395 0.003946   2.041 0.15735   
+    ## direction:age                1 0.00014 0.000143   0.074 0.78628   
+    ## aoasl:age                    1 0.00000 0.000001   0.001 0.97903   
+    ## hearing:direction:aoasl      1 0.00012 0.000117   0.061 0.80616   
+    ## hearing:direction:age        1 0.00082 0.000816   0.422 0.51785   
+    ## hearing:aoasl:age            1 0.00004 0.000037   0.019 0.89028   
+    ## direction:aoasl:age          1 0.00316 0.003162   1.635 0.20495   
+    ## hearing:direction:aoasl:age  1 0.00236 0.002360   1.220 0.27288   
+    ## Residuals                   74 0.14310 0.001934                   
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 13 observations deleted due to missingness
+
+1.  ANCOVA with factor Hearing and covariates Age and AoASL, for Forward only
+
+<!-- -->
+
+    ##                   Df  Sum Sq  Mean Sq F value Pr(>F)
+    ## hearing            1 0.00343 0.003431   1.924  0.173
+    ## aoasl              1 0.00072 0.000719   0.403  0.529
+    ## age                1 0.00463 0.004632   2.597  0.115
+    ## hearing:aoasl      1 0.00008 0.000084   0.047  0.830
+    ## hearing:age        1 0.00064 0.000637   0.357  0.554
+    ## aoasl:age          1 0.00188 0.001882   1.055  0.311
+    ## hearing:aoasl:age  1 0.00123 0.001229   0.689  0.412
+    ## Residuals         39 0.06955 0.001783               
+    ## 5 observations deleted due to missingness
+
+1.  ANCOVA with factor Hearing and covariates AoASL and Age, for Reverse only.
+
+<!-- -->
+
+    ##                   Df  Sum Sq  Mean Sq F value Pr(>F)  
+    ## hearing            1 0.01389 0.013892   6.611 0.0145 *
+    ## aoasl              1 0.00001 0.000006   0.003 0.9564  
+    ## age                1 0.00678 0.006782   3.227 0.0811 .
+    ## hearing:aoasl      1 0.00003 0.000029   0.014 0.9066  
+    ## hearing:age        1 0.00418 0.004184   1.991 0.1671  
+    ## aoasl:age          1 0.00132 0.001320   0.628 0.4333  
+    ## hearing:aoasl:age  1 0.00113 0.001133   0.539 0.4677  
+    ## Residuals         35 0.07355 0.002101                 
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 8 observations deleted due to missingness
 
 FaceChest
 ---------
@@ -903,25 +1228,9 @@ BUT. Chin is actually neck. It's not even part of the face if you think about it
 
 So let's do this. Then see what's happening across groups for FaceChest. First I want a boxplot to comapre the new and old FaceChest variables.
 
-``` r
-# Redefine face, chest, and facechest
-fulldata <- fulldata %>%
-  ungroup() %>%
-  rename(facechest_old = facechest) %>%
-  rowwise() %>%
-  mutate(face = sum(forehead, eyes, mouth, na.rm = TRUE),
-         chest = sum(neck, upperchest, midchest, lowerchest, na.rm = TRUE),
-         facechest = (face - chest)/(face + chest)) %>%
-  ungroup()
-
-fulldata %>% 
-  gather(metric, value, c(facechest_old, facechest)) %>%
-  ggplot(aes(x = maingroup, y = value, fill = direction)) + geom_boxplot() + facet_wrap("metric")
-```
-
     ## Warning: Removed 30 rows containing non-finite values (stat_boxplot).
 
-![](09finaldata_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-2-1.png)
+![](09finaldata_files/figure-markdown_github-ascii_identifiers/recalculate%20facechest-1.png)
 
 Cool. Next we'll do error bar charts using the new FaceChest across groups.
 
@@ -937,24 +1246,19 @@ facechest_info <- fulldata %>%
             se = sd/sqrt(n))
 
 ggplot(facechest_info, aes(x = maingroup, y = mean, fill = direction, color = direction)) +
-  geom_point(stat = "identity", position = position_dodge(0.5)) + 
-  geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.5), width = 0.5) +
+  geom_point(stat = "identity", position = position_dodge(0.5), size = 2) + 
+  geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.5), width = 0.3, size = 1) +
   labs(title = "FaceChest Ratio", subtitle = "Error bars represent SE", x = "", y = "facechest ratio") +
   scale_y_continuous(limits = c(-1,1))
 ```
 
-![](09finaldata_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-3-1.png)
+![](09finaldata_files/figure-markdown_github-ascii_identifiers/facechest%20bars-1.png)
 
-Now let's do the ANOVA.
+Now let's do the ANOVAs. Also skipping LSDs here.
 
-``` r
-# FaceChest ANOVA but remember, participant-level first!
-fc_aov <- fulldata %>%
-  group_by(maingroup, participant, direction) %>%
-  summarise(facechest = mean(facechest, na.rm = TRUE)) %>%
-  aov(facechest ~ maingroup * direction, data = .)
-summary(fc_aov)
-```
+1.  ANOVA with factors MainGroup & Direction.
+
+<!-- -->
 
     ##                     Df Sum Sq Mean Sq F value Pr(>F)  
     ## maingroup            3  1.317  0.4389   2.111 0.1040  
@@ -963,89 +1267,78 @@ summary(fc_aov)
     ## Residuals           95 19.754  0.2079                 
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 1 observation deleted due to missingness
 
-``` r
-TukeyHSD(fc_aov)
-```
+1.  ANOVA with factor MainGroup, for Forward only.
 
-    ##   Tukey multiple comparisons of means
-    ##     95% family-wise confidence level
-    ## 
-    ## Fit: aov(formula = facechest ~ maingroup * direction, data = .)
-    ## 
-    ## $maingroup
-    ##                                  diff        lwr        upr     p adj
-    ## DeafLate-DeafEarly         0.21402505 -0.1023072 0.53035734 0.2944823
-    ## HearingLate-DeafEarly      0.12217507 -0.2043972 0.44874728 0.7620918
-    ## HearingNovice-DeafEarly   -0.08754118 -0.4222586 0.24717623 0.9029764
-    ## HearingLate-DeafLate      -0.09184998 -0.4263885 0.24268858 0.8897151
-    ## HearingNovice-DeafLate    -0.30156623 -0.6440606 0.04092812 0.1046612
-    ## HearingNovice-HearingLate -0.20971625 -0.5616902 0.14225773 0.4074069
-    ## 
-    ## $direction
-    ##                        diff        lwr        upr     p adj
-    ## reversed-forward -0.1662271 -0.3446328 0.01217867 0.0674613
-    ## 
-    ## $`maingroup:direction`
-    ##                                                     diff        lwr
-    ## DeafLate:forward-DeafEarly:forward            0.18128134 -0.3439484
-    ## HearingLate:forward-DeafEarly:forward         0.12525665 -0.4221444
-    ## HearingNovice:forward-DeafEarly:forward       0.02624201 -0.5348120
-    ## DeafEarly:reversed-DeafEarly:forward         -0.13268312 -0.6487778
-    ## DeafLate:reversed-DeafEarly:forward           0.11150119 -0.4240755
-    ## HearingLate:reversed-DeafEarly:forward       -0.01358964 -0.5609907
-    ## HearingNovice:reversed-DeafEarly:forward     -0.33400749 -0.8950615
-    ## HearingLate:forward-DeafLate:forward         -0.05602469 -0.6120467
-    ## HearingNovice:forward-DeafLate:forward       -0.15503933 -0.7245077
-    ## DeafEarly:reversed-DeafLate:forward          -0.31396446 -0.8391942
-    ## DeafLate:reversed-DeafLate:forward           -0.06978014 -0.6141652
-    ## HearingLate:reversed-DeafLate:forward        -0.19487097 -0.7508930
-    ## HearingNovice:reversed-DeafLate:forward      -0.51528883 -1.0847572
-    ## HearingNovice:forward-HearingLate:forward    -0.09901464 -0.6889942
-    ## DeafEarly:reversed-HearingLate:forward       -0.25793977 -0.8053408
-    ## DeafLate:reversed-HearingLate:forward        -0.01375545 -0.5795616
-    ## HearingLate:reversed-HearingLate:forward     -0.13884628 -0.7158576
-    ## HearingNovice:reversed-HearingLate:forward   -0.45926414 -1.0492436
-    ## DeafEarly:reversed-HearingNovice:forward     -0.15892513 -0.7199791
-    ## DeafLate:reversed-HearingNovice:forward       0.08525919 -0.4937662
-    ## HearingLate:reversed-HearingNovice:forward   -0.03983164 -0.6298112
-    ## HearingNovice:reversed-HearingNovice:forward -0.36024950 -0.9629182
-    ## DeafLate:reversed-DeafEarly:reversed          0.24418431 -0.2913924
-    ## HearingLate:reversed-DeafEarly:reversed       0.11909348 -0.4283075
-    ## HearingNovice:reversed-DeafEarly:reversed    -0.20132437 -0.7623784
-    ## HearingLate:reversed-DeafLate:reversed       -0.12509083 -0.6908970
-    ## HearingNovice:reversed-DeafLate:reversed     -0.44550869 -1.0245340
-    ## HearingNovice:reversed-HearingLate:reversed  -0.32041786 -0.9103974
-    ##                                                     upr     p adj
-    ## DeafLate:forward-DeafEarly:forward           0.70651110 0.9614976
-    ## HearingLate:forward-DeafEarly:forward        0.67265767 0.9965412
-    ## HearingNovice:forward-DeafEarly:forward      0.58729603 0.9999999
-    ## DeafEarly:reversed-DeafEarly:forward         0.38341151 0.9929145
-    ## DeafLate:reversed-DeafEarly:forward          0.64707791 0.9980947
-    ## HearingLate:reversed-DeafEarly:forward       0.53381139 1.0000000
-    ## HearingNovice:reversed-DeafEarly:forward     0.22704653 0.5913057
-    ## HearingLate:forward-DeafLate:forward         0.49999735 0.9999849
-    ## HearingNovice:forward-DeafLate:forward       0.41442906 0.9900034
-    ## DeafEarly:reversed-DeafLate:forward          0.21126530 0.5862038
-    ## DeafLate:reversed-DeafLate:forward           0.47460487 0.9999221
-    ## HearingLate:reversed-DeafLate:forward        0.36115107 0.9582064
-    ## HearingNovice:reversed-DeafLate:forward      0.05417956 0.1060821
-    ## HearingNovice:forward-HearingLate:forward    0.49096487 0.9995291
-    ## DeafEarly:reversed-HearingLate:forward       0.28946126 0.8260434
-    ## DeafLate:reversed-HearingLate:forward        0.55205072 1.0000000
-    ## HearingLate:reversed-HearingLate:forward     0.43816506 0.9952726
-    ## HearingNovice:reversed-HearingLate:forward   0.13071537 0.2473425
-    ## DeafEarly:reversed-HearingNovice:forward     0.40212889 0.9873632
-    ## DeafLate:reversed-HearingNovice:forward      0.66428454 0.9998023
-    ## HearingLate:reversed-HearingNovice:forward   0.55014787 0.9999990
-    ## HearingNovice:reversed-HearingNovice:forward 0.24241919 0.5862222
-    ## DeafLate:reversed-DeafEarly:reversed         0.77976103 0.8490339
-    ## HearingLate:reversed-DeafEarly:reversed      0.66649451 0.9974807
-    ## HearingNovice:reversed-DeafEarly:reversed    0.35972965 0.9526484
-    ## HearingLate:reversed-DeafLate:reversed       0.44071534 0.9972122
-    ## HearingNovice:reversed-DeafLate:reversed     0.13351667 0.2608580
-    ## HearingNovice:reversed-HearingLate:reversed  0.26956165 0.6978317
+<!-- -->
+
+    ##             Df Sum Sq Mean Sq F value Pr(>F)
+    ## maingroup    3  0.295 0.09847   0.608  0.613
+    ## Residuals   48  7.777 0.16202
+
+1.  ANOVA with factor MainGroup, for Reverse only.
+
+<!-- -->
+
+    ##             Df Sum Sq Mean Sq F value Pr(>F)
+    ## maingroup    3  1.279  0.4264   1.673  0.185
+    ## Residuals   47 11.977  0.2548
+
+1.  ANCOVA with factors Hearing & Direction, and covariate AoASL and Age.
+
+<!-- -->
+
+    ##                             Df Sum Sq Mean Sq F value  Pr(>F)   
+    ## hearing                      1  0.161  0.1609   0.868 0.35414   
+    ## direction                    1  0.730  0.7303   3.939 0.05033 . 
+    ## aoasl                        1  0.435  0.4350   2.346 0.12924   
+    ## age                          1  1.654  1.6535   8.918 0.00367 **
+    ## hearing:direction            1  0.124  0.1244   0.671 0.41499   
+    ## hearing:aoasl                1  1.378  1.3779   7.431 0.00775 **
+    ## direction:aoasl              1  0.033  0.0329   0.178 0.67442   
+    ## hearing:age                  1  0.101  0.1009   0.544 0.46271   
+    ## direction:age                1  0.056  0.0563   0.303 0.58316   
+    ## aoasl:age                    1  0.839  0.8393   4.526 0.03621 * 
+    ## hearing:direction:aoasl      1  0.008  0.0082   0.044 0.83419   
+    ## hearing:direction:age        1  0.086  0.0860   0.464 0.49768   
+    ## hearing:aoasl:age            1  0.286  0.2856   1.540 0.21792   
+    ## direction:aoasl:age          1  0.000  0.0000   0.000 0.98981   
+    ## hearing:direction:aoasl:age  1  0.042  0.0421   0.227 0.63487   
+    ## Residuals                   87 16.131  0.1854                   
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+1.  ANCOVA with factor Hearing and covariates Age and AoASL, for Forward only
+
+<!-- -->
+
+    ##                   Df Sum Sq Mean Sq F value Pr(>F)  
+    ## hearing            1  0.001  0.0012   0.008 0.9281  
+    ## aoasl              1  0.117  0.1165   0.809 0.3733  
+    ## age                1  0.551  0.5512   3.828 0.0568 .
+    ## hearing:aoasl      1  0.588  0.5880   4.083 0.0494 *
+    ## hearing:age        1  0.000  0.0003   0.002 0.9645  
+    ## aoasl:age          1  0.425  0.4248   2.950 0.0929 .
+    ## hearing:aoasl:age  1  0.054  0.0542   0.376 0.5427  
+    ## Residuals         44  6.336  0.1440                 
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+1.  ANCOVA with factor Hearing and covariates AoASL and Age, for Reverse only.
+
+<!-- -->
+
+    ##                   Df Sum Sq Mean Sq F value Pr(>F)  
+    ## hearing            1  0.275  0.2748   1.206 0.2782  
+    ## aoasl              1  0.353  0.3525   1.548 0.2202  
+    ## age                1  1.160  1.1602   5.093 0.0292 *
+    ## hearing:aoasl      1  0.799  0.7986   3.506 0.0680 .
+    ## hearing:age        1  0.187  0.1867   0.820 0.3703  
+    ## aoasl:age          1  0.414  0.4143   1.819 0.1845  
+    ## hearing:aoasl:age  1  0.274  0.2735   1.201 0.2793  
+    ## Residuals         43  9.795  0.2278                 
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 MouthEye
 --------
@@ -1064,24 +1357,19 @@ moutheye_info <- fulldata %>%
             se = sd/sqrt(n))
 
 ggplot(moutheye_info, aes(x = maingroup, y = mean, fill = direction, color = direction)) +
-  geom_point(stat = "identity", position = position_dodge(0.5)) + 
-  geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.5), width = 0.5) +
+  geom_point(stat = "identity", position = position_dodge(0.5), size = 2) + 
+  geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.5), width = 0.3, size = 1) +
   labs(title = "MouthEye Ratio", subtitle = "Error bars represent SE", x = "", y = "moutheye ratio") +
   scale_y_continuous(limits = c(-1,1))
 ```
 
-![](09finaldata_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-5-1.png)
+![](09finaldata_files/figure-markdown_github-ascii_identifiers/moutheye%20bar%20chart-1.png)
 
-And Moutheye ANOVA.
+And Moutheye ANOVAs. Also skipping LSDs here.
 
-``` r
-# MouthEye ANOVA but remember, participant-level first!
-me_aov <- fulldata %>%
-  group_by(maingroup, participant, direction) %>%
-  summarise(moutheye = mean(moutheye, na.rm = TRUE)) %>%
-  aov(moutheye ~ maingroup * direction, data = .)
-summary(me_aov)
-```
+1.  ANOVA with factors MainGroup & Direction.
+
+<!-- -->
 
     ##                     Df Sum Sq Mean Sq F value Pr(>F)  
     ## maingroup            3  2.165  0.7218   2.652 0.0533 .
@@ -1090,89 +1378,80 @@ summary(me_aov)
     ## Residuals           92 25.035  0.2721                 
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 4 observations deleted due to missingness
+    ## 3 observations deleted due to missingness
 
-``` r
-TukeyHSD(me_aov)
-```
+1.  ANOVA with factor MainGroup, for Forward only.
 
-    ##   Tukey multiple comparisons of means
-    ##     95% family-wise confidence level
-    ## 
-    ## Fit: aov(formula = moutheye ~ maingroup * direction, data = .)
-    ## 
-    ## $maingroup
-    ##                                   diff         lwr          upr     p adj
-    ## DeafLate-DeafEarly        -0.058776004 -0.42742730  0.309875290 0.9754099
-    ## HearingLate-DeafEarly     -0.381706457 -0.76282392 -0.000588997 0.0494956
-    ## HearingNovice-DeafEarly   -0.061136623 -0.44705445  0.324781203 0.9758569
-    ## HearingLate-DeafLate      -0.322930453 -0.71365216  0.067791253 0.1415325
-    ## HearingNovice-DeafLate    -0.002360619 -0.39776611  0.393044871 0.9999986
-    ## HearingNovice-HearingLate  0.320569834 -0.08648329  0.727622955 0.1738594
-    ## 
-    ## $direction
-    ##                        diff        lwr       upr     p adj
-    ## reversed-forward -0.0724788 -0.2798536 0.1348961 0.4893376
-    ## 
-    ## $`maingroup:direction`
-    ##                                                     diff        lwr
-    ## DeafLate:forward-DeafEarly:forward           -0.02323934 -0.6245312
-    ## HearingLate:forward-DeafEarly:forward        -0.27511698 -0.9017909
-    ## HearingNovice:forward-DeafEarly:forward      -0.08352026 -0.7258243
-    ## DeafEarly:reversed-DeafEarly:forward         -0.01110222 -0.6123941
-    ## DeafLate:reversed-DeafEarly:forward          -0.11184810 -0.7385220
-    ## HearingLate:reversed-DeafEarly:forward       -0.50919251 -1.1514966
-    ## HearingNovice:reversed-DeafEarly:forward     -0.04947236 -0.6917764
-    ## HearingLate:forward-DeafLate:forward         -0.25187764 -0.8884210
-    ## HearingNovice:forward-DeafLate:forward       -0.06028092 -0.7122179
-    ## DeafEarly:reversed-DeafLate:forward           0.01213713 -0.5994340
-    ## DeafLate:reversed-DeafLate:forward           -0.08860876 -0.7251521
-    ## HearingLate:reversed-DeafLate:forward        -0.48595316 -1.1378902
-    ## HearingNovice:reversed-DeafLate:forward      -0.02623302 -0.6781700
-    ## HearingNovice:forward-HearingLate:forward     0.19159672 -0.4838217
-    ## DeafEarly:reversed-HearingLate:forward        0.26401477 -0.3725286
-    ## DeafLate:reversed-HearingLate:forward         0.16326888 -0.4973034
-    ## HearingLate:reversed-HearingLate:forward     -0.23407552 -0.9094940
-    ## HearingNovice:reversed-HearingLate:forward    0.22564462 -0.4497738
-    ## DeafEarly:reversed-HearingNovice:forward      0.07241805 -0.5795189
-    ## DeafLate:reversed-HearingNovice:forward      -0.02832784 -0.7037463
-    ## HearingLate:reversed-HearingNovice:forward   -0.42567224 -1.1156175
-    ## HearingNovice:reversed-HearingNovice:forward  0.03404790 -0.6558974
-    ## DeafLate:reversed-DeafEarly:reversed         -0.10074589 -0.7372893
-    ## HearingLate:reversed-DeafEarly:reversed      -0.49809029 -1.1500273
-    ## HearingNovice:reversed-DeafEarly:reversed    -0.03837015 -0.6903071
-    ## HearingLate:reversed-DeafLate:reversed       -0.39734440 -1.0727629
-    ## HearingNovice:reversed-DeafLate:reversed      0.06237574 -0.6130427
-    ## HearingNovice:reversed-HearingLate:reversed   0.45972015 -0.2302251
-    ##                                                    upr     p adj
-    ## DeafLate:forward-DeafEarly:forward           0.5780525 1.0000000
-    ## HearingLate:forward-DeafEarly:forward        0.3515569 0.8719243
-    ## HearingNovice:forward-DeafEarly:forward      0.5587838 0.9999136
-    ## DeafEarly:reversed-DeafEarly:forward         0.5901897 1.0000000
-    ## DeafLate:reversed-DeafEarly:forward          0.5148258 0.9992899
-    ## HearingLate:reversed-DeafEarly:forward       0.1331116 0.2264623
-    ## HearingNovice:reversed-DeafEarly:forward     0.5928317 0.9999976
-    ## HearingLate:forward-DeafLate:forward         0.3846657 0.9216637
-    ## HearingNovice:forward-DeafLate:forward       0.5916561 0.9999915
-    ## DeafEarly:reversed-DeafLate:forward          0.6237082 1.0000000
-    ## DeafLate:reversed-DeafLate:forward           0.5479346 0.9998633
-    ## HearingLate:reversed-DeafLate:forward        0.1659838 0.2984707
-    ## HearingNovice:reversed-DeafLate:forward      0.6257040 1.0000000
-    ## HearingNovice:forward-HearingLate:forward    0.8670152 0.9871789
-    ## DeafEarly:reversed-HearingLate:forward       0.9005582 0.9016148
-    ## DeafLate:reversed-HearingLate:forward        0.8238412 0.9943902
-    ## HearingLate:reversed-HearingLate:forward     0.4413429 0.9604359
-    ## HearingNovice:reversed-HearingLate:forward   0.9010631 0.9675629
-    ## DeafEarly:reversed-HearingNovice:forward     0.7243550 0.9999703
-    ## DeafLate:reversed-HearingNovice:forward      0.6470906 1.0000000
-    ## HearingLate:reversed-HearingNovice:forward   0.2642730 0.5452564
-    ## HearingNovice:reversed-HearingNovice:forward 0.7239932 0.9999999
-    ## DeafLate:reversed-DeafEarly:reversed         0.5357975 0.9996780
-    ## HearingLate:reversed-DeafEarly:reversed      0.1538467 0.2686661
-    ## HearingNovice:reversed-DeafEarly:reversed    0.6135668 0.9999996
-    ## HearingLate:reversed-DeafLate:reversed       0.2780741 0.6051160
-    ## HearingNovice:reversed-DeafLate:reversed     0.7377942 0.9999916
-    ## HearingNovice:reversed-HearingLate:reversed  1.1496654 0.4439614
+<!-- -->
+
+    ##             Df Sum Sq Mean Sq F value Pr(>F)
+    ## maingroup    3  0.595  0.1984   0.872  0.462
+    ## Residuals   48 10.920  0.2275
+
+1.  ANOVA with factor MainGroup, for Reverse only.
+
+<!-- -->
+
+    ##             Df Sum Sq Mean Sq F value Pr(>F)
+    ## maingroup    3  1.814  0.6046   1.885  0.146
+    ## Residuals   44 14.115  0.3208               
+    ## 3 observations deleted due to missingness
+
+1.  ANCOVA with factors Hearing & Direction, and covariate AoASL and Age.
+
+<!-- -->
+
+    ##                             Df Sum Sq Mean Sq F value Pr(>F)  
+    ## hearing                      1  0.962  0.9625   3.399 0.0688 .
+    ## direction                    1  0.118  0.1177   0.416 0.5209  
+    ## aoasl                        1  0.171  0.1706   0.602 0.4399  
+    ## age                          1  0.450  0.4498   1.589 0.2110  
+    ## hearing:direction            1  0.016  0.0161   0.057 0.8123  
+    ## hearing:aoasl                1  0.898  0.8982   3.172 0.0785 .
+    ## direction:aoasl              1  0.001  0.0014   0.005 0.9440  
+    ## hearing:age                  1  0.330  0.3305   1.167 0.2831  
+    ## direction:age                1  0.153  0.1531   0.541 0.4642  
+    ## aoasl:age                    1  0.017  0.0173   0.061 0.8055  
+    ## hearing:direction:aoasl      1  0.082  0.0821   0.290 0.5917  
+    ## hearing:direction:age        1  0.103  0.1035   0.365 0.5471  
+    ## hearing:aoasl:age            1  0.437  0.4375   1.545 0.2173  
+    ## direction:aoasl:age          1  0.002  0.0016   0.006 0.9406  
+    ## hearing:direction:aoasl:age  1  0.048  0.0479   0.169 0.6820  
+    ## Residuals                   84 23.783  0.2831                 
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 3 observations deleted due to missingness
+
+1.  ANCOVA with factor Hearing and covariates Age and AoASL, for Forward only
+
+<!-- -->
+
+    ##                   Df Sum Sq Mean Sq F value Pr(>F)  
+    ## hearing            1  0.381  0.3806   1.710 0.1978  
+    ## aoasl              1  0.104  0.1039   0.466 0.4982  
+    ## age                1  0.038  0.0376   0.169 0.6829  
+    ## hearing:aoasl      1  0.752  0.7516   3.376 0.0729 .
+    ## hearing:age        1  0.037  0.0370   0.166 0.6857  
+    ## aoasl:age          1  0.004  0.0038   0.017 0.8960  
+    ## hearing:aoasl:age  1  0.405  0.4051   1.820 0.1843  
+    ## Residuals         44  9.796  0.2226                 
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+1.  ANCOVA with factor Hearing and covariates AoASL and Age, for Reverse only.
+
+<!-- -->
+
+    ##                   Df Sum Sq Mean Sq F value Pr(>F)
+    ## hearing            1  0.586  0.5859   1.675  0.203
+    ## aoasl              1  0.067  0.0671   0.192  0.664
+    ## age                1  0.580  0.5804   1.660  0.205
+    ## hearing:aoasl      1  0.201  0.2011   0.575  0.453
+    ## hearing:age        1  0.408  0.4081   1.167  0.286
+    ## aoasl:age          1  0.020  0.0199   0.057  0.813
+    ## hearing:aoasl:age  1  0.079  0.0786   0.225  0.638
+    ## Residuals         40 13.987  0.3497               
+    ## 3 observations deleted due to missingness
 
 Heat Maps
 =========
@@ -1219,7 +1498,7 @@ ggplot(eyegaze_heat, aes(x = maingroup, y = aoi)) +
   ylab("") + xlab("") + ggtitle("Eye Gaze Heat Map, by Direction")
 ```
 
-![](09finaldata_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-1.png)
+![](09finaldata_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-1-1.png)
 
 ``` r
 ggplot(eyegaze_heat_all, aes(x = maingroup, y = aoi)) +
@@ -1231,7 +1510,7 @@ ggplot(eyegaze_heat_all, aes(x = maingroup, y = aoi)) +
   ylab("") + xlab("") + ggtitle("Eye Gaze Heat Map (Direction Collapsed)")
 ```
 
-![](09finaldata_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-2.png)
+![](09finaldata_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-1-2.png)
 
 Summary
 =======
@@ -1256,3 +1535,71 @@ About Adults:
 -I think I want to write it up as an ANCOVA, with direction included. And LSD comparisons instead of Tukey. (I will do my own corrections) -You often have one liners summarizing results, in all tabs, those are nice, keep them coming. -(If you have reasons to present anything other than the ANCOVA, put that in your results tab)
 
 I think if we do it this way then we get a really important story to tell: That the *critical* AoA cutoff is below 4 vs above 4 years of age (two groups 0-4 vs 4-13). This suggest early ASL is important.
+
+Gist as binomial logit-link function model
+==========================================
+
+``` r
+gist_glmm <- glmer(gist ~ direction * maingroup + (1|id) + (1|story), data = fulldata, family=binomial (link="logit"))
+```
+
+    ## Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv, : Model is nearly unidentifiable: large eigenvalue ratio
+    ##  - Rescale variables?
+
+``` r
+summary(gist_glmm)
+```
+
+    ## Generalized linear mixed model fit by maximum likelihood (Laplace
+    ##   Approximation) [glmerMod]
+    ##  Family: binomial  ( logit )
+    ## Formula: gist ~ direction * maingroup + (1 | id) + (1 | story)
+    ##    Data: fulldata
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##    167.6    200.9    -73.8    147.6      198 
+    ## 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -3.3261 -0.3017  0.0000  0.2294  1.4668 
+    ## 
+    ## Random effects:
+    ##  Groups Name        Variance Std.Dev.
+    ##  id     (Intercept) 1.745    1.321   
+    ##  story  (Intercept) 1.952    1.397   
+    ## Number of obs: 208, groups:  id, 52; story, 4
+    ## 
+    ## Fixed effects:
+    ##                                          Estimate Std. Error z value
+    ## (Intercept)                                 4.696      1.492   3.147
+    ## directionreversed                          -3.490      1.259  -2.773
+    ## maingroupDeafLate                          16.931    286.428   0.059
+    ## maingroupHearingLate                       16.229    276.008   0.059
+    ## maingroupHearingNovice                     -4.926      1.512  -3.258
+    ## directionreversed:maingroupDeafLate       -18.937    286.427  -0.066
+    ## directionreversed:maingroupHearingLate    -18.605    276.009  -0.067
+    ## directionreversed:maingroupHearingNovice    1.606      1.484   1.082
+    ##                                          Pr(>|z|)   
+    ## (Intercept)                               0.00165 **
+    ## directionreversed                         0.00556 **
+    ## maingroupDeafLate                         0.95286   
+    ## maingroupHearingLate                      0.95311   
+    ## maingroupHearingNovice                    0.00112 **
+    ## directionreversed:maingroupDeafLate       0.94729   
+    ## directionreversed:maingroupHearingLate    0.94626   
+    ## directionreversed:maingroupHearingNovice  0.27934   
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##             (Intr) drctnr mngrDL mngrHL mngrHN drc:DL drc:HL
+    ## dirctnrvrsd -0.772                                          
+    ## maingrpDfLt -0.002  0.001                                   
+    ## mngrpHrngLt  0.001 -0.001 -0.130                            
+    ## mngrpHrngNv -0.785  0.776  0.002 -0.001                     
+    ## drctnrvr:DL  0.001 -0.001 -1.000  0.130 -0.001              
+    ## drctnrvr:HL -0.002  0.001  0.130 -1.000  0.002 -0.130       
+    ## drctnrvr:HN  0.546 -0.774  0.000  0.002 -0.690  0.001 -0.001
+    ## convergence code: 0
+    ## Model is nearly unidentifiable: large eigenvalue ratio
+    ##  - Rescale variables?
