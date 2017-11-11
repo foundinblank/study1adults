@@ -55,7 +55,9 @@ gist <- read_csv('gist_indiv.csv', col_types = cols(
   mutate(video = str_sub(video,6,8))
 
 # Presto, our full reunified dataset - 'fulldata'
-fulldata <- left_join(eyelexdata, gist)
+# But I want to remove columns I don't want anymore
+fulldata <- left_join(eyelexdata, gist) %>%
+  select(-moutheye, -facechest, -face, -chest)
 ```
 
 # Group Changes and Participant Tables
@@ -382,16 +384,22 @@ corstarsl(lexgist_all)
 
 # Eye Gaze Data
 
-Now eye gaze data. Boxplots first. Also here, we're renaming "chin" to "neck" because that's what it actually is! 
+Now eye gaze data. Boxplots first. Also here, we're renaming "chin" to "neck" because that's what it actually is! But we also have to fix all NA's in the percentages to zeros, becuase that's what they actually are. 
 ```{r eye gaze boxplot}
 # rename chin to neck
 fulldata <- fulldata %>%
-  rename(neck = chin)
+  rename(neck = chin) %>%
+  gather(aoi, percent, belly:upperchest)
+
+# Fix all NA's in Percent column to 0
+fixpercent <- fulldata$percent
+fulldata$percent <- coalesce(fixpercent, 0)
+fulldata <- fulldata %>%
+  spread(aoi, percent)
 
 fulldata %>%
   filter(eye_exclude == FALSE) %>%
-  select(direction, moutheye:upperchest) %>%
-  select(-moutheye, -facechest, -face, -chest) %>%
+  select(direction, belly:upperchest) %>%
   gather(aoi, percent, belly:upperchest) %>%
   ggplot(aes(x = aoi, y = percent, fill = direction)) + geom_boxplot()
 ```
@@ -412,7 +420,7 @@ aoi5_data <- fulldata %>%
   gather(aoi, percent, belly:upperchest) %>%
   group_by(id, direction, aoi) %>%
   mutate(percent = mean(percent, na.rm = TRUE)) %>%
-  ungroup () %>%
+  ungroup() %>%
   distinct() %>%
   filter(aoi %in% aoi5) %>%
   spread(aoi, percent)
@@ -708,22 +716,20 @@ BUT. Chin is actually neck. It's not even part of the face if you think about it
 1. Face = forehead + eyes + mouth
 1. Chest = neck + upperchest + midchest + lowerchest
 
-So let's do this. Then see what's happening across groups for FaceChest. First I want a boxplot to comapre the new and old FaceChest variables. 
+So let's do this. Then see what's happening across groups for FaceChest.
 
-```{r recalculate facechest, echo=FALSE, results = 'markup'}
-# Redefine face, chest, and facechest
+```{r calculate facechest, echo=FALSE, results = 'markup'}
+# Calculate face, chest, and facechest - and moutheye too
 fulldata <- fulldata %>%
-  ungroup() %>%
-  rename(facechest_old = facechest) %>%
   rowwise() %>%
   mutate(face = sum(forehead, eyes, mouth, na.rm = TRUE),
          chest = sum(neck, upperchest, midchest, lowerchest, na.rm = TRUE),
-         facechest = (face - chest)/(face + chest)) %>%
-  ungroup()
+         facechest = (face - chest)/(face + chest),
+         moutheye = (mouth - eyes)/(mouth + eyes))
 
-fulldata %>% 
-  gather(metric, value, c(facechest_old, facechest)) %>%
-  ggplot(aes(x = maingroup, y = value, fill = direction)) + geom_boxplot() + facet_wrap("metric")
+# fulldata %>% 
+#   gather(metric, value, c(facechest_old, facechest)) %>%
+#   ggplot(aes(x = maingroup, y = value, fill = direction)) + geom_boxplot() + facet_wrap("metric")
 ```
 
 Cool. Next we'll do error bar charts using the new FaceChest across groups. 
@@ -743,14 +749,15 @@ ggplot(facechest_info, aes(x = maingroup, y = mean, fill = direction, color = di
   geom_point(stat = "identity", position = position_dodge(0.5), size = 2) + 
   geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.5), width = 0.3, size = 1) +
   labs(title = "FaceChest Ratio", subtitle = "Error bars represent SE", x = "", y = "facechest ratio") +
-  scale_y_continuous(limits = c(-1,1))
+  scale_y_continuous(limits = c(-1,1)) + 
+  geom_hline(yintercept = 0, linetype = "dotted")
 ```
 
 Now let's do the ANOVAs. Also skipping LSDs here. 
 
 1. ANOVA with factors MainGroup & Direction.
 
-```{r facechest anova 1, echo=FALSE, results = 'markup'}
+```{r facechest anova 1, echo=FALSE, results = 'markup', message=FALSE}
 # Create the participant-level db (let's also pop moutheye in this too)
 fc_data <- fulldata %>%
   filter(eye_exclude == FALSE) %>%
@@ -815,7 +822,7 @@ summary(facechest_aov6)
 
 ## MouthEye
 We've also got a moutheye ratio! Maybe something there, too.
-```{r moutheye bar chart}
+```{r moutheye bar chart, message=FALSE, warning=FALSE}
 moutheye_info <- fulldata %>%
   filter(eye_exclude == FALSE) %>%
   group_by(maingroup, direction, participant) %>%
@@ -830,7 +837,8 @@ ggplot(moutheye_info, aes(x = maingroup, y = mean, fill = direction, color = dir
   geom_point(stat = "identity", position = position_dodge(0.5), size = 2) + 
   geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.5), width = 0.3, size = 1) +
   labs(title = "MouthEye Ratio", subtitle = "Error bars represent SE", x = "", y = "moutheye ratio") +
-  scale_y_continuous(limits = c(-1,1))
+  scale_y_continuous(limits = c(-1,1)) + 
+  geom_hline(yintercept = 0, linetype = "dotted")
 ```
 
 And Moutheye ANOVAs. Also skipping LSDs here. 
@@ -926,7 +934,7 @@ ggplot(eyegaze_heat, aes(x = maingroup, y = aoi)) +
   geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
 #  scale_fill_gradient(low = "lightblue",high = "steelblue") +
 #  scale_fill_distiller(type="div", palette = "RdYlBu") +
-  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,1)) +
+  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,.75)) +
   theme(axis.text.x=element_text(angle=45,hjust=1)) + facet_grid(. ~ direction) +
   ylab("") + xlab("") + ggtitle("Eye Gaze Heat Map, by Direction")
 
@@ -934,7 +942,7 @@ ggplot(eyegaze_heat_all, aes(x = maingroup, y = aoi)) +
   geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
 #  scale_fill_gradient(low = "lightblue",high = "steelblue") +
 #  scale_fill_distiller(type="div", palette = "RdYlBu") +
-  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,1)) +
+  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,.75)) +
   theme(axis.text.x=element_text(angle=45,hjust=1)) +
   ylab("") + xlab("") + ggtitle("Eye Gaze Heat Map (Direction Collapsed)")
 ```
@@ -957,7 +965,7 @@ results1 <- structure(list(model = c("gist-maingroup-both", "gist-maingroup-fw",
 results1
 ```
 
-And below are the p-values from the ANCOVAs with Hearing & AoASL. I included all ANCOVAs for Gist and Lex Recall, and ANCOVAs for any eye AOI or ratio was included only if either maingroup or direction was significant. LSD comparisons are not needed because there's only 2 levels in each group!
+And below are the p-values from the ANCOVAs with Hearing & AoASL. I included all ANCOVAs for Gist and Lex Recall, and ANCOVAs for any eye AOI or ratio was included only if any main factor was significant. LSD comparisons are not needed because there's only 2 levels in each group!
 
 ```{r results2, rows.print = 25}
 results2 <- structure(list(model = c("gist-both", "gist-fw", "gist-rv", "lex-both", 
