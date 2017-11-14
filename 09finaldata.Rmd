@@ -27,7 +27,8 @@ library(lme4)
 library(lmerTest)
 library(scales)
 library(viridis)
-library(agricolae)
+library(agricolae) 
+library(GGally)
 
 # Load lex and eye data
 cleanlexdata <- read_csv("cleandata.csv") %>%
@@ -394,7 +395,7 @@ lexgist_data <- fulldata %>%
   mutate(gist = mean(gist, na.rm = TRUE),
          lex = mean(acc, na.rm = TRUE)) %>%
   ungroup() %>%
-  select(maingroup, participant, hearing, direction, aoasl, signyrs, gist, lex) %>%
+  select(maingroup, participant, hearing, direction, aoasl, signyrs, age, gist, lex) %>%
   distinct() %>%
   gather(metric, value, gist:lex) %>%
   unite(metricvalue, c(metric, direction), sep = "_") %>%
@@ -465,9 +466,8 @@ corstarsl(lexgist_all)
 
 ## Scatterplot of Correlations
 Let's visualize what's happening with the correlations here. 
-```{r correlation charts, fig.height = 12, fig.width = 12}
-library(GGally)
-ggpairs(lexgist_data, columns = c(2:7), aes(color = hearing))
+```{r correlation charts, fig.height=12, fig.width=12, message=FALSE, warning=FALSE}
+ggpairs(lexgist_data, columns = c(2:8), aes(color = hearing))
 ```
 
 

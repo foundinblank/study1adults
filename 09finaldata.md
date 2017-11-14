@@ -37,7 +37,8 @@ library(lme4)
 library(lmerTest)
 library(scales)
 library(viridis)
-library(agricolae)
+library(agricolae) 
+library(GGally)
 
 # Load lex and eye data
 cleanlexdata <- read_csv("cleandata.csv") %>%
@@ -639,7 +640,7 @@ lexgist_data <- fulldata %>%
   mutate(gist = mean(gist, na.rm = TRUE),
          lex = mean(acc, na.rm = TRUE)) %>%
   ungroup() %>%
-  select(maingroup, participant, hearing, direction, aoasl, signyrs, gist, lex) %>%
+  select(maingroup, participant, hearing, direction, aoasl, signyrs, age, gist, lex) %>%
   distinct() %>%
   gather(metric, value, gist:lex) %>%
   unite(metricvalue, c(metric, direction), sep = "_") %>%
@@ -686,20 +687,22 @@ print("DEAF Correlations - Pearson's r")
 Hmisc::rcorr(as.matrix(lexgist_deaf))$r
 ```
 
-    ##                     aoasl     signyrs gist_forward gist_reversed
-    ## aoasl          1.00000000 -0.50188273   0.08266371   -0.25585943
-    ## signyrs       -0.50188273  1.00000000   0.18321127   -0.01264108
-    ## gist_forward   0.08266371  0.18321127   1.00000000    0.01762269
-    ## gist_reversed -0.25585943 -0.01264108   0.01762269    1.00000000
-    ## lex_forward    0.14743346  0.27968505  -0.08155560    0.02667231
-    ## lex_reversed  -0.25601873  0.06666998  -0.09770666    0.36021802
-    ##               lex_forward lex_reversed
-    ## aoasl          0.14743346  -0.25601873
-    ## signyrs        0.27968505   0.06666998
-    ## gist_forward  -0.08155560  -0.09770666
-    ## gist_reversed  0.02667231   0.36021802
-    ## lex_forward    1.00000000   0.35984892
-    ## lex_reversed   0.35984892   1.00000000
+    ##                     aoasl     signyrs        age gist_forward
+    ## aoasl          1.00000000 -0.50188273  0.2569266   0.08266371
+    ## signyrs       -0.50188273  1.00000000  0.7005996   0.18321127
+    ## age            0.25692660  0.70059955  1.0000000   0.27454460
+    ## gist_forward   0.08266371  0.18321127  0.2745446   1.00000000
+    ## gist_reversed -0.25585943 -0.01264108 -0.1726494   0.01762269
+    ## lex_forward    0.14743346  0.27968505  0.4299784  -0.08155560
+    ## lex_reversed  -0.25601873  0.06666998 -0.1276563  -0.09770666
+    ##               gist_reversed lex_forward lex_reversed
+    ## aoasl           -0.25585943  0.14743346  -0.25601873
+    ## signyrs         -0.01264108  0.27968505   0.06666998
+    ## age             -0.17264941  0.42997837  -0.12765634
+    ## gist_forward     0.01762269 -0.08155560  -0.09770666
+    ## gist_reversed    1.00000000  0.02667231   0.36021802
+    ## lex_forward      0.02667231  1.00000000   0.35984892
+    ## lex_reversed     0.36021802  0.35984892   1.00000000
 
 ``` r
 print("DEAF Correlations - P-values")
@@ -711,20 +714,22 @@ print("DEAF Correlations - P-values")
 Hmisc::rcorr(as.matrix(lexgist_deaf))$P
 ```
 
-    ##                     aoasl     signyrs gist_forward gist_reversed
-    ## aoasl                  NA 0.005536857    0.6698839    0.18035489
-    ## signyrs       0.005536857          NA    0.3414473    0.94810844
-    ## gist_forward  0.669883883 0.341447297           NA    0.92770438
-    ## gist_reversed 0.180354888 0.948108441    0.9277044            NA
-    ## lex_forward   0.445335297 0.141722359    0.6740666    0.89076140
-    ## lex_reversed  0.180074336 0.731133006    0.6140990    0.05492031
-    ##               lex_forward lex_reversed
-    ## aoasl          0.44533530   0.18007434
-    ## signyrs        0.14172236   0.73113301
-    ## gist_forward   0.67406661   0.61409897
-    ## gist_reversed  0.89076140   0.05492031
-    ## lex_forward            NA   0.05518766
-    ## lex_reversed   0.05518766           NA
+    ##                     aoasl      signyrs          age gist_forward
+    ## aoasl                  NA 5.536857e-03 1.784812e-01    0.6698839
+    ## signyrs       0.005536857           NA 2.316796e-05    0.3414473
+    ## age           0.178481213 2.316796e-05           NA    0.1495001
+    ## gist_forward  0.669883883 3.414473e-01 1.495001e-01           NA
+    ## gist_reversed 0.180354888 9.481084e-01 3.704662e-01    0.9277044
+    ## lex_forward   0.445335297 1.417224e-01 1.990877e-02    0.6740666
+    ## lex_reversed  0.180074336 7.311330e-01 5.093054e-01    0.6140990
+    ##               gist_reversed lex_forward lex_reversed
+    ## aoasl            0.18035489  0.44533530   0.18007434
+    ## signyrs          0.94810844  0.14172236   0.73113301
+    ## age              0.37046625  0.01990877   0.50930544
+    ## gist_forward     0.92770438  0.67406661   0.61409897
+    ## gist_reversed            NA  0.89076140   0.05492031
+    ## lex_forward      0.89076140          NA   0.05518766
+    ## lex_reversed     0.05492031  0.05518766           NA
 
 ``` r
 cat(paste("","\n",""))
@@ -742,16 +747,18 @@ print("HEARING Correlations - Pearson's r")
 Hmisc::rcorr(as.matrix(lexgist_hearing))$r
 ```
 
-    ##                     aoasl     signyrs gist_forward gist_reversed
-    ## aoasl          1.00000000 -0.07887013  -0.15525565    0.07815751
-    ## signyrs       -0.07887013  1.00000000   0.57814670    0.28845748
-    ## gist_forward  -0.15525565  0.57814670   1.00000000    0.29502174
-    ## gist_reversed  0.07815751  0.28845748   0.29502174    1.00000000
-    ## lex_forward    0.02500269  0.36725658   0.57154566    0.35682374
-    ## lex_reversed   0.01411303  0.20828810   0.07645807    0.57951176
+    ##                     aoasl     signyrs       age gist_forward gist_reversed
+    ## aoasl          1.00000000 -0.07887013 0.3468184  -0.15525565    0.07815751
+    ## signyrs       -0.07887013  1.00000000 0.9021947   0.57814670    0.28845748
+    ## age            0.34681845  0.90219468 1.0000000   0.44651473    0.30963454
+    ## gist_forward  -0.15525565  0.57814670 0.4465147   1.00000000    0.29502174
+    ## gist_reversed  0.07815751  0.28845748 0.3096345   0.29502174    1.00000000
+    ## lex_forward    0.02500269  0.36725658 0.3093175   0.57154566    0.35682374
+    ## lex_reversed   0.01411303  0.20828810 0.2013959   0.07645807    0.57951176
     ##               lex_forward lex_reversed
     ## aoasl          0.02500269   0.01411303
     ## signyrs        0.36725658   0.20828810
+    ## age            0.30931753   0.20139593
     ## gist_forward   0.57154566   0.07645807
     ## gist_reversed  0.35682374   0.57951176
     ## lex_forward    1.00000000   0.36558339
@@ -767,20 +774,22 @@ print("HEARING Correlations - P-values")
 Hmisc::rcorr(as.matrix(lexgist_hearing))$P
 ```
 
-    ##                   aoasl     signyrs gist_forward gist_reversed lex_forward
-    ## aoasl                NA 0.720558621  0.479339909   0.722986497 0.909841021
-    ## signyrs       0.7205586          NA  0.003857505   0.181932462 0.084723426
-    ## gist_forward  0.4793399 0.003857505           NA   0.171744860 0.004385475
-    ## gist_reversed 0.7229865 0.181932462  0.171744860            NA 0.094647552
-    ## lex_forward   0.9098410 0.084723426  0.004385475   0.094647552          NA
-    ## lex_reversed  0.9490402 0.340222805  0.728786878   0.003755275 0.086260140
-    ##               lex_reversed
-    ## aoasl          0.949040176
-    ## signyrs        0.340222805
-    ## gist_forward   0.728786878
-    ## gist_reversed  0.003755275
-    ## lex_forward    0.086260140
-    ## lex_reversed            NA
+    ##                   aoasl      signyrs          age gist_forward
+    ## aoasl                NA 7.205586e-01 1.049514e-01  0.479339909
+    ## signyrs       0.7205586           NA 4.046899e-09  0.003857505
+    ## age           0.1049514 4.046899e-09           NA  0.032691671
+    ## gist_forward  0.4793399 3.857505e-03 3.269167e-02           NA
+    ## gist_reversed 0.7229865 1.819325e-01 1.505025e-01  0.171744860
+    ## lex_forward   0.9098410 8.472343e-02 1.509426e-01  0.004385475
+    ## lex_reversed  0.9490402 3.402228e-01 3.567949e-01  0.728786878
+    ##               gist_reversed lex_forward lex_reversed
+    ## aoasl           0.722986497 0.909841021  0.949040176
+    ## signyrs         0.181932462 0.084723426  0.340222805
+    ## age             0.150502508 0.150942632  0.356794880
+    ## gist_forward    0.171744860 0.004385475  0.728786878
+    ## gist_reversed            NA 0.094647552  0.003755275
+    ## lex_forward     0.094647552          NA  0.086260140
+    ## lex_reversed    0.003755275 0.086260140           NA
 
 ``` r
 cat(paste("","\n",""))
@@ -798,16 +807,18 @@ print("ALL Correlations - Pearson's r")
 Hmisc::rcorr(as.matrix(lexgist_all))$r
 ```
 
-    ##                     aoasl    signyrs gist_forward gist_reversed
-    ## aoasl          1.00000000 -0.7852245   -0.3230903    -0.3922803
-    ## signyrs       -0.78522450  1.0000000    0.4956183     0.3356193
-    ## gist_forward  -0.32309031  0.4956183    1.0000000     0.2712761
-    ## gist_reversed -0.39228034  0.3356193    0.2712761     1.0000000
-    ## lex_forward   -0.08115845  0.2969899    0.4927911     0.2170182
-    ## lex_reversed  -0.33945209  0.3182316    0.1521110     0.4921550
+    ##                     aoasl    signyrs        age gist_forward gist_reversed
+    ## aoasl          1.00000000 -0.7852245 -0.3136458   -0.3230903    -0.3922803
+    ## signyrs       -0.78522450  1.0000000  0.8314757    0.4956183     0.3356193
+    ## age           -0.31364575  0.8314757  1.0000000    0.4602616     0.1930257
+    ## gist_forward  -0.32309031  0.4956183  0.4602616    1.0000000     0.2712761
+    ## gist_reversed -0.39228034  0.3356193  0.1930257    0.2712761     1.0000000
+    ## lex_forward   -0.08115845  0.2969899  0.3631828    0.4927911     0.2170182
+    ## lex_reversed  -0.33945209  0.3182316  0.1886432    0.1521110     0.4921550
     ##               lex_forward lex_reversed
     ## aoasl         -0.08115845   -0.3394521
     ## signyrs        0.29698992    0.3182316
+    ## age            0.36318284    0.1886432
     ## gist_forward   0.49279109    0.1521110
     ## gist_reversed  0.21701819    0.4921550
     ## lex_forward    1.00000000    0.3800772
@@ -823,20 +834,22 @@ print("ALL Correlations - P-values")
 Hmisc::rcorr(as.matrix(lexgist_all))$P
 ```
 
-    ##                      aoasl      signyrs gist_forward gist_reversed
-    ## aoasl                   NA 5.523138e-12 0.0194786567  0.0040239673
-    ## signyrs       5.523138e-12           NA 0.0001870211  0.0150006737
-    ## gist_forward  1.947866e-02 1.870211e-04           NA  0.0517394597
-    ## gist_reversed 4.023967e-03 1.500067e-02 0.0517394597            NA
-    ## lex_forward   5.673490e-01 3.251160e-02 0.0002061625  0.1222542968
-    ## lex_reversed  1.382018e-02 2.149676e-02 0.2817023354  0.0002107074
-    ##                lex_forward lex_reversed
-    ## aoasl         0.5673489939 0.0138201778
-    ## signyrs       0.0325116001 0.0214967644
-    ## gist_forward  0.0002061625 0.2817023354
-    ## gist_reversed 0.1222542968 0.0002107074
-    ## lex_forward             NA 0.0054478274
-    ## lex_reversed  0.0054478274           NA
+    ##                      aoasl      signyrs          age gist_forward
+    ## aoasl                   NA 5.523138e-12 2.356068e-02 0.0194786567
+    ## signyrs       5.523138e-12           NA 2.309264e-14 0.0001870211
+    ## age           2.356068e-02 2.309264e-14           NA 0.0005965582
+    ## gist_forward  1.947866e-02 1.870211e-04 5.965582e-04           NA
+    ## gist_reversed 4.023967e-03 1.500067e-02 1.703671e-01 0.0517394597
+    ## lex_forward   5.673490e-01 3.251160e-02 8.137388e-03 0.0002061625
+    ## lex_reversed  1.382018e-02 2.149676e-02 1.804672e-01 0.2817023354
+    ##               gist_reversed  lex_forward lex_reversed
+    ## aoasl          0.0040239673 0.5673489939 0.0138201778
+    ## signyrs        0.0150006737 0.0325116001 0.0214967644
+    ## age            0.1703671221 0.0081373882 0.1804672184
+    ## gist_forward   0.0517394597 0.0002061625 0.2817023354
+    ## gist_reversed            NA 0.1222542968 0.0002107074
+    ## lex_forward    0.1222542968           NA 0.0054478274
+    ## lex_reversed   0.0002107074 0.0054478274           NA
 
 I'm also including nicely formatted tables with \*\*\* indicators of significance for quick referencing. Order: Deaf, Hearing, All.
 
@@ -863,37 +876,64 @@ corstarsl(lexgist_deaf)
     ## 
     ##     format.pval, round.POSIXt, trunc.POSIXt, units
 
-    ##                  aoasl signyrs gist_forward gist_reversed lex_forward
-    ## aoasl                                                                
-    ## signyrs       -0.50**                                                
-    ## gist_forward     0.08    0.18                                        
-    ## gist_reversed   -0.26   -0.01         0.02                           
-    ## lex_forward      0.15    0.28        -0.08          0.03             
-    ## lex_reversed    -0.26    0.07        -0.10          0.36        0.36
+    ##                  aoasl  signyrs     age gist_forward gist_reversed
+    ## aoasl                                                             
+    ## signyrs       -0.50**                                             
+    ## age              0.26   0.70***                                   
+    ## gist_forward     0.08     0.18    0.27                            
+    ## gist_reversed   -0.26    -0.01   -0.17         0.02               
+    ## lex_forward      0.15     0.28   0.43*        -0.08          0.03 
+    ## lex_reversed    -0.26     0.07   -0.13        -0.10          0.36 
+    ##               lex_forward
+    ## aoasl                    
+    ## signyrs                  
+    ## age                      
+    ## gist_forward             
+    ## gist_reversed            
+    ## lex_forward              
+    ## lex_reversed        0.36
 
 ``` r
 corstarsl(lexgist_hearing)
 ```
 
-    ##                aoasl  signyrs gist_forward gist_reversed lex_forward
-    ## aoasl                                                               
-    ## signyrs       -0.08                                                 
-    ## gist_forward  -0.16   0.58**                                        
-    ## gist_reversed  0.08     0.29         0.30                           
-    ## lex_forward    0.03     0.37       0.57**          0.36             
-    ## lex_reversed   0.01     0.21         0.08        0.58**        0.37
+    ##                aoasl  signyrs     age gist_forward gist_reversed
+    ## aoasl                                                           
+    ## signyrs       -0.08                                             
+    ## age            0.35   0.90***                                   
+    ## gist_forward  -0.16   0.58**   0.45*                            
+    ## gist_reversed  0.08     0.29    0.31         0.30               
+    ## lex_forward    0.03     0.37    0.31       0.57**          0.36 
+    ## lex_reversed   0.01     0.21    0.20         0.08        0.58** 
+    ##               lex_forward
+    ## aoasl                    
+    ## signyrs                  
+    ## age                      
+    ## gist_forward             
+    ## gist_reversed            
+    ## lex_forward              
+    ## lex_reversed        0.37
 
 ``` r
 corstarsl(lexgist_all)
 ```
 
-    ##                  aoasl  signyrs gist_forward gist_reversed lex_forward
-    ## aoasl                                                                 
-    ## signyrs       -0.79***                                                
-    ## gist_forward   -0.32*   0.50***                                       
-    ## gist_reversed -0.39**    0.34*         0.27                           
-    ## lex_forward     -0.08    0.30*       0.49***         0.22             
-    ## lex_reversed   -0.34*    0.32*         0.15        0.49***     0.38**
+    ##                  aoasl  signyrs      age gist_forward gist_reversed
+    ## aoasl                                                              
+    ## signyrs       -0.79***                                             
+    ## age            -0.31*   0.83***                                    
+    ## gist_forward   -0.32*   0.50***  0.46***                           
+    ## gist_reversed -0.39**    0.34*     0.19         0.27               
+    ## lex_forward     -0.08    0.30*   0.36**       0.49***         0.22 
+    ## lex_reversed   -0.34*    0.32*     0.19         0.15        0.49***
+    ##               lex_forward
+    ## aoasl                    
+    ## signyrs                  
+    ## age                      
+    ## gist_forward             
+    ## gist_reversed            
+    ## lex_forward              
+    ## lex_reversed      0.38**
 
 Scatterplot of Correlations
 ---------------------------
@@ -901,18 +941,7 @@ Scatterplot of Correlations
 Let's visualize what's happening with the correlations here.
 
 ``` r
-library(GGally)
-```
-
-    ## 
-    ## Attaching package: 'GGally'
-
-    ## The following object is masked from 'package:dplyr':
-    ## 
-    ##     nasa
-
-``` r
-ggpairs(lexgist_data, columns = c(2:7), aes(color = hearing))
+ggpairs(lexgist_data, columns = c(2:8), aes(color = hearing))
 ```
 
 ![](09finaldata_files/figure-markdown_github-ascii_identifiers/correlation%20charts-1.png)
