@@ -1,7 +1,7 @@
 The Last Data Analysis to Rule Them All? (study1adults)
 ================
 Adam Stone, PhD
-11-14-2017
+11-18-2017
 
 -   [Putting It All Back Together](#putting-it-all-back-together)
 -   [Group Changes and Participant Tables](#group-changes-and-participant-tables)
@@ -24,6 +24,7 @@ Adam Stone, PhD
 -   [Heat Maps](#heat-maps)
 -   [Summary](#summary)
 -   [Rain's Notes](#rains-notes)
+-   [Ternary Plots](#ternary-plots)
 
 Putting It All Back Together
 ============================
@@ -1920,3 +1921,23 @@ About Adults:
 -I think I want to write it up as an ANCOVA, with direction included. And LSD comparisons instead of Tukey. (I will do my own corrections) -You often have one liners summarizing results, in all tabs, those are nice, keep them coming. -(If you have reasons to present anything other than the ANCOVA, put that in your results tab)
 
 I think if we do it this way then we get a really important story to tell: That the *critical* AoA cutoff is below 4 vs above 4 years of age (two groups 0-4 vs 4-13). This suggest early ASL is important.
+
+Ternary Plots
+=============
+
+Let's make triangle plots. "What?" you say. Read on.
+
+``` r
+library(ggtern)
+fulldata %>% 
+  ggtern(aes(x = eyes, y = mouth, z = neck)) + facet_grid(direction ~ maingroup) + stat_density_tern(geom='polygon', aes(fill=..level..), bins=4) + geom_point(color = "white", alpha = 0.5) + theme_bw()
+```
+
+![](09finaldata_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-2-1.png)
+
+``` r
+fulldata %>% 
+  ggtern(aes(x = eyes, y = mouth, z = neck)) + facet_grid(direction ~ maingroup) + geom_confidence_tern(breaks = c(.5), color = "red") + geom_point() + theme_bw()
+```
+
+![](09finaldata_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-2-2.png)

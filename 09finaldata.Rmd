@@ -1099,4 +1099,16 @@ gist_glmm <- glmer(gist ~ direction * maingroup + (1|id) + (1|story), data = ful
 summary(gist_glmm)
 ```
 
- 
+# Ternary Plots
+
+Let's make triangle plots. "What?" you say. Read on. 
+
+```{r fig.height=12, fig.width=12, message=FALSE, warning=FALSE}
+library(ggtern)
+fulldata %>% 
+  ggtern(aes(x = eyes, y = mouth, z = neck)) + facet_grid(direction ~ maingroup) + stat_density_tern(geom='polygon', aes(fill=..level..), bins=4) + geom_point(color = "white", alpha = 0.5) + theme_bw()
+
+fulldata %>% 
+  ggtern(aes(x = eyes, y = mouth, z = neck)) + facet_grid(direction ~ maingroup) + geom_confidence_tern(breaks = c(.5), color = "red") + geom_point() + theme_bw()
+```
+
