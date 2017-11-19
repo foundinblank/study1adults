@@ -3,9 +3,9 @@ title: "The Last Data Analysis to Rule Them All? (study1adults)"
 author: "Adam Stone, PhD" 
 date: '`r format(Sys.Date(), "%m-%d-%Y")`'
 output:
-  github_document:
-    toc: yes
-    toc_depth: 2
+#  github_document:
+#    toc: yes
+#    toc_depth: 2
   html_notebook:
     code_folding: hide
     theme: paper
@@ -527,7 +527,7 @@ Each ANOVA will be accompanied by LSDs for Group and AOI if significant.
 
 Below is for all 5 top AOIs. 
 
-```{r big anova aoi5, echo=FALSE, results="markup"}
+```{r big anova aoi5, echo=FALSE, results = 'markup'}
 # First, we've got to set up the dataset. Define the 5 AOIs
 aoi5 <- c('forehead','eyes','mouth','neck','upperchest')
 
@@ -554,7 +554,7 @@ big_aov_aoi5_lsd$comparison
 ```
 
 And now the big ANOVA for just Eyes, Mouth, and Neck. 
-```{r big anova aoi3, echo=FALSE, results="markup"}
+```{r big anova aoi3, echo=FALSE, results = 'markup'}
 # Limit to eyes mouth neck
 big_aov_aoi3 <- aoi5_data %>%
   select(-upperchest, -forehead) %>%
@@ -572,7 +572,7 @@ This is going to get complicated - we need to run all 6 ANOVAs/ANCOVAs on 5 AOIs
 
 1. ANOVA with factors MainGroup & Direction.
 
-```{r forehead anova1, echo=FALSE, results="markup"}
+```{r forehead anova1, echo=FALSE, results = 'markup'}
 # forehead ANOVA 1
 forehead_aov1 <- aov(forehead ~ maingroup * direction, data = aoi5_data)
 summary(forehead_aov1)
@@ -582,7 +582,7 @@ summary(forehead_aov1)
 
 2. ANOVA with factor MainGroup, for Forward only.
 
-```{r forehead anova2, echo=FALSE, results="markup"}
+```{r forehead anova2, echo=FALSE, results = 'markup'}
 # forehead ANOVA 2
 forehead_aov2 <- aov(forehead ~ maingroup, data = filter(aoi5_data, direction == "forward"))
 summary(forehead_aov2)
@@ -592,7 +592,7 @@ summary(forehead_aov2)
 
 3. ANOVA with factor MainGroup, for Reverse only. 
 
-```{r forehead anova3, echo=FALSE, results="markup"}
+```{r forehead anova3, echo=FALSE, results = 'markup'}
 # forehead ANOVA 3
 forehead_aov3 <- aov(forehead ~ maingroup, data = filter(aoi5_data, direction == "reversed"))
 summary(forehead_aov3)
@@ -602,7 +602,7 @@ summary(forehead_aov3)
 
 4. ANCOVA with factor Direction, and covariate AoASL and Age.
 
-```{r forehead anova4, echo=FALSE, results="markup"}
+```{r forehead anova4, echo=FALSE, results = 'markup'}
 # forehead ANOVA 4
 forehead_aov4 <- aov(forehead ~ direction * aoasl * age, data = aoi5_data)
 summary(forehead_aov4)
@@ -610,7 +610,7 @@ summary(forehead_aov4)
 
 5. Regression with variables Age and AoASL, for Forward only
 
-```{r forehead anova5, echo=FALSE, results="markup"}
+```{r forehead anova5, echo=FALSE, results = 'markup'}
 # forehead ANOVA 5
 forehead_aov5 <- lm(forehead ~ aoasl * age, data = filter(aoi5_data, direction == "forward"))
 summary(forehead_aov5)
@@ -618,7 +618,7 @@ summary(forehead_aov5)
 
 6. Regression with variables Age and AoASL, for Reverse only
 
-```{r forehead anova6, echo=FALSE, results="markup"}
+```{r forehead anova6, echo=FALSE, results = 'markup'}
 # forehead ANOVA 6
 forehead_aov6 <- lm(forehead ~ aoasl * age, data = filter(aoi5_data, direction == "reversed"))
 summary(forehead_aov6)
