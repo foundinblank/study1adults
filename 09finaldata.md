@@ -1,7 +1,7 @@
 The Last Data Analysis to Rule Them All? (study1adults)
 ================
 Adam Stone, PhD
-11-18-2017
+11-19-2017
 
 -   [Putting It All Back Together](#putting-it-all-back-together)
 -   [Group Changes and Participant Tables](#group-changes-and-participant-tables)
@@ -14,6 +14,7 @@ Adam Stone, PhD
 -   [AoA Correlations](#aoa-correlations)
     -   [Scatterplot of Correlations](#scatterplot-of-correlations)
 -   [Eye Gaze Data](#eye-gaze-data)
+    -   [Big Three-Way ANOVA](#big-three-way-anova)
     -   [Forehead](#forehead)
     -   [Eyes](#eyes)
     -   [Mouth](#mouth)
@@ -23,8 +24,8 @@ Adam Stone, PhD
     -   [MouthEye](#moutheye)
 -   [Heat Maps](#heat-maps)
 -   [Summary](#summary)
--   [Rain's Notes](#rains-notes)
 -   [Ternary Plots](#ternary-plots)
+-   [Rain's Notes](#rains-notes)
 
 Putting It All Back Together
 ============================
@@ -973,6 +974,87 @@ fulldata %>%
 
 ![](09finaldata_files/figure-markdown_github-ascii_identifiers/eye%20gaze%20boxplot-1.png)
 
+But let's try error charts too! Instead of boxplots.
+
+``` r
+fulldata_error <- fulldata %>%
+  filter(eye_exclude == FALSE) %>%
+  gather(aoi, percent, belly:upperchest) %>%
+  group_by(id, direction, aoi) %>%
+  summarise(percent = mean(percent, na.rm = TRUE)) %>%
+  ungroup() %>%
+  distinct() %>%
+  group_by(direction, aoi) %>%
+  summarise(mean = mean(percent, na.rm = TRUE),
+            sd = sd(percent, na.rm = TRUE),
+            count = n(),
+            se = sd/sqrt(count))
+
+fulldata_error %>%
+  ggplot(aes(x = aoi, y = mean, fill = direction)) + 
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.9), width = 0.5) +
+  labs(title = "Eye Gaze Behavior", subtitle = "Error bars represent SE", x = "", y = "percent looking") +
+  scale_y_continuous(labels = percent, limits = c(0,1)) 
+```
+
+![](09finaldata_files/figure-markdown_github-ascii_identifiers/eye%20gaze%20error%20bar%20chart-1.png)
+
+Big Three-Way ANOVA
+-------------------
+
+Now we're going to try a three-way Group x Direction x AOI ANOVA. Two flavors:
+
+1.  One with the 5 AOIs that got a lot of high points based on the **boxplot** (Forehead to UpperChest)
+2.  One with 3 AOIs that show up at all on the **error bar chart** (Eyes, Mouth, Neck)
+
+Each ANOVA will be accompanied by LSDs for Group and AOI if significant.
+
+Below is for all 5 top AOIs.
+
+    ##                          Df Sum Sq Mean Sq F value Pr(>F)    
+    ## maingroup                 3  0.004   0.001   0.044 0.9876    
+    ## direction                 1  0.002   0.002   0.048 0.8269    
+    ## aoi                       4 22.390   5.598 170.596 <2e-16 ***
+    ## maingroup:direction       3  0.000   0.000   0.003 0.9998    
+    ## maingroup:aoi            12  1.044   0.087   2.650 0.0019 ** 
+    ## direction:aoi             4  0.344   0.086   2.621 0.0343 *  
+    ## maingroup:direction:aoi  12  0.088   0.007   0.223 0.9973    
+    ## Residuals               475 15.586   0.033                   
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+    ##                         difference pvalue signif.          LCL         UCL
+    ## eyes - forehead        0.194567995 0.0000     ***  0.144969717  0.24416627
+    ## eyes - mouth          -0.377338614 0.0000     *** -0.426936891 -0.32774034
+    ## eyes - neck            0.055178534 0.0293       *  0.005580257  0.10477681
+    ## eyes - upperchest      0.186517910 0.0000     ***  0.136919632  0.23611619
+    ## forehead - mouth      -0.571906609 0.0000     *** -0.621504886 -0.52230833
+    ## forehead - neck       -0.139389461 0.0000     *** -0.188987738 -0.08979118
+    ## forehead - upperchest -0.008050085 0.7499         -0.057648362  0.04154819
+    ## mouth - neck           0.432517148 0.0000     ***  0.382918871  0.48211543
+    ## mouth - upperchest     0.563856524 0.0000     ***  0.514258246  0.61345480
+    ## neck - upperchest      0.131339376 0.0000     ***  0.081741098  0.18093765
+
+And now the big ANOVA for just Eyes, Mouth, and Neck.
+
+    ##                          Df Sum Sq Mean Sq F value  Pr(>F)    
+    ## maingroup                 3  0.031   0.010   0.190 0.90322    
+    ## direction                 1  0.012   0.012   0.218 0.64069    
+    ## aoi                       2 11.416   5.708 106.365 < 2e-16 ***
+    ## maingroup:direction       3  0.002   0.001   0.013 0.99797    
+    ## maingroup:aoi             6  0.979   0.163   3.039 0.00676 ** 
+    ## direction:aoi             2  0.329   0.164   3.065 0.04820 *  
+    ## maingroup:direction:aoi   6  0.079   0.013   0.246 0.96078    
+    ## Residuals               285 15.294   0.054                    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+    ##               difference pvalue signif.          LCL        UCL
+    ## eyes - mouth -0.37733861 0.0000     *** -0.440876463 -0.3138008
+    ## eyes - neck   0.05517853 0.0885       . -0.008359315  0.1187164
+    ## mouth - neck  0.43251715 0.0000     ***  0.368979299  0.4960550
+
 Forehead
 --------
 
@@ -1913,15 +1995,6 @@ results3
     ## 3  lex-fw                  -0.08  0.567
     ## 4  lex-rv                  -0.34  0.014
 
-Rain's Notes
-============
-
-About Adults:
-
--I think I want to write it up as an ANCOVA, with direction included. And LSD comparisons instead of Tukey. (I will do my own corrections) -You often have one liners summarizing results, in all tabs, those are nice, keep them coming. -(If you have reasons to present anything other than the ANCOVA, put that in your results tab)
-
-I think if we do it this way then we get a really important story to tell: That the *critical* AoA cutoff is below 4 vs above 4 years of age (two groups 0-4 vs 4-13). This suggest early ASL is important.
-
 Ternary Plots
 =============
 
@@ -1933,11 +2006,20 @@ fulldata %>%
   ggtern(aes(x = eyes, y = mouth, z = neck)) + facet_grid(direction ~ maingroup) + stat_density_tern(geom='polygon', aes(fill=..level..), bins=4) + geom_point(color = "white", alpha = 0.5) + theme_bw()
 ```
 
-![](09finaldata_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-2-1.png)
+![](09finaldata_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-1-1.png)
 
 ``` r
 fulldata %>% 
   ggtern(aes(x = eyes, y = mouth, z = neck)) + facet_grid(direction ~ maingroup) + geom_confidence_tern(breaks = c(.5), color = "red") + geom_point() + theme_bw()
 ```
 
-![](09finaldata_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-2-2.png)
+![](09finaldata_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-1-2.png)
+
+Rain's Notes
+============
+
+About Adults:
+
+-I think I want to write it up as an ANCOVA, with direction included. And LSD comparisons instead of Tukey. (I will do my own corrections) -You often have one liners summarizing results, in all tabs, those are nice, keep them coming. -(If you have reasons to present anything other than the ANCOVA, put that in your results tab)
+
+I think if we do it this way then we get a really important story to tell: That the *critical* AoA cutoff is below 4 vs above 4 years of age (two groups 0-4 vs 4-13). This suggest early ASL is important.

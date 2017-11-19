@@ -493,12 +493,41 @@ fulldata %>%
   ggplot(aes(x = aoi, y = percent, fill = direction)) + geom_boxplot()
 ```
 
-## Forehead
-This is going to get complicated - we need to run all 6 ANOVAs/ANCOVAs on 5 AOIs. That's 30 models. Thank goodness for find-and-replace! I'm going to skip the LSD comparisons for now, to make it easier to just scroll through. 
+But let's try error charts too! Instead of boxplots.
 
-1. ANOVA with factors MainGroup & Direction.
+```{r eye gaze error bar chart}
+fulldata_error <- fulldata %>%
+  filter(eye_exclude == FALSE) %>%
+  gather(aoi, percent, belly:upperchest) %>%
+  group_by(id, direction, aoi) %>%
+  summarise(percent = mean(percent, na.rm = TRUE)) %>%
+  ungroup() %>%
+  distinct() %>%
+  group_by(direction, aoi) %>%
+  summarise(mean = mean(percent, na.rm = TRUE),
+            sd = sd(percent, na.rm = TRUE),
+            count = n(),
+            se = sd/sqrt(count))
 
-```{r forehead anova1, echo=FALSE, results="markup"}
+fulldata_error %>%
+  ggplot(aes(x = aoi, y = mean, fill = direction)) + 
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.9), width = 0.5) +
+  labs(title = "Eye Gaze Behavior", subtitle = "Error bars represent SE", x = "", y = "percent looking") +
+  scale_y_continuous(labels = percent, limits = c(0,1)) 
+```
+
+## Big Three-Way ANOVA
+Now we're going to try a three-way Group x Direction x AOI ANOVA. Two flavors:
+
+1. One with the 5 AOIs that got a lot of high points based on the **boxplot** (Forehead to UpperChest)
+1. One with 3 AOIs that show up at all on the **error bar chart** (Eyes, Mouth, Neck)
+
+Each ANOVA will be accompanied by LSDs for Group and AOI if significant. 
+
+Below is for all 5 top AOIs. 
+
+```{r big anova aoi5, echo=FALSE, results="markup"}
 # First, we've got to set up the dataset. Define the 5 AOIs
 aoi5 <- c('forehead','eyes','mouth','neck','upperchest')
 
@@ -514,7 +543,37 @@ aoi5_data <- fulldata %>%
   filter(aoi %in% aoi5) %>%
   spread(aoi, percent)
 
-# forehead ANCOVA 1
+big_aov_aoi5 <- aoi5_data %>%
+  gather(aoi, percent, eyes:upperchest) %>%
+  aov(percent ~ maingroup * direction * aoi, data = .)
+
+summary(big_aov_aoi5)
+
+big_aov_aoi5_lsd <- LSD.test(big_aov_aoi5, "aoi", group = FALSE)
+big_aov_aoi5_lsd$comparison
+```
+
+And now the big ANOVA for just Eyes, Mouth, and Neck. 
+```{r big anova aoi3, echo=FALSE, results="markup"}
+# Limit to eyes mouth neck
+big_aov_aoi3 <- aoi5_data %>%
+  select(-upperchest, -forehead) %>%
+  gather(aoi, percent, eyes:neck) %>%
+  aov(percent ~ maingroup * direction * aoi, data = .)
+
+summary(big_aov_aoi3)
+
+big_aov_aoi3_lsd <- LSD.test(big_aov_aoi3, "aoi", group = FALSE)
+big_aov_aoi3_lsd$comparison
+```
+
+## Forehead
+This is going to get complicated - we need to run all 6 ANOVAs/ANCOVAs on 5 AOIs. That's 30 models. Thank goodness for find-and-replace! I'm going to skip the LSD comparisons for now, to make it easier to just scroll through. 
+
+1. ANOVA with factors MainGroup & Direction.
+
+```{r forehead anova1, echo=FALSE, results="markup"}
+# forehead ANOVA 1
 forehead_aov1 <- aov(forehead ~ maingroup * direction, data = aoi5_data)
 summary(forehead_aov1)
 # forehead_lsd1 <- LSD.test(forehead_aov1, "maingroup", group = FALSE)
@@ -1084,6 +1143,19 @@ results3 <- tribble(
 results3
 ```
 
+# Ternary Plots
+
+Let's make triangle plots. "What?" you say. Read on. 
+
+```{r fig.height=12, fig.width=12, message=FALSE, warning=FALSE}
+library(ggtern)
+fulldata %>% 
+  ggtern(aes(x = eyes, y = mouth, z = neck)) + facet_grid(direction ~ maingroup) + stat_density_tern(geom='polygon', aes(fill=..level..), bins=4) + geom_point(color = "white", alpha = 0.5) + theme_bw()
+
+fulldata %>% 
+  ggtern(aes(x = eyes, y = mouth, z = neck)) + facet_grid(direction ~ maingroup) + geom_confidence_tern(breaks = c(.5), color = "red") + geom_point() + theme_bw()
+```
+
 # Rain's Notes
 About Adults:
 
@@ -1098,17 +1170,3 @@ I think if we do it this way then we get a really important story to tell:  That
 gist_glmm <- glmer(gist ~ direction * maingroup + (1|id) + (1|story), data = fulldata, family=binomial (link="logit"))
 summary(gist_glmm)
 ```
-
-# Ternary Plots
-
-Let's make triangle plots. "What?" you say. Read on. 
-
-```{r fig.height=12, fig.width=12, message=FALSE, warning=FALSE}
-library(ggtern)
-fulldata %>% 
-  ggtern(aes(x = eyes, y = mouth, z = neck)) + facet_grid(direction ~ maingroup) + stat_density_tern(geom='polygon', aes(fill=..level..), bins=4) + geom_point(color = "white", alpha = 0.5) + theme_bw()
-
-fulldata %>% 
-  ggtern(aes(x = eyes, y = mouth, z = neck)) + facet_grid(direction ~ maingroup) + geom_confidence_tern(breaks = c(.5), color = "red") + geom_point() + theme_bw()
-```
-
