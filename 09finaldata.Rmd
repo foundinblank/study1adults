@@ -548,9 +548,59 @@ summary(big_aov_aoi3)
 big_aov_aoi3_lsd <- LSD.test(big_aov_aoi3, "aoi", group = FALSE)
 big_aov_aoi3_lsd$comparison
 ```
+## Interactions Visualization
+So we have significant maingroup:aoi and direction:aoi interactions. Let's try to visualize what can be driving these. We can go back to the SEM chart but break it down...
 
-## All the AOI raw numbers/averages
-Let's get a table of our raw numbers here, by group
+*The error bars are not 100% accurate, I took a quick-n-easy way around*
+
+```{r}
+aoi3_interactions <- fulldata %>%
+  filter(eye_exclude == FALSE) %>%
+  select(id, participant, maingroup, direction, eyes, mouth, neck) %>%
+  gather(aoi, percent, c(eyes, mouth, neck)) %>%
+  group_by(maingroup, direction, aoi) %>%
+  summarise(mean = mean(percent, na.rm = TRUE),
+            sd = sd(percent, na.rm = TRUE),
+            count = n()/2,
+            se = sd/sqrt(count))
+# I need to first collapse across stories for each participant...here I didn't. Must fix later.
+
+aoi3_interactions %>%
+  ggplot(aes(x = aoi, y = mean, fill = direction)) + 
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.9), width = 0.5) +
+  labs(title = "Eye Gaze Behavior", subtitle = "Error bars represent SE", x = "", y = "percent looking") +
+  scale_y_continuous(labels = percent) +
+  facet_wrap("maingroup")
+
+aoi3_interactions %>%
+  ggplot(aes(x = aoi, y = mean, fill = maingroup)) + 
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.9), width = 0.5) +
+  labs(title = "Eye Gaze Behavior", subtitle = "Error bars represent SE", x = "", y = "percent looking") +
+  scale_y_continuous(labels = percent) +
+  facet_wrap("direction")
+
+aoi3_interactions %>%
+  ggplot(aes(x = maingroup, y = mean, fill = direction)) + 
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.9), width = 0.5) +
+  labs(title = "Eye Gaze Behavior", subtitle = "Error bars represent SE", x = "", y = "percent looking") +
+  scale_y_continuous(labels = percent) +
+  facet_wrap("aoi")
+
+aoi3_interactions %>%
+  ggplot(aes(x = direction, y = mean, fill = maingroup)) + 
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.9), width = 0.5) +
+  labs(title = "Eye Gaze Behavior", subtitle = "Error bars represent SE", x = "", y = "percent looking") +
+  scale_y_continuous(labels = percent) +
+  facet_wrap("aoi")
+```
+
+
+## All the AOI means
+Let's get tables of our means here, in various configurations
 
 ```{r aoi raw, echo = FALSE, results = 'markup'}
 aoi3_data %>%
