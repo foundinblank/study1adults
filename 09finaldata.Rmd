@@ -626,7 +626,9 @@ aoi3_data %>%
   group_by(maingroup, direction) %>%
   summarise(eyes = mean(eyes, na.rm = TRUE),
             mouth = mean(mouth, na.rm = TRUE),
-            neck = mean(neck, na.rm = TRUE))
+            neck = mean(neck, na.rm = TRUE)) %>%
+  rowwise() %>%
+  mutate(total = sum(eyes,mouth,neck))
 
 aoi3_data %>%
   group_by(maingroup, direction) %>%
@@ -636,7 +638,9 @@ aoi3_data %>%
   group_by(maingroup) %>%
   summarise(eyes = mean(eyes, na.rm = TRUE),
             mouth = mean(mouth, na.rm = TRUE),
-            neck = mean(neck, na.rm = TRUE))  
+            neck = mean(neck, na.rm = TRUE))  %>%
+  rowwise() %>%
+  mutate(total = sum(eyes,mouth,neck))
 
 aoi3_data %>%
   group_by(maingroup, direction) %>%
@@ -646,7 +650,9 @@ aoi3_data %>%
   group_by(direction) %>%
   summarise(eyes = mean(eyes, na.rm = TRUE),
             mouth = mean(mouth, na.rm = TRUE),
-            neck = mean(neck, na.rm = TRUE))  
+            neck = mean(neck, na.rm = TRUE)) %>%
+  rowwise() %>%
+  mutate(total = sum(eyes,mouth,neck))
 
 aoi3_data %>%
   group_by(maingroup, direction) %>%
