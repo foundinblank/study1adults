@@ -12,6 +12,10 @@ output:
     toc_float: yes
 ---
 
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
+```
+
 # Putting It All Back Together
 
 Throughout all the data analysis we've done, the datasets have become more fragmented - lexical recall, gist, and eye tracking datasets. I want to put them all together in one whole dataset again so we can perform some analyses more efficiently (particularly correlations). The only thing I need to remember is we'll have a new column called `eye_exclude` and if it is set to `TRUE` it means we can't include that row in any analysis relating to eye gaze (usually because that trial was less than 25% looking). 
@@ -25,6 +29,7 @@ library(scales)
 library(viridis)
 library(agricolae) 
 library(GGally)
+library(ez)
 
 # Load lex and eye data
 cleanlexdata <- read_csv("cleandata.csv") %>%
@@ -215,14 +220,13 @@ ggplot(lex_bar, aes(x = maingroup, y = mean, fill = direction)) +
 ```
 
 ## ANOVA Plan
-Next, we're going to do ANOVAs and ANCOVAs. We'll always do it in this order. The first three ANOVAs will be followed by LSD of the four maingroups with *uncorrected p-values.* 
+Next, we're going to do ANOVAs. We'll always do it in this order.
 
 1. ANOVA with factors MainGroup & Direction
 2. ANOVA with factor MainGroup, for Forward only
 3. ANOVA with factor MainGroup, for Reverse only 
-4. ANCOVA with factor Direction, and covariate AoASL and Age
-5. Regression with variables AoASL and Age, for Forward only
-6. Regression with variables AoASL and Age, for Reverse only. 
+
+(I also ran ANCOVAs before but now have taken them out...they are below: (4) ANCOVA with factor Direction, and covariate AoASL and Age, (5) Regression with variables AoASL and Age, for Forward only, (6) Regression with variables AoASL and Age, for Reverse only.) 
 
 I did not include Age as a covariate in the first 3 ANOVAs because they did not add to or change the model in any significant way. 
 
@@ -239,21 +243,39 @@ participant_data <- fulldata %>%
   select(id, participant, hearing, maingroup, direction, age, aoasl, acc, gist) %>%
   distinct()
 
-# Gist ANOVA 1
-gist_aov1 <- aov(gist ~ maingroup * direction, data = participant_data)
-summary(gist_aov1)
-gist_lsd1 <- LSD.test(gist_aov1, "maingroup", group = FALSE)
-gist_lsd1$comparison
+# # Gist ANOVA 1
+# gist_aov1 <- aov(gist ~ maingroup * direction, data = participant_data)
+# summary(gist_aov1)
+# gist_lsd1 <- LSD.test(gist_aov1, "maingroup", group = FALSE)
+# gist_lsd1$comparison
+
+# Gist EZ ANOVA
+ezANOVA(
+  data = participant_data,
+  dv = gist,
+  wid = id,
+  within = direction,
+  between = maingroup,
+  type = 3
+)["ANOVA"]
 ```
 
 2. ANOVA with factor MainGroup, for Forward only. Also a Kruskal-Wallis test. And Chi-Sq too. 
 
 ```{r gist anova2, echo=FALSE, results = 'markup'}
-# Gist ANOVA 2
-gist_aov2 <- aov(gist ~ maingroup, data = filter(participant_data, direction == "forward"))
-summary(gist_aov2)
-gist_lsd2 <- LSD.test(gist_aov2, "maingroup", group = FALSE)
-gist_lsd2$comparison
+# # Gist ANOVA 2
+# gist_aov2 <- aov(gist ~ maingroup, data = filter(participant_data, direction == "forward"))
+# summary(gist_aov2)
+# gist_lsd2 <- LSD.test(gist_aov2, "maingroup", group = FALSE)
+# gist_lsd2$comparison
+
+ezANOVA(
+  data = filter(participant_data, direction == "forward"),
+  dv = gist,
+  wid = id,
+  between = maingroup,
+  type = 3
+)["ANOVA"]
 
 # KW Non-parametric test (like one-way ANOVA)
 kruskal.test(gist ~ maingroup, data = as.matrix(filter(participant_data, direction == "forward")))
@@ -278,11 +300,19 @@ chisq.test(gist_chisq_fw)
 3. ANOVA with factor MainGroup, for Reverse only. 
 
 ```{r gist anova3, echo=FALSE, results = 'markup'}
-# Gist ANOVA 3
-gist_aov3 <- aov(gist ~ maingroup, data = filter(participant_data, direction == "reversed"))
-summary(gist_aov3)
-gist_lsd3 <- LSD.test(gist_aov3, "maingroup", group = FALSE)
-gist_lsd3$comparison
+# # Gist ANOVA 3
+# gist_aov3 <- aov(gist ~ maingroup, data = filter(participant_data, direction == "reversed"))
+# summary(gist_aov3)
+# gist_lsd3 <- LSD.test(gist_aov3, "maingroup", group = FALSE)
+# gist_lsd3$comparison 
+
+ezANOVA(
+  data = filter(participant_data, direction == "reversed"),
+  dv = gist,
+  wid = id,
+  between = maingroup,
+  type = 3
+)["ANOVA"]
 
 # KW Non-parametric test (like one-way ANOVA)
 kruskal.test(gist ~ maingroup, data = as.matrix(filter(participant_data, direction == "reversed")))
@@ -304,86 +334,62 @@ gist_chisq_rv <- cbind(gist_chisq_rv[,"none"], gist_chisq_rv[,"one"], gist_chisq
 chisq.test(gist_chisq_rv)
 ```
 
-4. ANCOVA with factor Direction, and variables AoASL and Age.
-
-```{r gist anova4, echo=FALSE, results = 'markup'}
-# Gist ANOVA 4
-gist_aov4 <- aov(gist ~ direction * aoasl * age, data = participant_data)
-summary(gist_aov4)
-```
-
-5. Regression with variables Age and AoASL, for Forward only
-
-```{r gist anova5, echo=FALSE, results = 'markup'}
-# Gist ANOVA 5
-gist_aov5 <- lm(gist ~ aoasl * age, data = filter(participant_data, direction == "forward"))
-summary(gist_aov5)
-```
-
-6. Regression with variables AoASL and Age, for Reverse only. 
-
-```{r gist anova6, echo=FALSE, results = 'markup'}
-# Gist ANOVA 6
-gist_aov6 <- lm(gist ~ aoasl * age, data = filter(participant_data, direction == "reversed"))
-summary(gist_aov6)
-```
-
 ## Lexical Recall ANOVAs
 
 1. ANOVA with factors MainGroup & Direction.
 
 ```{r acc anova1, echo=FALSE, results = 'markup'}
-# Lexical Recall ANOVA 1
-acc_aov1 <- aov(acc ~ maingroup * direction, data = participant_data)
-summary(acc_aov1)
-acc_lsd1 <- LSD.test(acc_aov1, "maingroup", group = FALSE)
-acc_lsd1$comparison
+# # Lexical Recall ANOVA 1
+# acc_aov1 <- aov(acc ~ maingroup * direction, data = participant_data)
+# summary(acc_aov1)
+# acc_lsd1 <- LSD.test(acc_aov1, "maingroup", group = FALSE)
+# acc_lsd1$comparison
+
+ezANOVA(
+  data = participant_data,
+  dv = acc,
+  wid = id,
+  within = direction,
+  between = maingroup,
+  type = 3
+)["ANOVA"]
 ```
 
 2. ANOVA with factor MainGroup, for Forward only.
 
 ```{r acc anova2, echo=FALSE, results = 'markup'}
-# Lexical Recall ANOVA 2
-acc_aov2 <- aov(acc ~ maingroup, data = filter(participant_data, direction == "forward"))
-summary(acc_aov2)
-acc_lsd2 <- LSD.test(acc_aov2, "maingroup", group = FALSE)
-acc_lsd2$comparison
+# # Lexical Recall ANOVA 2
+# acc_aov2 <- aov(acc ~ maingroup, data = filter(participant_data, direction == "forward"))
+# summary(acc_aov2)
+# acc_lsd2 <- LSD.test(acc_aov2, "maingroup", group = FALSE)
+# acc_lsd2$comparison
+
+ezANOVA(
+  data = filter(participant_data, direction == "forward"),
+  dv = acc,
+  wid = id,
+  between = maingroup,
+  type = 3
+)["ANOVA"]
 ```
 
 3. ANOVA with factor MainGroup, for Reverse only. 
 
 ```{r acc anova3, echo=FALSE, results = 'markup'}
-# Lexical Recall ANOVA 3
-acc_aov3 <- aov(acc ~ maingroup, data = filter(participant_data, direction == "reversed"))
-summary(acc_aov3)
-acc_lsd3 <- LSD.test(acc_aov3, "maingroup", group = FALSE)
-acc_lsd3$comparison
+# # Lexical Recall ANOVA 3
+# acc_aov3 <- aov(acc ~ maingroup, data = filter(participant_data, direction == "reversed"))
+# summary(acc_aov3)
+# acc_lsd3 <- LSD.test(acc_aov3, "maingroup", group = FALSE)
+# acc_lsd3$comparison
+
+ezANOVA(
+  data = filter(participant_data, direction == "reversed"),
+  dv = acc,
+  wid = id,
+  between = maingroup,
+  type = 3
+)["ANOVA"]
 ```
-
-4. ANCOVA with factor Direction, and covariate AoASL and Age.
-
-```{r acc anova4, echo=FALSE, results = 'markup'}
-# Lexical Recall ANOVA 4
-acc_aov4 <- aov(acc ~ direction * aoasl * age, data = participant_data)
-summary(acc_aov4)
-```
-
-5. Regression with variables Age and AoASL, for Forward only
-
-```{r acc anova5, echo=FALSE, results = 'markup'}
-# Lexical Recall ANOVA 5
-acc_aov5 <- lm(acc ~ aoasl * age, data = filter(participant_data, direction == "forward"))
-summary(acc_aov5)
-```
-
-6. Regression with variables AoASL and Age, for Reverse only. 
-
-```{r acc anova6, echo=FALSE, results = 'markup'}
-# Lexical Recall ANOVA 6
-acc_aov6 <- lm(acc ~ aoasl * age, data = filter(participant_data, direction == "reversed"))
-summary(acc_aov6)
-```
-
 
 # AoA Correlations
 
@@ -523,7 +529,7 @@ fulldata_error %>%
 ## Big Three-Way ANOVA
 Now we're going to try a three-way Group x Direction x AOI ANOVA with the top 3 AOIs (Eyes, Mouth, Neck)
 
-```{r big anova aoi3, echo=FALSE, results = 'markup'}
+```{r big anova aoi3, echo=FALSE, message=FALSE, warning=FALSE, results="markup"}
 aoi3 <- c('eyes','mouth','neck')
 
 # Organize the data by those AOIs (but again we need participant-level first)
@@ -538,15 +544,30 @@ aoi3_data <- fulldata %>%
   filter(aoi %in% aoi3) %>%
   spread(aoi, percent)
 
-# Limit to eyes mouth neck
-big_aov_aoi3 <- aoi3_data %>%
+# # Limit to eyes mouth neck
+# big_aov_aoi3 <- aoi3_data %>%
+#   gather(aoi, percent, eyes:neck) %>%
+#   aov(percent ~ maingroup * direction * aoi, data = .)
+# 
+# summary(big_aov_aoi3)
+# 
+# big_aov_aoi3_lsd <- LSD.test(big_aov_aoi3, "aoi", group = FALSE)
+# big_aov_aoi3_lsd$comparison
+
+aoi3_data_gather <- aoi3_data %>%
   gather(aoi, percent, eyes:neck) %>%
-  aov(percent ~ maingroup * direction * aoi, data = .)
+  filter(id != "6")
 
-summary(big_aov_aoi3)
+big3_aov <- ezANOVA(
+  data = aoi3_data_gather,
+  dv = percent,
+  wid = id,
+  within = .(direction, aoi),
+  between = maingroup,
+  type = 3
+)["ANOVA"]
 
-big_aov_aoi3_lsd <- LSD.test(big_aov_aoi3, "aoi", group = FALSE)
-big_aov_aoi3_lsd$comparison
+print(big3_aov["ANOVA"])
 ```
 ## Interactions Visualization
 So we have significant maingroup:aoi and direction:aoi interactions. Let's try to visualize what can be driving these. We can go back to the SEM chart but break it down...
@@ -676,55 +697,57 @@ aoi3_data %>%
 
 ```{r eyes anova1, echo=FALSE, results = 'markup'}
 
-# eyes ANCOVA 1
-eyes_aov1 <- aov(eyes ~ maingroup * direction, data = aoi3_data)
-summary(eyes_aov1)
-# eyes_lsd1 <- LSD.test(eyes_aov1, "maingroup", group = FALSE)
-# eyes_lsd1$comparison
+# # eyes ANCOVA 1
+# eyes_aov1 <- aov(eyes ~ maingroup * direction, data = aoi3_data)
+# summary(eyes_aov1)
+# # eyes_lsd1 <- LSD.test(eyes_aov1, "maingroup", group = FALSE)
+# # eyes_lsd1$comparison
+
+aoi3_data <- filter(aoi3_data, id != "6")
+ezANOVA(
+  data = aoi3_data,
+  dv = eyes,
+  wid = id,
+  within = direction,
+  between = maingroup,
+  type = 3
+)["ANOVA"]
 ```
 
 2. ANOVA with factor MainGroup, for Forward only.
 
 ```{r eyes anova2, echo=FALSE, results = 'markup'}
-# eyes ANOVA 2
-eyes_aov2 <- aov(eyes ~ maingroup, data = filter(aoi3_data, direction == "forward"))
-summary(eyes_aov2)
-# eyes_lsd2 <- LSD.test(eyes_aov2, "maingroup", group = FALSE)
-# eyes_lsd2$comparison
+# # eyes ANOVA 2
+# eyes_aov2 <- aov(eyes ~ maingroup, data = filter(aoi3_data, direction == "forward"))
+# summary(eyes_aov2)
+# # eyes_lsd2 <- LSD.test(eyes_aov2, "maingroup", group = FALSE)
+# # eyes_lsd2$comparison
+
+ezANOVA(
+  data = filter(aoi3_data, direction == "forward"),
+  dv = eyes,
+  wid = id,
+  between = maingroup,
+  type = 3
+)["ANOVA"]
 ```
 
 3. ANOVA with factor MainGroup, for Reverse only. 
 
 ```{r eyes anova3, echo=FALSE, results = 'markup'}
-# eyes ANOVA 3
-eyes_aov3 <- aov(eyes ~ maingroup, data = filter(aoi3_data, direction == "reversed"))
-summary(eyes_aov3)
-# eyes_lsd3 <- LSD.test(eyes_aov3, "maingroup", group = FALSE)
-# eyes_lsd3$comparison
-```
+# # eyes ANOVA 3
+# eyes_aov3 <- aov(eyes ~ maingroup, data = filter(aoi3_data, direction == "reversed"))
+# summary(eyes_aov3)
+# # eyes_lsd3 <- LSD.test(eyes_aov3, "maingroup", group = FALSE)
+# # eyes_lsd3$comparison
 
-4. ANCOVA with factor Direction, and covariate AoASL and Age.
-
-```{r eyes anova4, echo=FALSE, results = 'markup'}
-# eyes ANOVA 4
-eyes_aov4 <- aov(eyes ~ direction * aoasl * age, data = aoi3_data)
-summary(eyes_aov4)
-```
-
-5. Regression with variables Age and AoASL, for Forward only
-
-```{r eyes anova5, echo=FALSE, results = 'markup'}
-# eyes ANOVA 5
-eyes_aov5 <- lm(eyes ~ aoasl * age, data = filter(aoi3_data, direction == "forward"))
-summary(eyes_aov5)
-```
-
-6. Regression with variables Age and AoASL, for Reverse only
-
-```{r eyes anova6, echo=FALSE, results = 'markup'}
-# eyes ANOVA 6
-eyes_aov6 <- lm(eyes ~ aoasl * age, data = filter(aoi3_data, direction == "reversed"))
-summary(eyes_aov6)
+ezANOVA(
+  data = filter(aoi3_data, direction == "reversed"),
+  dv = eyes,
+  wid = id,
+  between = maingroup,
+  type = 3
+)["ANOVA"]
 ```
 
 ## Mouth
@@ -733,55 +756,54 @@ summary(eyes_aov6)
 
 ```{r mouth anova1, echo=FALSE, results = 'markup'}
 
-# mouth ANCOVA 1
-mouth_aov1 <- aov(mouth ~ maingroup * direction, data = aoi3_data)
-summary(mouth_aov1)
-mouth_lsd1 <- LSD.test(mouth_aov1, "maingroup", group = FALSE)
-mouth_lsd1$comparison
+# # mouth ANCOVA 1
+# mouth_aov1 <- aov(mouth ~ maingroup * direction, data = aoi3_data)
+# summary(mouth_aov1)
+# mouth_lsd1 <- LSD.test(mouth_aov1, "maingroup", group = FALSE)
+# mouth_lsd1$comparison
+
+ezANOVA(
+  data = aoi3_data,
+  dv = mouth,
+  wid = id,
+  within = direction,
+  between = maingroup,
+  type = 3
+)["ANOVA"]
 ```
 
 2. ANOVA with factor MainGroup, for Forward only.
 
 ```{r mouth anova2, echo=FALSE, results = 'markup'}
-# mouth ANOVA 2
-mouth_aov2 <- aov(mouth ~ maingroup, data = filter(aoi3_data, direction == "forward"))
-summary(mouth_aov2)
-# mouth_lsd2 <- LSD.test(mouth_aov2, "maingroup", group = FALSE)
-# mouth_lsd2$comparison
+# # mouth ANOVA 2
+# mouth_aov2 <- aov(mouth ~ maingroup, data = filter(aoi3_data, direction == "forward"))
+# summary(mouth_aov2)
+# # mouth_lsd2 <- LSD.test(mouth_aov2, "maingroup", group = FALSE)
+# # mouth_lsd2$comparison
+ezANOVA(
+  data = filter(aoi3_data, direction == "forward"),
+  dv = mouth,
+  wid = id,
+  between = maingroup,
+  type = 3
+)["ANOVA"]
 ```
 
 3. ANOVA with factor MainGroup, for Reverse only. 
 
 ```{r mouth anova3, echo=FALSE, results = 'markup'}
-# mouth ANOVA 3
-mouth_aov3 <- aov(mouth ~ maingroup, data = filter(aoi3_data, direction == "reversed"))
-summary(mouth_aov3)
-# mouth_lsd3 <- LSD.test(mouth_aov3, "maingroup", group = FALSE)
-# mouth_lsd3$comparison
-```
-
-4. ANCOVA with factor Direction, and covariate AoASL and Age.
-
-```{r mouth anova4, echo=FALSE, results = 'markup'}
-# mouth ANOVA 4
-mouth_aov4 <- aov(mouth ~ direction * aoasl * age, data = aoi3_data)
-summary(mouth_aov4)
-```
-
-5. Regression with variables Age and AoASL, for Forward only
-
-```{r mouth anova5, echo=FALSE, results = 'markup'}
-# mouth ANOVA 5
-mouth_aov5 <- lm(mouth ~ aoasl * age, data = filter(aoi3_data, direction == "forward"))
-summary(mouth_aov5)
-```
-
-6. Regression with variables Age and AoASL, for Reverse only
-
-```{r mouth anova6, echo=FALSE, results = 'markup'}
-# mouth ANOVA 6
-mouth_aov6 <- lm(mouth ~ aoasl * age, data = filter(aoi3_data, direction == "reversed"))
-summary(mouth_aov6)
+# # mouth ANOVA 3
+# mouth_aov3 <- aov(mouth ~ maingroup, data = filter(aoi3_data, direction == "reversed"))
+# summary(mouth_aov3)
+# # mouth_lsd3 <- LSD.test(mouth_aov3, "maingroup", group = FALSE)
+# # mouth_lsd3$comparison
+ezANOVA(
+  data = filter(aoi3_data, direction == "reversed"),
+  dv = mouth,
+  wid = id,
+  between = maingroup,
+  type = 3
+)["ANOVA"]
 ```
 
 ## Neck
@@ -790,55 +812,54 @@ summary(mouth_aov6)
 
 ```{r neck anova1, echo=FALSE, results = 'markup'}
 
-# neck ANCOVA 1
-neck_aov1 <- aov(neck ~ maingroup * direction, data = aoi3_data)
-summary(neck_aov1)
-# neck_lsd1 <- LSD.test(neck_aov1, "maingroup", group = FALSE)
-# neck_lsd1$comparison
+# # neck ANCOVA 1
+# neck_aov1 <- aov(neck ~ maingroup * direction, data = aoi3_data)
+# summary(neck_aov1)
+# # neck_lsd1 <- LSD.test(neck_aov1, "maingroup", group = FALSE)
+# # neck_lsd1$comparison
+
+ezANOVA(
+  data = aoi3_data,
+  dv = neck,
+  wid = id,
+  within = direction,
+  between = maingroup,
+  type = 3
+)["ANOVA"]
 ```
 
 2. ANOVA with factor MainGroup, for Forward only.
 
 ```{r neck anova2, echo=FALSE, results = 'markup'}
-# neck ANOVA 2
-neck_aov2 <- aov(neck ~ maingroup, data = filter(aoi3_data, direction == "forward"))
-summary(neck_aov2)
-# neck_lsd2 <- LSD.test(neck_aov2, "maingroup", group = FALSE)
-# neck_lsd2$comparison
+# # neck ANOVA 2
+# neck_aov2 <- aov(neck ~ maingroup, data = filter(aoi3_data, direction == "forward"))
+# summary(neck_aov2)
+# # neck_lsd2 <- LSD.test(neck_aov2, "maingroup", group = FALSE)
+# # neck_lsd2$comparison
+ezANOVA(
+  data = filter(aoi3_data, direction == "forward"),
+  dv = neck,
+  wid = id,
+  between = maingroup,
+  type = 3
+)["ANOVA"]
 ```
 
 3. ANOVA with factor MainGroup, for Reverse only. 
 
 ```{r neck anova3, echo=FALSE, results = 'markup'}
-# neck ANOVA 3
-neck_aov3 <- aov(neck ~ maingroup, data = filter(aoi3_data, direction == "reversed"))
-summary(neck_aov3)
-# neck_lsd3 <- LSD.test(neck_aov3, "maingroup", group = FALSE)
-# neck_lsd3$comparison
-```
-
-4. ANCOVA with factor Direction, and covariate AoASL and Age.
-
-```{r neck anova4, echo=FALSE, results = 'markup'}
-# neck ANOVA 4
-neck_aov4 <- aov(neck ~ direction * aoasl * age, data = aoi3_data)
-summary(neck_aov4)
-```
-
-5. Regression with variables Age and AoASL, for Forward only
-
-```{r neck anova5, echo=FALSE, results = 'markup'}
-# neck ANOVA 5
-neck_aov5 <- lm(neck ~ aoasl * age, data = filter(aoi3_data, direction == "forward"))
-summary(neck_aov5)
-```
-
-6. Regression with variables Age and AoASL, for Reverse only
-
-```{r neck anova6, echo=FALSE, results = 'markup'}
-# neck ANOVA 6
-neck_aov6 <- lm(neck ~ aoasl * age, data = filter(aoi3_data, direction == "reversed"))
-summary(neck_aov6)
+# # neck ANOVA 3
+# neck_aov3 <- aov(neck ~ maingroup, data = filter(aoi3_data, direction == "reversed"))
+# summary(neck_aov3)
+# # neck_lsd3 <- LSD.test(neck_aov3, "maingroup", group = FALSE)
+# # neck_lsd3$comparison
+ezANOVA(
+  data = filter(aoi3_data, direction == "reversed"),
+  dv = neck,
+  wid = id,
+  between = maingroup,
+  type = 3
+)["ANOVA"]
 ```
 
 ## FaceChest
@@ -903,57 +924,58 @@ fc_data <- fulldata %>%
   mutate(facechest = mean(facechest, na.rm = TRUE),
          moutheye = mean(moutheye, na.rm = TRUE)) %>%
   ungroup() %>%
-  distinct()
+  distinct() %>%
+  filter(id != "6")
 
-# facechest ANCOVA 1
-facechest_aov1 <- aov(facechest ~ maingroup * direction, data = fc_data)
-summary(facechest_aov1)
-# facechest_lsd1 <- LSD.test(facechest_aov1, "maingroup", group = FALSE)
-# facechest_lsd1$comparison
+# # facechest ANCOVA 1
+# facechest_aov1 <- aov(facechest ~ maingroup * direction, data = fc_data)
+# summary(facechest_aov1)
+# # facechest_lsd1 <- LSD.test(facechest_aov1, "maingroup", group = FALSE)
+# # facechest_lsd1$comparison
+
+ezANOVA(
+  data = fc_data,
+  dv = facechest,
+  wid = id,
+  within = direction,
+  between = maingroup,
+  type = 3
+)["ANOVA"]
 ```
 
 2. ANOVA with factor MainGroup, for Forward only.
 
 ```{r facechest anova2, echo=FALSE, results = 'markup'}
-# facechest ANOVA 2
-facechest_aov2 <- aov(facechest ~ maingroup, data = filter(fc_data, direction == "forward"))
-summary(facechest_aov2)
-# facechest_lsd2 <- LSD.test(facechest_aov2, "maingroup", group = FALSE)
-# facechest_lsd2$comparison
+# # facechest ANOVA 2
+# facechest_aov2 <- aov(facechest ~ maingroup, data = filter(fc_data, direction == "forward"))
+# summary(facechest_aov2)
+# # facechest_lsd2 <- LSD.test(facechest_aov2, "maingroup", group = FALSE)
+# # facechest_lsd2$comparison
+
+ezANOVA(
+  data = filter(fc_data, direction == "forward"),
+  dv = facechest,
+  wid = id,
+  between = maingroup,
+  type = 3
+)["ANOVA"]
 ```
 
 3. ANOVA with factor MainGroup, for Reverse only. 
 
 ```{r facechest anova3, echo=FALSE, results = 'markup'}
-# facechest ANOVA 3
-facechest_aov3 <- aov(facechest ~ maingroup, data = filter(fc_data, direction == "reversed"))
-summary(facechest_aov3)
-# facechest_lsd3 <- LSD.test(facechest_aov3, "maingroup", group = FALSE)
-# facechest_lsd3$comparison
-```
-
-4. ANCOVA with factor Direction, and covariate AoASL and Age.
-
-```{r facechest anova4, echo=FALSE, results = 'markup'}
-# facechest ANOVA 4
-facechest_aov4 <- aov(facechest ~ direction * aoasl * age, data = fc_data)
-summary(facechest_aov4)
-```
-
-5. Regression with variables Age and AoASL, for Forward only
-
-```{r facechest anova5, echo=FALSE, results = 'markup'}
-# facechest ANOVA 5
-facechest_aov5 <- lm(facechest ~ aoasl * age, data = filter(fc_data, direction == "forward"))
-summary(facechest_aov5)
-```
-
-6. Regression with variables Age and AoASL, for Reverse only
-
-```{r facechest anova6, echo=FALSE, results = 'markup'}
-# facechest ANOVA 6
-facechest_aov6 <- lm(facechest ~ aoasl * age, data = filter(fc_data, direction == "reversed"))
-summary(facechest_aov6)
+# # facechest ANOVA 3
+# facechest_aov3 <- aov(facechest ~ maingroup, data = filter(fc_data, direction == "reversed"))
+# summary(facechest_aov3)
+# # facechest_lsd3 <- LSD.test(facechest_aov3, "maingroup", group = FALSE)
+# # facechest_lsd3$comparison
+ezANOVA(
+  data = filter(fc_data, direction == "reversed"),
+  dv = facechest,
+  wid = id,
+  between = maingroup,
+  type = 3
+)["ANOVA"]
 ```
 
 # Eye Gaze & Performance Correlations
@@ -965,7 +987,7 @@ Next we're going to correlate our eye gaze metrics (Eye, Mouth, Neck, and FaceCh
 ```{r repackage data for correlations again}
 eyeperf <- fulldata %>%
   filter(eye_exclude == FALSE) %>%
-  select(participant, maingroup, hearing, direction, acc, gist, eyes, mouth, neck, facechest) %>%
+  select(participant, maingroup, hearing, direction, aoasl, signyrs, acc, gist, eyes, mouth, neck, facechest) %>%
   group_by(maingroup, participant, direction) %>%
   mutate(gist = mean(gist, na.rm = TRUE),
          lex = mean(acc, na.rm = TRUE),
@@ -974,13 +996,13 @@ eyeperf <- fulldata %>%
          neck = mean(neck, na.rm = TRUE),
          facechest = mean(facechest, na.rm = TRUE)) %>%
   ungroup() %>%
-  select(maingroup, participant, hearing, direction, gist, lex, eyes, mouth, neck, facechest) %>%
+  select(maingroup, participant, hearing, direction, aoasl, signyrs, gist, lex, eyes, mouth, neck, facechest) %>%
   distinct() %>%
   gather(metric, value, gist:facechest) %>%
   unite(metricvalue, c(metric, direction), sep = "_") %>%
   spread(metricvalue, value) %>%
   select(-participant, -maingroup) %>%
-  select(hearing, gist_reversed, lex_forward, lex_reversed, eyes_forward, eyes_reversed,
+  select(hearing, aoasl, signyrs, gist_reversed, lex_forward, lex_reversed, eyes_forward, eyes_reversed,
          mouth_forward, mouth_reversed, neck_forward, neck_reversed, facechest_forward, facechest_reversed)
 
 eyeperf_deaf <- eyeperf %>% filter(hearing == "Deaf") %>% select(-hearing)
@@ -1015,7 +1037,7 @@ Hmisc::rcorr(as.matrix(eyeperf_all))$P
 
 I'm also including nicely formatted tables with *** indicators of significance for quick referencing. Order: Deaf, Hearing, All. 
 
-```{r pretty correlations for eyeperf}
+```{r pretty correlations for eyeperf, rows.print = 15}
 corstarsl(eyeperf_deaf)
 corstarsl(eyeperf_hearing)
 corstarsl(eyeperf_all)
@@ -1024,7 +1046,7 @@ corstarsl(eyeperf_all)
 And the correlation table.
 
 ```{r eyeperf correlation charts, fig.height=12, fig.width=12, message=FALSE, warning=FALSE}
-ggpairs(eyeperf, columns = c(2:11), aes(color = hearing))
+ggpairs(eyeperf, columns = c(2:13), aes(color = hearing))
 ```
 
 # Heat Maps
