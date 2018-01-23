@@ -1,0 +1,138 @@
+---
+title: "ANOVAs Grwarrrr"
+output:
+  html_notebook:
+    toc: yes
+    toc_depth: 2
+    toc_float: yes
+---
+
+First I'm loading the behavioraldata.csv file. And make sure all factor columns are identified as factors and all numeric columns are identified as numeric.
+
+```{r message=FALSE, warning=TRUE}
+library(tidyverse) 
+library(afex) 
+bdata <- read_csv("behavioraldata.csv") %>%
+  mutate(id = factor(id),
+         participant = factor(participant),
+         hearing = factor(hearing),
+         maingroup = factor(maingroup),
+         direction = factor(direction))
+bdata
+```
+
+# Gist
+
+Cool. Now I'm running a 2x4 ANOVA on Gist.
+
+* Outcome: gist
+* Within subjects: direction
+* Between subjects: maingroup 
+
+```{r message=FALSE}
+a1 <- aov_ez("id", "gist", bdata, between = "maingroup", within = "direction")
+a1
+```
+
+Next, I run a Forward ANOVA on Gist (between subjects: maingroup), with least-square means posthoc analyses for all pairs, with **no p-value corrections.**
+
+```{r message=FALSE}
+a2 <- aov_ez("id", "gist", filter(bdata, direction == "forward"), between = "maingroup")
+a2
+lsmeans(a2, "maingroup", contr = "pairwise", adjust = "none")$contrasts
+```
+
+Next, I run a Reverse ANOVA on Gist (between subjects: maingroup), with least-square means posthoc analyses for all pairs, with **no p-value corrections.**
+
+```{r message=FALSE}
+a3 <- aov_ez("id", "gist", filter(bdata, direction == "reversed"), between = "maingroup")
+a3
+lsmeans(a3, "maingroup", contr = "pairwise", adjust = "none")$contrasts
+```
+
+# Lexical Recall
+
+Next is a 2x4 ANOVA on Lexical Recall.
+
+* Outcome: lexical recall
+* Within subjects: direction
+* Between subjects: maingroup 
+
+```{r message=FALSE}
+a4 <- aov_ez("id", "acc", bdata, between = "maingroup", within = "direction")
+a4
+```
+
+Because there is no significant interaction between Subject Group and Direction, I'm going to do posthoc analyses on this anova, averaging across direction. 
+
+```{r}
+lsmeans(a4, "maingroup", contr = "pairwise", adjust = "none")$contrasts
+```
+
+
+```{r eval=FALSE, message=FALSE, include=FALSE}
+# Next, I run a Forward ANOVA on Lex Recall (between subjects: maingroup), with least-square means posthoc analyses for all pairs, with **no p-value corrections.**
+
+a5 <- aov_ez("id", "acc", filter(bdata, direction == "forward"), between = "maingroup")
+a5
+lsmeans(a5, "maingroup", contr = "pairwise", adjust = "none")$contrasts
+
+#Next, I run a Reverse ANOVA on Lex Recall (between subjects: maingroup), with least-square means posthoc analyses for all pairs, with **no p-value corrections.**
+
+a6 <- aov_ez("id", "acc", filter(bdata, direction == "reversed"), between = "maingroup")
+a6
+lsmeans(a6, "maingroup", contr = "pairwise", adjust = "none")$contrasts
+```
+
+Let's do a mu test for reversed videos to make sure accuracy is significantly different than 50%. 
+
+```{r}
+rev <- filter(bdata, direction == "reversed") 
+rev <- unlist(rev$acc)
+t.test(rev, mu=0.5)
+```
+
+
+# Eye Gaze
+Next I load the aoidata.csv file. 
+
+```{r message=FALSE, warning=TRUE}
+edata <- read_csv("aoidata.csv") %>%
+  mutate(id = factor(id),
+         hearing = factor(hearing),
+         maingroup = factor(maingroup),
+         direction = factor(direction),
+         aoi = factor(aoi))
+edata
+```
+
+Next we run a 3x2x4 ANOVA on eye gaze. 
+
+* Outcome: percent looking
+* Within subjects: direction & AOI
+* Between subjects: maingroup
+
+```{r message=FALSE}
+e1 <- aov_ez("id", "percent", edata, between = "maingroup", within = c("aoi","direction"))
+e1
+summary(e1)
+```
+
+Then again for Forward only. 
+
+```{r}
+e2 <- aov_ez("id", "percent", filter(edata, direction == "forward"), between = "maingroup", within = "aoi")
+e2
+lsmeans(e2, c("aoi","maingroup"), contr = "pairwise", adjust = "none")$contrasts
+summary(e2)
+```
+
+Then again for Reverse only. 
+
+```{r}
+e3 <- aov_ez("id", "percent", filter(edata, direction == "reversed"), between = "maingroup", within = "aoi")
+e3
+lsmeans(e3, c("aoi","maingroup"), contr = "pairwise", adjust = "none")$contrasts
+summary(e3)
+```
+

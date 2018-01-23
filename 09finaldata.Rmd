@@ -108,6 +108,12 @@ participant_info <- fulldata %>%
   select(-(age_mean:selfrate_sd))
 
 participant_info
+write_csv(fulldata, "finaldataset.csv")
+
+data_lowaoi <- fulldata %>% select(participant, story, belly:upperchest) %>% select(-eyes, -mouth, -chin) %>% gather(aoi, percent, belly:upperchest)
+data_lowaoi$percent[is.na(data_lowaoi$percent)] <- 0
+mean(data_lowaoi$percent, na.rm=TRUE)
+sd(data_lowaoi$percent, na.rm=TRUE)
 ```
 ## Participant ANOVAs 
 
@@ -192,13 +198,20 @@ gist_bar <- fulldata %>% select(participant, maingroup, direction, gist) %>%
   summarise(mean = mean(gist),
             sd = sd(gist),
             count = n(),
-            se = sd/sqrt(count))
+            se = sd/sqrt(count)) %>%
+  ungroup() %>%
+  mutate(maingroup = case_when(
+    maingroup == "DeafEarly" ~ "Deaf Early",
+    maingroup == "DeafLate" ~ "Deaf Late",
+    maingroup == "HearingLate" ~ "Hearing Late",
+    maingroup == "HearingNovice" ~ "Hearing Novice"
+    ))
 
 ggplot(gist_bar, aes(x = maingroup, y = mean, fill = direction)) +
   geom_bar(stat = "identity", position = position_dodge()) + 
   geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.9), width = 0.5) +
-  labs(title = "Story Comprehension (Gist)", subtitle = "Error bars represent SE", x = "", y = "mean gist") +
-  scale_y_continuous(labels = percent, limits = c(0,1))
+  labs(title = "Gist", x = "", y = "mean gist accuracy") +
+  scale_y_continuous(labels = percent, limits = c(0,1)) + theme_bw()
 
 # Lex bar chart
 lex_bar <- fulldata %>% select(participant, maingroup, direction, acc) %>%
@@ -208,16 +221,52 @@ lex_bar <- fulldata %>% select(participant, maingroup, direction, acc) %>%
   summarise(mean = mean(acc, na.rm = TRUE),
             sd = sd(acc, na.rm = TRUE),
             count = n(),
-            se = sd/sqrt(count))
+            se = sd/sqrt(count)) %>%
+  ungroup() %>%
+  mutate(maingroup = case_when(
+    maingroup == "DeafEarly" ~ "Deaf Early",
+    maingroup == "DeafLate" ~ "Deaf Late",
+    maingroup == "HearingLate" ~ "Hearing Late",
+    maingroup == "HearingNovice" ~ "Hearing Novice"
+    ))
 
 ggplot(lex_bar, aes(x = maingroup, y = mean, fill = direction)) +
   geom_bar(stat = "identity", position = position_dodge()) + 
   geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.9), width = 0.5) +
-  labs(title = "Lexical Recall", subtitle = "Error bars represent SE", x = "", y = "mean accuracy") +
+  labs(title = "Lexical Recall", x = "", y = "mean lexical recall accuracy") +
   scale_y_continuous(labels = percent, limits = c(0,1)) +
   geom_hline(yintercept = .5, linetype = "dotted") +
-  coord_cartesian(ylim = c(.5,1))
+  coord_cartesian(ylim = c(.5,1)) + theme_bw()
 ```
+
+And let's calculate the average reduction in score due to reversal first is lex recall, then gist.
+
+```{r}
+reversal_lex <- fulldata %>%
+  group_by(id, direction) %>%
+  summarise(lex_mean = mean(acc, na.rm = TRUE)) %>%
+  spread(direction, lex_mean) %>%
+  group_by(id) %>%
+  mutate(reversal = forward - reversed) %>%
+  ungroup()
+
+paste("lex mean", mean(reversal_lex$reversal))
+paste("lex sd", sd(reversal_lex$reversal))
+
+reversal_gist <- fulldata %>%
+  group_by(id, direction) %>%
+  summarise(gist_mean = mean(gist, na.rm = TRUE)) %>%
+  spread(direction, gist_mean) %>%
+  group_by(id) %>%
+  mutate(reversal = forward - reversed) %>%
+  ungroup()
+
+paste("gist mean", mean(reversal_gist$reversal))
+paste("gist sd", sd(reversal_gist$reversal))
+
+
+```
+
 
 ## ANOVA Plan
 Next, we're going to do ANOVAs. We'll always do it in this order.
@@ -234,14 +283,20 @@ I did not include Age as a covariate in the first 3 ANOVAs because they did not 
 
 1. ANOVA with factors MainGroup & Direction.
 
-```{r gist anova1, echo=FALSE, results = 'markup'}
+```{r gist anova1, echo=TRUE, results = 'markup'}
 # First let's make the participant-level dataset with which we'll do our ANCOVAs. 
 participant_data <- fulldata %>%
   group_by(maingroup, participant, direction) %>%
   mutate(gist = mean(gist, na.rm = TRUE),
          acc = mean(acc, na.rm = TRUE)) %>%
+  ungroup() %>%
   select(id, participant, hearing, maingroup, direction, age, aoasl, acc, gist) %>%
-  distinct()
+  distinct() %>%
+  mutate(id = factor(id),
+         participant = factor(participant),
+         hearing = factor(hearing),
+         maingroup = factor(maingroup),
+         direction = factor(direction))
 
 # # Gist ANOVA 1
 # gist_aov1 <- aov(gist ~ maingroup * direction, data = participant_data)
@@ -260,9 +315,9 @@ ezANOVA(
 )["ANOVA"]
 ```
 
-2. ANOVA with factor MainGroup, for Forward only. Also a Kruskal-Wallis test. And Chi-Sq too. 
+2. ANOVA with factor MainGroup, for Forward only. *In the code is a Kruskal-Wallis test. And Chi-Sq too.*
 
-```{r gist anova2, echo=FALSE, results = 'markup'}
+```{r gist anova2, echo=TRUE, results= 'markup'}
 # # Gist ANOVA 2
 # gist_aov2 <- aov(gist ~ maingroup, data = filter(participant_data, direction == "forward"))
 # summary(gist_aov2)
@@ -277,29 +332,29 @@ ezANOVA(
   type = 3
 )["ANOVA"]
 
-# KW Non-parametric test (like one-way ANOVA)
-kruskal.test(gist ~ maingroup, data = as.matrix(filter(participant_data, direction == "forward")))
-
-# Chi Sq
-gist_chisq_fw <- participant_data %>%
-  ungroup() %>%
-  filter(direction == "forward") %>%
-  select(maingroup, gist) %>%
-  group_by(maingroup, gist) %>%
-  summarise(count = n()) %>%
-  spread(gist, count) %>%
-  rename(none = "0",
-         one = "0.5",
-         both = "1")
-
-gist_chisq_fw[is.na(gist_chisq_fw)] <- 0L
-gist_chisq_fw <- cbind(gist_chisq_fw[,"none"], gist_chisq_fw[,"one"], gist_chisq_fw[,"both"])
-chisq.test(gist_chisq_fw)
+# # KW Non-parametric test (like one-way ANOVA)
+# kruskal.test(gist ~ maingroup, data = as.matrix(filter(participant_data, direction == "forward")))
+# 
+# # Chi Sq
+# gist_chisq_fw <- participant_data %>%
+#   ungroup() %>%
+#   filter(direction == "forward") %>%
+#   select(maingroup, gist) %>%
+#   group_by(maingroup, gist) %>%
+#   summarise(count = n()) %>%
+#   spread(gist, count) %>%
+#   rename(none = "0",
+#          one = "0.5",
+#          both = "1")
+# 
+# gist_chisq_fw[is.na(gist_chisq_fw)] <- 0L
+# gist_chisq_fw <- cbind(gist_chisq_fw[,"none"], gist_chisq_fw[,"one"], gist_chisq_fw[,"both"])
+# chisq.test(gist_chisq_fw)
 ```
 
-3. ANOVA with factor MainGroup, for Reverse only. 
+3. ANOVA with factor MainGroup, for Reverse only. *In the code is a Kruskal-Wallis test. And Chi-Sq too.*
 
-```{r gist anova3, echo=FALSE, results = 'markup'}
+```{r gist anova3, echo=TRUE, results = 'markup'}
 # # Gist ANOVA 3
 # gist_aov3 <- aov(gist ~ maingroup, data = filter(participant_data, direction == "reversed"))
 # summary(gist_aov3)
@@ -314,31 +369,31 @@ ezANOVA(
   type = 3
 )["ANOVA"]
 
-# KW Non-parametric test (like one-way ANOVA)
-kruskal.test(gist ~ maingroup, data = as.matrix(filter(participant_data, direction == "reversed")))
-
-# Chi Sq
-gist_chisq_rv <- participant_data %>%
-  ungroup() %>%
-  filter(direction == "reversed") %>%
-  select(maingroup, gist) %>%
-  group_by(maingroup, gist) %>%
-  summarise(count = n()) %>%
-  spread(gist, count) %>%
-  rename(none = "0",
-         one = "0.5",
-         both = "1")
-
-gist_chisq_rv[is.na(gist_chisq_rv)] <- 0L
-gist_chisq_rv <- cbind(gist_chisq_rv[,"none"], gist_chisq_rv[,"one"], gist_chisq_rv[,"both"])
-chisq.test(gist_chisq_rv)
+# # KW Non-parametric test (like one-way ANOVA)
+# kruskal.test(gist ~ maingroup, data = as.matrix(filter(participant_data, direction == "reversed")))
+# 
+# # Chi Sq
+# gist_chisq_rv <- participant_data %>%
+#   ungroup() %>%
+#   filter(direction == "reversed") %>%
+#   select(maingroup, gist) %>%
+#   group_by(maingroup, gist) %>%
+#   summarise(count = n()) %>%
+#   spread(gist, count) %>%
+#   rename(none = "0",
+#          one = "0.5",
+#          both = "1")
+# 
+# gist_chisq_rv[is.na(gist_chisq_rv)] <- 0L
+# gist_chisq_rv <- cbind(gist_chisq_rv[,"none"], gist_chisq_rv[,"one"], gist_chisq_rv[,"both"])
+# chisq.test(gist_chisq_rv)
 ```
 
 ## Lexical Recall ANOVAs
 
 1. ANOVA with factors MainGroup & Direction.
 
-```{r acc anova1, echo=FALSE, results = 'markup'}
+```{r acc anova1, echo=TRUE, results = 'markup'}
 # # Lexical Recall ANOVA 1
 # acc_aov1 <- aov(acc ~ maingroup * direction, data = participant_data)
 # summary(acc_aov1)
@@ -357,7 +412,7 @@ ezANOVA(
 
 2. ANOVA with factor MainGroup, for Forward only.
 
-```{r acc anova2, echo=FALSE, results = 'markup'}
+```{r acc anova2, echo=TRUE, results = 'markup'}
 # # Lexical Recall ANOVA 2
 # acc_aov2 <- aov(acc ~ maingroup, data = filter(participant_data, direction == "forward"))
 # summary(acc_aov2)
@@ -375,7 +430,7 @@ ezANOVA(
 
 3. ANOVA with factor MainGroup, for Reverse only. 
 
-```{r acc anova3, echo=FALSE, results = 'markup'}
+```{r acc anova3, echo=TRUE, results = 'markup'}
 # # Lexical Recall ANOVA 3
 # acc_aov3 <- aov(acc ~ maingroup, data = filter(participant_data, direction == "reversed"))
 # summary(acc_aov3)
@@ -522,10 +577,49 @@ fulldata_error %>%
   ggplot(aes(x = aoi, y = mean, fill = direction)) + 
   geom_bar(stat = "identity", position = position_dodge()) +
   geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.9), width = 0.5) +
-  labs(title = "Eye Gaze Behavior", subtitle = "Error bars represent SE", x = "", y = "percent looking") +
-  scale_y_continuous(labels = percent, limits = c(0,.75))
+  labs(title = "Eye Gaze Behavior", x = "", y = "looking time") +
+  scale_y_continuous(labels = percent, limits = c(0,.70)) + 
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
 ```
 
+And a table of eye gaze results too
+
+```{r eye gaze error table}
+fulldata_gazetable <- fulldata %>%
+  filter(eye_exclude == FALSE) %>%
+  gather(aoi, percent, belly:upperchest) %>%
+  group_by(id, maingroup, direction, aoi) %>%
+  summarise(percent = mean(percent, na.rm = TRUE)) %>%
+  ungroup() %>%
+  distinct() %>%
+  group_by(maingroup, direction, aoi) %>%
+  summarise(mean = mean(percent, na.rm = TRUE),
+            sd = sd(percent, na.rm = TRUE)) %>%
+  mutate(mean = round(mean*100,1),
+         sd = round(sd*100,1)) %>%
+  mutate(value = paste(mean, sd, sep = " ± ")) %>%
+  mutate(value = paste(value, "%", sep = ""))
+
+fulldata_gazetable$aoi <- fct_relevel(fulldata_gazetable$aoi, c("forehead","eyes","mouth","neck","upperchest",
+                                                        "midchest","lowerchest","belly","left","right"))
+
+fulldata_gazetable %>% 
+  ungroup() %>%
+  select(-mean, -sd) %>% 
+  spread(aoi, value)
+
+fulldata_total <- fulldata %>%
+  filter(eye_exclude == FALSE) %>%
+  gather(aoi, percent, belly:upperchest) %>%
+  group_by(aoi) %>%
+  summarise(percent = mean(percent, na.rm = TRUE)) %>%
+  spread(aoi, percent)
+
+#sum(fulldata_total$eyes, fulldata_total$mouth, fulldata_total$neck)
+#fulldata_total$left
+#fulldata_total$right
+```
 ## Big Three-Way ANOVA
 Now we're going to try a three-way Group x Direction x AOI ANOVA with the top 3 AOIs (Eyes, Mouth, Neck)
 
@@ -569,6 +663,38 @@ big3_aov <- ezANOVA(
 
 print(big3_aov["ANOVA"])
 ```
+## Left Vs Right
+```{r left right anova, echo=FALSE, message=FALSE, warning=FALSE, results="markup"}
+aoi3 <- c('left','right')
+
+# Organize the data by those AOIs (but again we need participant-level first)
+aoiLR_data <- fulldata %>%
+  filter(eye_exclude == FALSE) %>%
+  select(id, maingroup, hearing, aoasl, age, direction, belly:upperchest) %>%
+  gather(aoi, percent, belly:upperchest) %>%
+  group_by(id, aoi) %>%
+  mutate(percent = mean(percent, na.rm = TRUE)) %>%
+  ungroup() %>%
+  distinct() %>%
+  filter(aoi %in% aoi3) %>%
+  spread(aoi, percent)
+
+aoiLR_data_gather <- aoiLR_data %>%
+  gather(aoi, percent, left:right) %>%
+  filter(id != "6")
+
+bigLR_aov <- ezANOVA(
+  data = aoiLR_data_gather,
+  dv = percent,
+  wid = id,
+  within = aoi,
+  between = maingroup,
+  type = 3
+)["ANOVA"]
+
+print(bigLR_aov["ANOVA"])
+```
+
 ## Interactions Visualization
 So we have significant maingroup:aoi and direction:aoi interactions. Let's try to visualize what can be driving these. We can go back to the SEM chart but break it down...
 
@@ -901,14 +1027,22 @@ facechest_info <- fulldata %>%
   summarise(mean = mean(facechest),
             sd = sd(facechest),
             n = n(),
-            se = sd/sqrt(n))
+            se = sd/sqrt(n)) %>%
+  ungroup() %>%
+  mutate(maingroup = case_when(
+    maingroup == "DeafEarly" ~ "Deaf Early",
+    maingroup == "DeafLate" ~ "Deaf Late",
+    maingroup == "HearingLate" ~ "Hearing Late",
+    maingroup == "HearingNovice" ~ "Hearing Novice"
+    ))
 
 ggplot(facechest_info, aes(x = maingroup, y = mean, fill = direction, color = direction)) +
   geom_point(stat = "identity", position = position_dodge(0.5), size = 2) + 
   geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.5), width = 0.3, size = 1) +
-  labs(title = "FaceChest Ratio", subtitle = "Error bars represent SE", x = "", y = "facechest ratio") +
+  labs(title = "Face-Chest Ratio", x = "", y = "face-chest ratio") +
   scale_y_continuous(limits = c(-1,1)) + 
-  geom_hline(yintercept = 0, linetype = "dotted")
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  theme_bw()
 ```
 
 Now let's do the ANOVAs. Also skipping LSDs here. 
@@ -1064,7 +1198,14 @@ eyegaze_heat <- fulldata %>%
   ungroup() %>%
   filter(!is.na(aoi)) %>%
   mutate(aoi = factor(aoi,levels=c("belly","lowerchest","midchest",
-                                   "upperchest","neck","mouth","eyes","forehead")))
+                                   "upperchest","neck","mouth","eyes","forehead"))) %>%
+  ungroup() %>%
+  mutate(maingroup = case_when(
+    maingroup == "DeafEarly" ~ "Deaf Early",
+    maingroup == "DeafLate" ~ "Deaf Late",
+    maingroup == "HearingLate" ~ "Hearing Late",
+    maingroup == "HearingNovice" ~ "Hearing Novice"
+    ))
 
 eyegaze_heat_all <- fulldata %>%
   ungroup() %>%
@@ -1080,23 +1221,39 @@ eyegaze_heat_all <- fulldata %>%
   ungroup() %>%
   filter(!is.na(aoi)) %>%
   mutate(aoi = factor(aoi,levels=c("belly","lowerchest","midchest",
-                                   "upperchest","neck","mouth","eyes","forehead")))
+                                   "upperchest","neck","mouth","eyes","forehead"))) %>%
+  ungroup() %>%
+  mutate(maingroup = case_when(
+    maingroup == "DeafEarly" ~ "Deaf Early",
+    maingroup == "DeafLate" ~ "Deaf Late",
+    maingroup == "HearingLate" ~ "Hearing Late",
+    maingroup == "HearingNovice" ~ "Hearing Novice"
+    ))
 
 ggplot(eyegaze_heat, aes(x = maingroup, y = aoi)) +
   geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
-#  scale_fill_gradient(low = "lightblue",high = "steelblue") +
-#  scale_fill_distiller(type="div", palette = "RdYlBu") +
-  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,.75)) +
-  theme(axis.text.x=element_text(angle=45,hjust=1)) + facet_grid(. ~ direction) +
-  ylab("") + xlab("") + ggtitle("Eye Gaze Heat Map, by Direction")
+  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,.71), labels = percent, name = "looking time") +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=30,hjust=1),
+        strip.text.x = element_text(size = 11, color = "black", face = "italic"), 
+        strip.background = element_rect(colour = "white", fill = "white"),
+        panel.grid.major = element_line(color = "white")) +
+  facet_grid(. ~ direction) +
+  ylab("") + xlab("") + ggtitle("Eye Gaze Heat Map, by Direction") + 
+  scale_y_discrete(expand=c(0,0)) +
+  scale_x_discrete(expand = c(0,0))
+
 
 ggplot(eyegaze_heat_all, aes(x = maingroup, y = aoi)) +
   geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
-#  scale_fill_gradient(low = "lightblue",high = "steelblue") +
-#  scale_fill_distiller(type="div", palette = "RdYlBu") +
-  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,.75)) +
-  theme(axis.text.x=element_text(angle=45,hjust=1)) +
-  ylab("") + xlab("") + ggtitle("Eye Gaze Heat Map (Direction Collapsed)")
+  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,.71), labels = percent, name = "looking time") +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=30,hjust=1), 
+  panel.grid.major = element_line(color = "white")) +
+  ylab("") + xlab("") + ggtitle("Eye Gaze Heat Map (Direction Collapsed)") +
+  scale_y_discrete(expand=c(0,0)) +
+  scale_x_discrete(expand = c(0,0))
+
 ```
 
 # Summary
