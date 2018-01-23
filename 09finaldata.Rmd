@@ -1177,6 +1177,58 @@ corstarsl(eyeperf_hearing)
 corstarsl(eyeperf_all)
 ```
 
+I'm going to redo the ALL-participants correlations but for forward and reversed seprately. 
+```{r  correlations for eyeperffwrv}
+
+eyeperf_fwrv <- fulldata %>%
+  filter(eye_exclude == FALSE) %>%
+  select(participant, maingroup, hearing, direction, aoasl, signyrs, acc, gist, eyes, mouth, neck, facechest) %>%
+  group_by(maingroup, participant, direction) %>%
+  mutate(gist = mean(gist, na.rm = TRUE),
+         lex = mean(acc, na.rm = TRUE),
+         eyes = mean(eyes, na.rm = TRUE),
+         mouth = mean(mouth, na.rm = TRUE),
+         neck = mean(neck, na.rm = TRUE),
+         facechest = mean(facechest, na.rm = TRUE)) %>%
+  ungroup() %>%
+  select(maingroup, participant, hearing, direction, aoasl, signyrs, gist, lex, eyes, mouth, neck, facechest) %>%
+  distinct() %>%
+  gather(metric, value, gist:facechest) %>%
+  unite(metricvalue, c(metric, direction), sep = "_", remove = FALSE) %>%
+  select(-metric) %>%
+  spread(metricvalue, value) %>%
+  select(-participant, -maingroup, -hearing) %>%
+  select(direction, aoasl, signyrs, gist_reversed, lex_forward, lex_reversed, eyes_forward, eyes_reversed,
+         mouth_forward, mouth_reversed, neck_forward, neck_reversed, facechest_forward, facechest_reversed)
+
+eyeperf_fw <- eyeperf_fwrv %>% filter(direction == "forward") %>% 
+  select(-direction, -gist_reversed, -lex_reversed, -eyes_reversed, -mouth_reversed, -neck_reversed, -facechest_reversed)
+eyeperf_rv <- eyeperf_fwrv %>% filter(direction == "reversed") %>% select(-direction, -lex_forward, -eyes_forward, -mouth_forward, -neck_forward, -facechest_forward)
+
+# Correlations for FW
+print("FW Correlations - Pearson's r")
+#corstarsl(lexgist_deaf)
+Hmisc::rcorr(as.matrix(eyeperf_fw))$r
+print("FW Correlations - P-values")
+Hmisc::rcorr(as.matrix(eyeperf_fw))$P
+cat(paste("","\n",""))
+
+# Correlations for RV
+print("RV Correlations - Pearson's r")
+#corstarsl(lexgist_hearing)
+Hmisc::rcorr(as.matrix(eyeperf_rv))$r
+print("RV Correlations - P-values")
+Hmisc::rcorr(as.matrix(eyeperf_rv))$P
+cat(paste("","\n",""))
+```
+
+I'm also including nicely formatted tables with *** indicators of significance for quick referencing, forward v. reversed.
+
+```{r pretty correlations for eyeperffwrv, rows.print = 15}
+corstarsl(eyeperf_fw)
+corstarsl(eyeperf_rv)
+```
+
 And the correlation table.
 
 ```{r eyeperf correlation charts, fig.height=12, fig.width=12, message=FALSE, warning=FALSE}

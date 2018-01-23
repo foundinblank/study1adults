@@ -118,21 +118,24 @@ e1
 summary(e1)
 ```
 
-Then again for Forward only. 
+Then again for Eyes only but with only one factor: video direction. 
 
 ```{r}
-e2 <- aov_ez("id", "percent", filter(edata, direction == "forward"), between = "maingroup", within = "aoi")
+e2 <- aov_ez("id", "percent", filter(edata, aoi == "eyes"), within = "direction")
 e2
-lsmeans(e2, c("aoi","maingroup"), contr = "pairwise", adjust = "none")$contrasts
-summary(e2)
 ```
 
-Then again for Reverse only. 
+Mouth only but with only one factor: video direction. 
 
 ```{r}
-e3 <- aov_ez("id", "percent", filter(edata, direction == "reversed"), between = "maingroup", within = "aoi")
+e3 <- aov_ez("id", "percent", filter(edata, aoi == "mouth"), within = "direction")
 e3
-lsmeans(e3, c("aoi","maingroup"), contr = "pairwise", adjust = "none")$contrasts
-summary(e3)
+```
+
+Neck only but with only one factor: video direction. 
+
+```{r}
+e4 <- aov_ez("id", "percent", filter(edata, aoi == "neck"), within = "direction")
+e4
 ```
 
