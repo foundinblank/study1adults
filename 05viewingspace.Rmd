@@ -76,6 +76,8 @@ rawdata <- rawdata %>%
   group_by(participant,media) %>%
   slice(30:n())
 
+write_csv(rawdata,"adultviewingspaceraw.csv")
+
 means <- rawdata %>%
   group_by(participant,media) %>%
   dplyr::summarize(x = mean(x,na.rm=TRUE),

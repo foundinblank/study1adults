@@ -1383,3 +1383,171 @@ I think if we do it this way then we get a really important story to tell:  That
 gist_glmm <- glmer(gist ~ direction * maingroup + (1|id) + (1|story), data = fulldata, family=binomial (link="logit"))
 summary(gist_glmm)
 ```
+
+# Viewing Space Correlations 
+
+Okay now let's work with the raw viewing space that we created in [05viewingspace](05viewingspace.nb.html). For each participant the first 30 samples was removed. 
+
++ box width
++ upper limit
++ lower limit
++ left side
++ right side
++ height
++ box center position
++ area
+
+correlated with 
+
++ gist
++ lexical recall
++ sign years
++ aoasl
+
+Here's sample of the raw viewing data structure. 
+
+```{r}
+viewing <- read_csv('adultviewingspaceraw.csv') 
+head(viewing, 10)
+```
+
+Now I'm going to compute the following metrics with the following definitions!
+
++ *upper* (75th percentile on y-axis)
++ *lower* (25th percentile on y-axis)
++ *left* (25th percentile on x-axis)
++ *right* (75th percentile on x-axis)
++ *width* (x-axis IQR)
++ *height* (y-axis IQR)
++ *x-center* (median x-axis)
++ *y-center* (median y-axis)
++ *area* (x-axis IQR * y-axis IQR)
+
+```{r}
+# compute viewing metrics
+viewing_metrics <- viewing %>%
+  group_by(participant, direction, media) %>%
+  summarise(
+    upper = quantile(y,na.rm=TRUE)[[2]],
+    lower = quantile(y,na.rm=TRUE)[[4]],
+    left = quantile(x,na.rm=TRUE)[[2]],
+    right = quantile(x,na.rm=TRUE)[[4]],
+    width = IQR(x,na.rm=TRUE),
+    height = IQR(y,na.rm=TRUE),
+    x_center = median(x,na.rm=TRUE),
+    y_center = median(y,na.rm=TRUE),
+    area = width*height
+    )
+
+# average across two stories for each direction
+viewing_metrics <- viewing_metrics %>%
+  group_by(participant, direction) %>%
+  summarise_if(is.numeric, funs(mean(., na.rm = TRUE)))
+
+head(viewing_metrics,10)
+```
+
+The participant names are different than what we've been using, so I'm going to fix that. Then I'll join the behavioral data with the viewing space metrics.
+
+**Notes to self - which Alicia (Deaf or 2?) - add Gina in - add Jesse in - add JJ in - Laura 1 or Laura 2 - MarlaMarks or MarlaH - add Matthew - add Ranem**
+
+Below is an example of the forward table for viewing space and behavioral data
+
+```{r}
+# Fix participant names
+partnames <- read_csv("partnames.csv") %>% 
+  distinct() %>% 
+  mutate(participant = as.character(participant),
+         new_participant = as.character(new_participant))
+viewing_metrics_fixed <- viewing_metrics %>%
+  ungroup() %>%
+  mutate(participant = as.character(participant)) %>%
+  left_join(partnames, by = "participant") %>%
+  select(-participant) %>%
+  rename(participant = new_participant) %>%
+  filter(!is.na(participant)) %>%
+  select(participant, direction:area)
+
+# Get behavioral measures
+eyeperf_fwrv <- fulldata %>%
+  filter(eye_exclude == FALSE) %>%
+  select(participant, maingroup, hearing, direction, aoasl, signyrs, acc, gist, eyes, mouth, neck, facechest) %>%
+  group_by(maingroup, participant, direction) %>%
+  mutate(gist = mean(gist, na.rm = TRUE),
+         lex = mean(acc, na.rm = TRUE),
+         eyes = mean(eyes, na.rm = TRUE),
+         mouth = mean(mouth, na.rm = TRUE),
+         neck = mean(neck, na.rm = TRUE),
+         facechest = mean(facechest, na.rm = TRUE)) %>%
+  ungroup() %>%
+  select(maingroup, participant, hearing, direction, aoasl, signyrs, gist, lex) %>%
+  distinct()
+
+viewing_metrics_behav <- 
+  left_join(viewing_metrics_fixed, eyeperf_fwrv, by = c("participant","direction")) %>%
+  filter(!is.na(maingroup)) %>%
+  select(participant, direction, maingroup:lex, upper:area) %>%
+  gather(metric, value, gist:area) %>%
+  unite(metricvalue, c(metric, direction), sep = "_", remove = FALSE) %>%
+  select(-metric) %>%
+  spread(metricvalue, value) %>%
+  select(-participant, -maingroup, -hearing)
+
+viewing_fw <- viewing_metrics_behav %>% 
+  filter(direction == "forward") %>% 
+  select(aoasl,
+         signyrs,
+         gist_forward, 
+         lex_forward, 
+         upper_forward, 
+         lower_forward, 
+         left_forward, 
+         right_forward, 
+         width_forward, 
+         height_forward, 
+         x_center_forward, 
+         y_center_forward,
+         area_forward)
+viewing_rv <- viewing_metrics_behav %>% 
+  filter(direction == "reversed") %>% 
+  select(aoasl,
+         signyrs,
+         gist_reversed, 
+         lex_reversed, 
+         upper_reversed, 
+         lower_reversed, 
+         left_reversed, 
+         right_reversed, 
+         width_reversed, 
+         height_reversed, 
+         x_center_reversed, 
+         y_center_reversed,
+         area_reversed)
+
+head(viewing_fw,10)
+```
+
+I'll show the pretty correlations table first. Forward and reversed in that order. 
+
+```{r pretty correlations for viewing, rows.print = 15}
+corstarsl(viewing_fw)
+corstarsl(viewing_rv)
+```
+
+Now the Pearson's r correlations and p-values for forward and reversed stories in that order. 
+```{r}
+# Correlations for FW
+print("FW Correlations - Pearson's r")
+Hmisc::rcorr(as.matrix(viewing_fw))$r
+print("FW Correlations - P-values")
+Hmisc::rcorr(as.matrix(viewing_fw))$P
+cat(paste("","\n",""))
+
+# Correlations for RV
+print("RV Correlations - Pearson's r")
+Hmisc::rcorr(as.matrix(viewing_rv))$r
+print("RV Correlations - P-values")
+Hmisc::rcorr(as.matrix(viewing_rv))$P
+cat(paste("","\n",""))
+```
+
