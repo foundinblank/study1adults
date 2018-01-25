@@ -1406,8 +1406,8 @@ correlated with
 
 Here's sample of the raw viewing data structure. 
 
-```{r}
-viewing <- read_csv('adultviewingspaceraw.csv') 
+```{r message=FALSE, warning=FALSE}
+viewing <- read_csv('adultviewingspaceraw.csv', progress=FALSE) 
 head(viewing, 10)
 ```
 
@@ -1453,7 +1453,7 @@ The participant names are different than what we've been using, so I'm going to 
 
 Below is an example of the forward table for viewing space and behavioral data
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 # Fix participant names
 partnames <- read_csv("partnames.csv") %>% 
   distinct() %>% 
