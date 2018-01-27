@@ -1179,8 +1179,8 @@ Hmisc::rcorr(as.matrix(eyeperf_deaf_rv))$P
 cat(paste("","\n",""))
 corstarsl(eyeperf_deaf_rv)
 ```
+```{r eval=FALSE, include=FALSE}
 ## Deaf Correlations, Both Directions
-```{r rows.print = 15}
 # Correlations for Deaf
 print("DEAF Correlations - Pearson's r")
 #corstarsl(lexgist_deaf)
@@ -1215,8 +1215,8 @@ cat(paste("","\n",""))
 corstarsl(eyeperf_hearing_rv)
 ```
 
+```{r eval=FALSE, include=FALSE}
 ## Hearing Correlations, Both Directions
-```{r rows.print = 15}
 # Correlations for Hearing
 print("HEARING Correlations - Pearson's r")
 #corstarsl(lexgist_hearing)
@@ -1277,8 +1277,9 @@ cat(paste("","\n",""))
 corstarsl(eyeperf_rv)
 ```
 
+
+```{r eval=FALSE, include=FALSE}
 ## All People Correlations, Both Directions
-```{r rows.print = 15}
 # Correlations for All
 print("ALL Correlations - Pearson's r")
 #corstarsl(lexgist_all)
@@ -1464,10 +1465,23 @@ correlated with
 + sign years
 + aoasl
 
-Here's sample of the raw viewing data structure. 
+Here's sample of the raw viewing data structure. I'm also going to fix participant names because the raw viewing data has the old participant names. 
 
 ```{r message=FALSE, warning=FALSE}
-viewing <- read_csv('adultviewingspaceraw.csv', progress=FALSE) 
+viewing <- read_csv('../Adult Data/rawdata/adultviewingspaceraw.csv', progress=FALSE) 
+
+# Fix participant names
+partnames <- read_csv("partnames.csv") %>% 
+  distinct() %>% 
+  mutate(participant = as.character(participant),
+         new_participant = as.character(new_participant))
+viewing <- left_join(viewing, partnames, by = "participant") %>%
+  select(-participant) %>%
+  rename(participant = new_participant) %>%
+  filter(!is.na(participant)) %>%
+  select(participant, group:maingroup)
+
+# Show table
 head(viewing, 10)
 ```
 
@@ -1507,31 +1521,13 @@ viewing_metrics <- viewing_metrics %>%
 head(viewing_metrics,10)
 ```
 
-The participant names are different than what we've been using, so I'm going to fix that. Then I'll join the behavioral data with the viewing space metrics.
-
-**Notes to self - which Alicia (Deaf or 2?) - add Gina in - add Jesse in - add JJ in - Laura 1 or Laura 2 - MarlaMarks or MarlaH - add Matthew - add Ranem**
-
-Below is an example of the forward table for viewing space and behavioral data
+Now I'll join the behavioral data with the viewing space metrics. Below is an example of the forward table for viewing space and behavioral data
 
 ```{r message=FALSE, warning=FALSE}
-# Fix participant names
-partnames <- read_csv("partnames.csv") %>% 
-  distinct() %>% 
-  mutate(participant = as.character(participant),
-         new_participant = as.character(new_participant))
-viewing_metrics_fixed <- viewing_metrics %>%
-  ungroup() %>%
-  mutate(participant = as.character(participant)) %>%
-  left_join(partnames, by = "participant") %>%
-  select(-participant) %>%
-  rename(participant = new_participant) %>%
-  filter(!is.na(participant)) %>%
-  select(participant, direction:area)
-
 # Get behavioral measures
 eyeperf_fwrv <- fulldata %>%
   filter(eye_exclude == FALSE) %>%
-  select(participant, maingroup, hearing, direction, aoasl, signyrs, acc, gist, eyes, mouth, neck, facechest) %>%
+  select(participant, maingroup, hearing, direction, aoasl, signyrs, selfrate, acc, gist, eyes, mouth, neck, facechest) %>%
   group_by(maingroup, participant, direction) %>%
   mutate(gist = mean(gist, na.rm = TRUE),
          lex = mean(acc, na.rm = TRUE),
@@ -1540,23 +1536,26 @@ eyeperf_fwrv <- fulldata %>%
          neck = mean(neck, na.rm = TRUE),
          facechest = mean(facechest, na.rm = TRUE)) %>%
   ungroup() %>%
-  select(maingroup, participant, hearing, direction, aoasl, signyrs, gist, lex) %>%
+  select(maingroup, participant, hearing, direction, aoasl, signyrs, selfrate, gist, lex) %>%
   distinct()
 
 viewing_metrics_behav <- 
-  left_join(viewing_metrics_fixed, eyeperf_fwrv, by = c("participant","direction")) %>%
+  left_join(viewing_metrics, eyeperf_fwrv, by = c("participant","direction")) %>%
   filter(!is.na(maingroup)) %>%
-  select(participant, direction, maingroup:lex, upper:area) %>%
+  select(participant, direction, hearing, maingroup:lex, upper:area) %>%
   gather(metric, value, gist:area) %>%
   unite(metricvalue, c(metric, direction), sep = "_", remove = FALSE) %>%
   select(-metric) %>%
   spread(metricvalue, value) %>%
-  select(-participant, -maingroup, -hearing)
+  ungroup() %>%
+  select(-participant, -maingroup)
 
 viewing_fw <- viewing_metrics_behav %>% 
   filter(direction == "forward") %>% 
-  select(aoasl,
+  select(hearing,
+         aoasl,
          signyrs,
+         selfrate,
          gist_forward, 
          lex_forward, 
          upper_forward, 
@@ -1568,10 +1567,18 @@ viewing_fw <- viewing_metrics_behav %>%
          x_center_forward, 
          y_center_forward,
          area_forward)
+viewing_fw_deaf <- viewing_fw %>%
+  filter(hearing == "Deaf") %>%
+  select(-hearing)
+viewing_fw_hearing <- viewing_fw %>%
+  filter(hearing == "Hearing") %>%
+  select(-hearing)
 viewing_rv <- viewing_metrics_behav %>% 
   filter(direction == "reversed") %>% 
-  select(aoasl,
+  select(hearing,
+         aoasl,
          signyrs,
+         selfrate,
          gist_reversed, 
          lex_reversed, 
          upper_reversed, 
@@ -1583,31 +1590,66 @@ viewing_rv <- viewing_metrics_behav %>%
          x_center_reversed, 
          y_center_reversed,
          area_reversed)
+viewing_rv_deaf <- viewing_rv %>%
+  filter(hearing == "Deaf") %>%
+  select(-hearing)
+viewing_rv_hearing <- viewing_rv %>%
+  filter(hearing == "Hearing") %>%
+  select(-hearing)
+
+viewing_fw <- select(viewing_fw, -hearing)
+viewing_rv <- select(viewing_rv, -hearing)
 
 head(viewing_fw,10)
 ```
 
-I'll show the pretty correlations table first. Forward and reversed in that order. 
-
-```{r pretty correlations for viewing, rows.print = 15}
-corstarsl(viewing_fw)
-corstarsl(viewing_rv)
+## Deaf Viewing Correlations, Forward
+```{r rows.print = 15}
+print("Correlations - Pearson's r")
+Hmisc::rcorr(as.matrix(viewing_fw_deaf))$r
+print("Correlations - P-values")
+Hmisc::rcorr(as.matrix(viewing_fw_deaf))$P
+corstarsl(viewing_fw_deaf)
+```
+## Deaf Viewing Correlations, Reversed
+```{r rows.print = 15}
+print("Correlations - Pearson's r")
+Hmisc::rcorr(as.matrix(viewing_rv_deaf))$r
+print("Correlations - P-values")
+Hmisc::rcorr(as.matrix(viewing_rv_deaf))$P
+corstarsl(viewing_rv_deaf)
 ```
 
-Now the Pearson's r correlations and p-values for forward and reversed stories in that order. 
-```{r}
-# Correlations for FW
-print("FW Correlations - Pearson's r")
+## Hearing Viewing Correlations, Forward
+```{r rows.print = 15}
+print("Correlations - Pearson's r")
+Hmisc::rcorr(as.matrix(viewing_fw_hearing))$r
+print("Correlations - P-values")
+Hmisc::rcorr(as.matrix(viewing_fw_hearing))$P
+corstarsl(viewing_fw_hearing)
+```
+## Hearing Viewing Correlations, Reversed
+```{r rows.print = 15}
+print("Correlations - Pearson's r")
+Hmisc::rcorr(as.matrix(viewing_rv_hearing))$r
+print("Correlations - P-values")
+Hmisc::rcorr(as.matrix(viewing_rv_hearing))$P
+corstarsl(viewing_rv_hearing)
+```
+## All Viewing Correlations, Forward
+```{r rows.print = 15}
+print("Correlations - Pearson's r")
 Hmisc::rcorr(as.matrix(viewing_fw))$r
-print("FW Correlations - P-values")
+print("Correlations - P-values")
 Hmisc::rcorr(as.matrix(viewing_fw))$P
-cat(paste("","\n",""))
-
-# Correlations for RV
-print("RV Correlations - Pearson's r")
+corstarsl(viewing_fw)
+```
+## All Viewing Correlations, Reversed
+```{r rows.print = 15}
+print("Correlations - Pearson's r")
 Hmisc::rcorr(as.matrix(viewing_rv))$r
-print("RV Correlations - P-values")
+print("Correlations - P-values")
 Hmisc::rcorr(as.matrix(viewing_rv))$P
-cat(paste("","\n",""))
+corstarsl(viewing_rv)
 ```
 
