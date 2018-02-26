@@ -93,19 +93,32 @@ participant_info <- fulldata %>%
   summarise(n = n(),
             age_mean = mean(age),
             age_sd = sd(age),
+            age_max = max(age),
+            age_min = min(age),
             aoasl_mean = mean(aoasl),
             aoasl_sd = sd(aoasl),
+            aoasl_max = max(aoasl),
+            aoasl_min = min(aoasl),
             signyrs_mean = mean(signyrs),
             signyrs_sd = sd(signyrs),
+            signyrs_max = max(signyrs),
+            signyrs_min = min(signyrs),
             selfrate_mean = mean(selfrate),
-            selfrate_sd = sd(selfrate)) %>%
+            selfrate_sd = sd(selfrate),
+            selfrate_max = max(selfrate),
+            selfrate_min = min(selfrate)) %>%
   ungroup() %>%
   mutate_if(is.double, funs(round(., 2))) %>%
   mutate(age = paste(age_mean, "±", age_sd, sep = " "),
          aoasl = paste(aoasl_mean, "±", aoasl_sd, sep = " "),
          signyrs = paste(signyrs_mean, "±", signyrs_sd, sep = " "),
-         selfrate = paste(selfrate_mean, "±", selfrate_sd, sep = " ")) %>%
-  select(-(age_mean:selfrate_sd))
+         selfrate = paste(selfrate_mean, "±", selfrate_sd, sep = " "),
+         age_range = paste(age_min, age_max, sep = "-"),
+         aoasl_range = paste(aoasl_min, aoasl_max, sep = "-"),
+         signyrs_range = paste(signyrs_min, signyrs_max, sep = "-"),
+         selfrate_range = paste(selfrate_min, selfrate_max, sep = "-")) %>%
+  select(-(age_mean:selfrate_sd)) %>%
+  select(-c(selfrate_max, selfrate_min))
 
 participant_info
 write_csv(fulldata, "finaldataset.csv")
@@ -183,6 +196,22 @@ lexgist_info <- fulldata %>%
   select(-(lex_mean:gist_sd)) %>%
   gather(metric, value, lex:gist) %>%
   unite("metric", c(metric, direction), sep = "_") %>%
+  spread(metric, value) %>%
+  print()
+
+lexgist_info <- fulldata %>%
+  group_by(maingroup) %>%
+  summarise(lex_mean = mean(acc, na.rm = TRUE),
+            lex_sd = sd(acc, na.rm = TRUE),
+            gist_mean = mean(gist),
+            gist_sd = sd(gist)) %>%
+  ungroup() %>%
+  mutate_if(is.double, funs(round(., 2))) %>% 
+  mutate(lex = paste(lex_mean, "±", lex_sd, sep = " "),
+         gist = paste(gist_mean, "±", gist_sd, sep = " ")) %>%
+  select(-(lex_mean:gist_sd)) %>%
+  gather(metric, value, lex:gist) %>%
+#  unite("metric", c(metric, direction), sep = "_") %>%
   spread(metric, value) %>%
   print()
 ```

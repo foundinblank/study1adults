@@ -116,6 +116,9 @@ Next we run a 3x2x4 ANOVA on eye gaze.
 e1 <- aov_ez("id", "percent", edata, between = "maingroup", within = c("aoi","direction"))
 e1
 summary(e1)
+
+lsmeans(e1, "maingroup", contr = "pairwise", adjust = "none")$contrasts
+
 ```
 
 Then again for Eyes only but with only one factor: video direction. 
@@ -137,5 +140,443 @@ Neck only but with only one factor: video direction.
 ```{r}
 e4 <- aov_ez("id", "percent", filter(edata, aoi == "neck"), within = "direction")
 e4
+```
+
+# High vs. Low Performers
+First I run 09finaldata and get the `fulldata` tibble to change it to `eyeperf`
+```{r}
+eyeperf <- fulldata %>%
+  filter(eye_exclude == FALSE) %>%
+  select(participant, maingroup, hearing, direction, aoasl, signyrs, selfrate, acc, gist, eyes, mouth, neck, facechest) %>%
+  group_by(maingroup, participant, direction) %>%
+  mutate(gist = mean(gist, na.rm = TRUE),
+         lex = mean(acc, na.rm = TRUE),
+         eyes = mean(eyes, na.rm = TRUE),
+         mouth = mean(mouth, na.rm = TRUE),
+         neck = mean(neck, na.rm = TRUE),
+         facechest = mean(facechest, na.rm = TRUE)) %>%
+  ungroup() %>%
+  select(maingroup, participant, hearing, direction, aoasl, signyrs, selfrate, gist, lex, eyes, mouth, neck, facechest) %>%
+  distinct() %>%
+  gather(metric, value, gist:facechest) %>%
+  unite(metricvalue, c(metric, direction), sep = "_") %>%
+  spread(metricvalue, value) %>%
+  select(-participant) %>%
+  select(maingroup, hearing, aoasl, signyrs, selfrate, gist_reversed, lex_forward, lex_reversed, eyes_forward,
+         eyes_reversed, mouth_forward, mouth_reversed, neck_forward, neck_reversed,
+         facechest_forward, facechest_reversed)
+
+# eyeperf <- fulldata %>%
+#   filter(eye_exclude == FALSE) %>%
+#   select(participant, maingroup, hearing, direction, aoasl, signyrs, selfrate, acc, gist, upperchest, midchest, lowerchest, belly) %>%
+#   group_by(maingroup, participant, direction) %>%
+#   mutate(gist = mean(gist, na.rm = TRUE),
+#          lex = mean(acc, na.rm = TRUE),
+#          upperchest = mean(upperchest, na.rm = TRUE),
+#          midchest = mean(midchest, na.rm = TRUE),
+#          lowerchest = mean(lowerchest, na.rm = TRUE),
+#          belly = mean(belly, na.rm = TRUE)) %>%
+#   ungroup() %>%
+#   select(maingroup, participant, hearing, direction, aoasl, signyrs, selfrate, gist, lex, upperchest, midchest, lowerchest, belly) %>%
+#   distinct() %>%
+#   gather(metric, value, gist:belly) %>%
+#   unite(metricvalue, c(metric, direction), sep = "_") %>%
+#   spread(metricvalue, value) %>%
+#   select(-participant, -maingroup)
+
+# eyeperf <- fulldata %>%
+#   filter(eye_exclude == FALSE) %>%
+#   select(participant, maingroup, story, hearing, direction, aoasl, signyrs, selfrate, acc, gist, upperchest, midchest, lowerchest, belly) %>%
+#   group_by(maingroup, participant, direction, story) %>%
+#   mutate(chest = sum(upperchest, midchest, lowerchest, belly, na.rm = TRUE)) %>%
+#   group_by(maingroup, participant, direction) %>%
+#   mutate(gist = mean(gist, na.rm = TRUE),
+#          lex = mean(acc, na.rm = TRUE),
+#          chest = mean(chest, na.rm = TRUE)) %>%
+#   ungroup() %>%
+#   select(maingroup, participant, hearing, direction, aoasl, signyrs, selfrate, gist, lex, chest) %>%
+#   distinct() %>%
+#   gather(metric, value, gist:chest) %>%
+#   unite(metricvalue, c(metric, direction), sep = "_") %>%
+#   spread(metricvalue, value) %>%
+#   select(-participant, -maingroup)
+```
+
+## Gist Reversed
+Cool. Now let's divide into high and low performers. I'll  do gist reversed. Well, maybe that won't work because that's only 3 levels! So I'll combine 0.5 and 1 (that's 32) vs 0 (19). 
+
+```{r}
+# gist_hl <- eyeperf %>% 
+#   select(gist_reversed, facechest_reversed) %>%
+#   mutate(group = case_when(
+#     gist_reversed == 0 ~ "low",
+#     gist_reversed == 0.5 ~ "high",
+#     gist_reversed == 1 ~ "high"
+#   )) %>%
+#   mutate(group = factor(group)) %>%
+#   select(-gist_reversed) 
+# 
+# gist_high = filter(gist_hl, group == "high") %>% select(-group)
+# gist_low = filter(gist_hl, group == "low") %>% select(-group)
+# 
+# gist_high = unlist(gist_high$facechest_reversed)
+# gist_low = unlist(gist_low$facechest_reversed)
+# t.test(gist_high, gist_low)
+
+
+gist_hl <- eyeperf %>% 
+  select(gist_reversed, facechest_reversed) %>%
+  mutate(group = case_when(
+    gist_reversed == 0 ~ "low",
+    gist_reversed == 0.5 ~ "medium",
+    gist_reversed == 1 ~ "high"
+  )) %>%
+  mutate(group = factor(group)) %>%
+  select(-gist_reversed) 
+
+gist_m <- aov(data = gist_hl, facechest_reversed ~ group)
+summary(gist_m)
+
+gist_hl %>% group_by(group) %>% summarise(fcr = mean(facechest_reversed, na.rm = TRUE))
+```
+
+## Lex Recall Forward (Mean)
+p = 0.421 (doesn't matter if the mean score is in high or low group)
+```{r}
+lex_fw_hl <- eyeperf %>% 
+  select(lex_forward, chest_forward) 
+lex_mean = mean(lex_fw_hl$lex_forward)
+
+lex_fw_hl <- lex_fw_hl %>%
+  mutate(group = case_when(
+    lex_forward > lex_mean ~ "high",
+    lex_forward <= lex_mean ~ "low")) %>%
+  mutate(group = factor(group))
+
+summary(lex_fw_hl)
+
+lex_fw_high = filter(lex_fw_hl, group == "high") %>% select(chest_forward)
+lex_fw_low = filter(lex_fw_hl, group == "low") %>% select(chest_forward)
+
+lexfw_high = unlist(lex_fw_high$chest_forward)
+lexfw_low = unlist(lex_fw_low$chest_forward)
+t.test(lexfw_high, lexfw_low)
+```
+
+## Lex Recall Forward (Median)
+This is interesting, if high is > median and low is <= median, the p-value is 0.066. If high is >= median and low is < median, the p-value is 0.24. 
+```{r}
+lex_fw_hl <- eyeperf %>% 
+  select(lex_forward, chest_forward) 
+lex_med = median(lex_fw_hl$lex_forward)
+
+lex_fw_hl <- lex_fw_hl %>%
+  mutate(group = case_when(
+    lex_forward > lex_med ~ "high",
+    lex_forward <= lex_med ~ "low")) %>%
+  mutate(group = factor(group))
+
+summary(lex_fw_hl)
+
+lex_fw_high = filter(lex_fw_hl, group == "high") %>% select(chest_forward)
+lex_fw_low = filter(lex_fw_hl, group == "low") %>% select(chest_forward)
+
+lexfw_high = unlist(lex_fw_high$chest_forward)
+lexfw_low = unlist(lex_fw_low$chest_forward)
+t.test(lexfw_high, lexfw_low)
+```
+
+## Lex Recall Reverse (Mean)
+p = 0.8973 (doesn't matter if the mean score is in high or low group)
+```{r}
+lex_fw_hl <- eyeperf %>% 
+  select(lex_reversed, chest_reversed) 
+lex_mean = mean(lex_fw_hl$lex_reversed, na.rm = TRUE)
+
+lex_fw_hl <- lex_fw_hl %>%
+  mutate(group = case_when(
+    lex_reversed > lex_mean ~ "high",
+    lex_reversed <= lex_mean ~ "low")) %>%
+  mutate(group = factor(group))
+
+summary(lex_fw_hl)
+
+lex_fw_high = filter(lex_fw_hl, group == "high") %>% select(chest_reversed)
+lex_fw_low = filter(lex_fw_hl, group == "low") %>% select(chest_reversed)
+
+lexfw_high = unlist(lex_fw_high$chest_reversed)
+lexfw_low = unlist(lex_fw_low$chest_reversed)
+t.test(lexfw_high, lexfw_low)
+```
+
+## Lex Recall Reverse (Median)
+p = 0.60 or more, doesn't matter where the median is in. 
+```{r}
+lex_fw_hl <- eyeperf %>% 
+  select(lex_reversed, chest_reversed) 
+lex_mean = median(lex_fw_hl$lex_reversed, na.rm = TRUE)
+
+lex_fw_hl <- lex_fw_hl %>%
+  mutate(group = case_when(
+    lex_reversed > lex_mean ~ "high",
+    lex_reversed <= lex_mean ~ "low")) %>%
+  mutate(group = factor(group))
+
+summary(lex_fw_hl)
+
+lex_fw_high = filter(lex_fw_hl, group == "high") %>% select(chest_reversed)
+lex_fw_low = filter(lex_fw_hl, group == "low") %>% select(chest_reversed)
+
+lexfw_high = unlist(lex_fw_high$chest_reversed)
+lexfw_low = unlist(lex_fw_low$chest_reversed)
+t.test(lexfw_high, lexfw_low)
+```
+
+# Top v Bottom 25% Performers
+
+Let's try this again but with top and bottom 25% people. 
+
+"It makes total sense to me why that [high v. low] approach doesn't work, because many who are right around the median don't help address what happens when you have GOOD comprehension (i.e. ABOVE average) vs POOR, especially if you have a lot who straddle the median.   SO you need to move toward the ends."
+
+## Gist Reversed
+
+Well, that's not going to work becuase we just have three possible scores - 0, 0.5, and 1. I'll try that as three groups! And do an ANOVA. 
+```{r}
+gist_hl <- eyeperf %>% 
+  select(gist_reversed, chest_reversed) %>%
+  mutate(group = case_when(
+    gist_reversed == 0 ~ "low",
+    gist_reversed == 0.5 ~ "middle",
+    gist_reversed == 1 ~ "high"
+  )) %>%
+  mutate(group = factor(group)) %>%
+  select(-gist_reversed)
+
+id = seq(1,nrow(gist_hl))
+gist_hl = cbind(gist_hl, id)
+  
+  
+
+g1 <- aov_ez("id", "chest_reversed", gist_hl, between = "group")
+g1
+```
+
+## Lex Recall Forward 
+p = 0.656 (doesn't matter if inclusive or exclusive)
+```{r}
+lex_fw_hl <- eyeperf %>% 
+  select(lex_forward, chest_forward) 
+lex_quartiles = quantile(lex_fw_hl$lex_forward, probs = c(0.25, 0.75))
+
+lex_fw_hl <- lex_fw_hl %>%
+  mutate(group = case_when(
+    lex_forward >= lex_quartiles[2] ~ "high",
+    lex_forward <= lex_quartiles[1] ~ "low")) %>%
+  mutate(group = factor(group)) %>%
+  filter(!is.na(group))
+
+summary(lex_fw_hl)
+
+lex_fw_high = filter(lex_fw_hl, group == "high") %>% select(chest_forward)
+lex_fw_low = filter(lex_fw_hl, group == "low") %>% select(chest_forward)
+
+lexfw_high = unlist(lex_fw_high$chest_forward)
+lexfw_low = unlist(lex_fw_low$chest_forward)
+t.test(lexfw_high, lexfw_low)
+```
+
+## Lex Recall Reverse 
+p = 0.656 (doesn't matter if inclusive or exclusive)
+```{r}
+lex_fw_hl <- eyeperf %>% 
+  select(lex_reversed, chest_reversed) %>%
+  filter(!is.na(lex_reversed))
+lex_quartiles = quantile(lex_fw_hl$lex_reversed, probs = c(0.25, 0.75))
+
+lex_fw_hl <- lex_fw_hl %>%
+  mutate(group = case_when(
+    lex_reversed >= lex_quartiles[2] ~ "high",
+    lex_reversed <= lex_quartiles[1] ~ "low")) %>%
+  mutate(group = factor(group)) %>%
+  filter(!is.na(group))
+
+summary(lex_fw_hl)
+
+lex_fw_high = filter(lex_fw_hl, group == "high") %>% select(chest_reversed)
+lex_fw_low = filter(lex_fw_hl, group == "low") %>% select(chest_reversed)
+
+lexfw_high = unlist(lex_fw_high$chest_reversed)
+lexfw_low = unlist(lex_fw_low$chest_reversed)
+t.test(lexfw_high, lexfw_low)
+```
+
+## Scatterplots
+```{r}
+library(scales)
+ggplot(eyeperf, aes(x = gist_reversed, y = facechest_reversed)) + 
+  geom_point() + geom_smooth(method = "lm") +
+  scale_x_continuous(labels = percent) +
+  scale_y_continuous(limits = c(-1,1)) + ggtitle("Gist Rv")
+ggplot(eyeperf, aes(x = lex_forward, y = facechest_forward)) + 
+  geom_point() + geom_smooth(method = "lm") +
+  scale_x_continuous(labels = percent) +
+  scale_y_continuous(limits = c(-1,1)) + ggtitle("Lex Fw")
+ggplot(eyeperf, aes(x = lex_reversed, y = facechest_reversed)) + 
+  geom_point() + geom_smooth(method = "lm") +
+  scale_x_continuous(labels = percent) +
+  scale_y_continuous(limits = c(-1,1)) + ggtitle("Lex Rv")
+```
+
+# Repeated Measures Correlations
+OKAY! I found [this article](https://www.frontiersin.org/articles/10.3389/fpsyg.2017.00456/full#h11) which discusses correlations with repeated measures, and it involves the `rmcorr` package. Let's give that a spin. 
+
+```{r}
+library(rmcorr)
+data <- fulldata
+
+data <- data %>% 
+  select(participant, direction, maingroup, aoasl, acc, gist, facechest, eyes, mouth, neck, upperchest) %>%
+  arrange(participant, direction)
+
+ggplot(data, aes(x = acc, y = facechest)) + geom_point() + geom_smooth(method = "lm") + xlab("lex recall (all)") + scale_x_continuous(labels = percent) + ylab("facechest (all)")
+ggplot(data, aes(x = acc, y = facechest, color = maingroup)) + geom_point() + geom_smooth(method = "lm") + xlab("lex recall") + scale_x_continuous(labels = percent) + ylab("facechest") + facet_grid(direction ~ maingroup) + guides(color = FALSE)
+
+data_fw <- data %>% filter(direction == "forward")
+data_rv <- data %>% filter(direction == "reversed")
+
+fw <- rmcorr(participant, facechest, acc, data_fw)
+rv <- rmcorr(participant, facechest, acc, data_rv)
+all <- rmcorr(participant, facechest, acc, data)
+
+plot(fw, data_fw)
+plot(rv, data_rv)
+plot(all, data)
+
+```
+
+# Regular Correlation by Groups
+## Deaf Early
+```{r rows.print = 15}
+corstarsl2 <- function(x){ 
+require(Hmisc) 
+x <- as.matrix(x) 
+R <- Hmisc::rcorr(x)$r 
+p <- Hmisc::rcorr(x)$P 
+## define notions for significance levels; spacing is important.
+mystars <- ifelse(p < .001, "***", ifelse(p < .01, "** ", ifelse(p < .05, "* ", " ")))
+## trunctuate the matrix that holds the correlations to two decimal
+R <- format(round(cbind(rep(-1.11, ncol(x)), R), 2))[,-1] 
+## build a new matrix that includes the correlations with their apropriate stars 
+Rnew <- matrix(paste(R, mystars, sep=""), ncol=ncol(x)) 
+diag(Rnew) <- paste(diag(R), " ", sep="") 
+rownames(Rnew) <- colnames(x) 
+colnames(Rnew) <- paste(colnames(x), "", sep="") 
+## remove upper triangle
+Rnew <- as.matrix(Rnew)
+Rnew[upper.tri(Rnew, diag = TRUE)] <- ""
+Rnew <- as.data.frame(Rnew) 
+## remove last column and return the matrix (which is now a data frame)
+Rnew <- cbind(Rnew[2:3])
+return(Rnew) 
+}
+eyeperf %>% filter(maingroup == "DeafEarly") %>% select(lex_forward, 
+                                                       lex_reversed, 
+                                                       facechest_forward, 
+                                                       facechest_reversed) %>%
+  corstarsl(.)
+eyeperf1 <- eyeperf %>% filter(maingroup == "DeafEarly") %>% 
+  select(lex_forward, facechest_forward) %>%
+  rename(lex = lex_forward,
+         facechest = facechest_forward)
+
+eyeperf2 <- eyeperf %>% filter(maingroup == "DeafEarly") %>% 
+  select(lex_reversed, facechest_reversed) %>%
+  rename(lex = lex_reversed,
+         facechest = facechest_reversed)
+
+rbind(eyeperf1, eyeperf2) %>% corstarsl(.)
+  
+```
+
+```{r rows.print = 15}
+eyeperf %>% filter(maingroup == "DeafLate") %>% select(lex_forward, 
+                                                       lex_reversed, 
+                                                       facechest_forward, 
+                                                       facechest_reversed) %>%
+  corstarsl(.)
+eyeperf1 <- eyeperf %>% filter(maingroup == "DeafLate") %>% 
+  select(lex_forward, facechest_forward) %>%
+  rename(lex = lex_forward,
+         facechest = facechest_forward)
+
+eyeperf2 <- eyeperf %>% filter(maingroup == "DeafLate") %>% 
+  select(lex_reversed, facechest_reversed) %>%
+  rename(lex = lex_reversed,
+         facechest = facechest_reversed)
+
+rbind(eyeperf1, eyeperf2) %>% corstarsl(.)
+
+```
+
+```{r rows.print = 15}
+eyeperf %>% filter(maingroup == "HearingLate") %>% select(lex_forward, 
+                                                       lex_reversed, 
+                                                       facechest_forward, 
+                                                       facechest_reversed) %>%
+  corstarsl(.)
+
+eyeperf1 <- eyeperf %>% filter(maingroup == "HearingLate") %>% 
+  select(lex_forward, facechest_forward) %>%
+  rename(lex = lex_forward,
+         facechest = facechest_forward)
+
+eyeperf2 <- eyeperf %>% filter(maingroup == "HearingLate") %>% 
+  select(lex_reversed, facechest_reversed) %>%
+  rename(lex = lex_reversed,
+         facechest = facechest_reversed)
+
+rbind(eyeperf1, eyeperf2) %>% corstarsl(.)
+```
+
+```{r rows.print = 15}
+eyeperf %>% filter(maingroup == "HearingNovice") %>% select(lex_forward, 
+                                                       lex_reversed, 
+                                                       facechest_forward, 
+                                                       facechest_reversed) %>%
+  corstarsl(.)
+
+eyeperf1 <- eyeperf %>% filter(maingroup == "HearingNovice") %>% 
+  select(lex_forward, facechest_forward) %>%
+  rename(lex = lex_forward,
+         facechest = facechest_forward)
+
+eyeperf2 <- eyeperf %>% filter(maingroup == "HearingNovice") %>% 
+  select(lex_reversed, facechest_reversed) %>%
+  rename(lex = lex_reversed,
+         facechest = facechest_reversed)
+
+rbind(eyeperf1, eyeperf2) %>% corstarsl(.)
+
+```
+
+```{r}
+newfcr <- fulldata %>%
+  filter(eye_exclude == FALSE) %>%
+  select(participant, maingroup, direction, acc, forehead, eyes, mouth, neck, upperchest, midchest, lowerchest, belly, facechest) %>% 
+  rowwise() %>%
+  mutate(face = sum(forehead, eyes, mouth, na.rm = TRUE),
+         chest = sum(upperchest, midchest, lowerchest, na.rm = TRUE),
+         fcr2 = (face - chest)/(face+chest)) %>%
+  select(maingroup, direction, acc, facechest, fcr2) %>%
+  arrange(facechest)
+
+newfcr %>% group_by(maingroup) %>%
+  summarise(fcr_mean = mean(facechest),
+            fcr_sd = sd(facechest),
+            fcr2_mean = mean(fcr2),
+            fcr2_sd = sd(fcr2))
+
+ggplot(newfcr, aes(x = acc, y = fcr2, color = maingroup)) + geom_point() +
+  facet_grid(direction ~ maingroup) + geom_smooth(method = "lm")
 ```
 
