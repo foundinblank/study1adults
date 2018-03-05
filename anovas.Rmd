@@ -580,3 +580,20 @@ ggplot(newfcr, aes(x = acc, y = fcr2, color = maingroup)) + geom_point() +
   facet_grid(direction ~ maingroup) + geom_smooth(method = "lm")
 ```
 
+# Partial Correlations
+First, run 09finaldata all the way (but for this, especially to line ~560 - Eye Gaze Data)
+
+```{r}
+library(ppcor)
+
+lexgist_deaf %>%
+  dplyr::select(aoasl, signyrs, gist_reversed) %>%
+  as.matrix() %>%
+  pcor()
+
+lexgist_deaf %>%
+  dplyr::select(aoasl, signyrs, lex_reversed) %>%
+  as.matrix() %>%
+  pcor()
+```
+

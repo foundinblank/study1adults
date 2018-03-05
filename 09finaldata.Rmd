@@ -1374,8 +1374,8 @@ eyegaze_heat_all <- fulldata %>%
 
 ggplot(eyegaze_heat, aes(x = maingroup, y = aoi)) +
   geom_tile(aes(fill=percent),color="lightgray",na.rm=TRUE) + 
-#  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,.71), labels = percent, name = "looking time") +
-    scale_fill_gradient(low = "#ffffff", high = "#08519c", space = "Lab", limits = c(0,.71), labels = percent, name = "looking time", na.value = "grey50") +
+#  scale_fill_viridis(option = "viridis", direction=-1, limits = c(0,.7), labels = percent, name = "looking time") +
+    scale_fill_gradient(low = "#ffffff", high = "#08519c", space = "Lab", limits = c(0,.704), labels = percent, name = "looking time", na.value = "grey50") +
   theme_bw() +
   theme(axis.text.x=element_text(angle=30,hjust=1),
         strip.text.x = element_text(size = 11, color = "black", face = "italic"), 
