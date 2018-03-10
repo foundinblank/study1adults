@@ -14,33 +14,62 @@ output:
 
 Let's give this a shot!!
 
-First let's see who's in our dataset. This is Test 1 - 3 Bears - Forward
+# Three Bears Forward 
+First let's see who's in our dataset. This is Test 1 - 3 Bears - Forward. We're pulling cleaned-up names and assigned groups from our final dataset that we used in our AOI analysis. Then we are removing participants whose Three Bears Forward story wasn't included in our AOI analysis due to <25% looking time or other reasons. 
 
 ```{r}
 library(tidyverse)
 library(openxlsx)
 library(janitor)
 
+# Get Three Bears data
 data <- read.xlsx("Test1_Cindy_bears_FW_Examine for Spatial Referencing.xlsx") %>%
   clean_names() %>%
   rename(y = gazepointy_mcspx,
          language = x_language_value,
          name = participantname,
-         group = x_group_value) %>%
-  filter(language != "NoviceASL_Trained") %>%
-  filter(language != "LateASL")
+         group = x_group_value)
 
-data %>% select(name, group, language) %>% distinct()
+# Pull clean names and join to data
+cleannames <- read_csv("partnames.csv") %>%
+  distinct() %>%
+  rename(name = participant)
+
+data <- data %>% left_join(cleannames, by = "name") %>%
+  select(-name) %>%
+  rename(name = new_participant) %>%
+  filter(!is.na(name))
+
+# Pull final group assignments and join to data
+cleangroups <- read_csv("finaldataset.csv") %>%
+  select(participant, maingroup) %>%
+  rename(name = participant) %>%
+  distinct()
+
+data <- data %>% left_join(cleangroups, by = "name") %>%
+  select(-group)
+
+# Let's find out who was NOT included in Three Bears
+excluded <- read_csv("finaldataset.csv") %>%
+  select(participant, maingroup, story, direction, eye_exclude) %>%
+  filter(story == "Goldilocks" & direction == "forward") %>%
+  rename(name = participant) %>%
+  select(name, eye_exclude)
+
+data <- data %>% left_join(excluded, by = "name") %>%
+  filter(!eye_exclude) %>%
+  filter(!is.na(eye_exclude))
+
+data %>% select(name, maingroup) %>% distinct()
 ```
 
 Now let's graph!! 
 
-Messy, I know, but already we can see some novice ASL has big shifts downward. 
+Messy, I know, but already we can see some HearingNovice has big shifts downward. And some HearingLate too.
 
 ```{r}
 data %>%
-  ggplot(aes(x = gazepointindex, y = y, color = language)) + geom_path() + scale_y_reverse()
-
+  ggplot(aes(x = gazepointindex, y = y, color = maingroup, group = name)) + geom_line() + scale_y_reverse()
 ```
 
 Next let's plot the moments where spatial referencing happens. Those are frames
@@ -65,9 +94,9 @@ data <- data %>%
   mutate(secs = gazepointindex/120)
 
 data %>%
-  ggplot(aes(x = secs, y = y, color = language)) + 
+  ggplot(aes(x = secs, y = y, color = maingroup, group = name)) + 
   scale_y_reverse() + 
-  geom_path() + 
+  geom_line() + 
   annotate("rect", xmin = 7.92, xmax = 8.92, ymin = 0, ymax = 900,
   alpha = .2, fill = "red") +
   annotate("rect", xmin = 10.6, xmax = 11.52, ymin = 0, ymax = 900,
@@ -76,50 +105,257 @@ data %>%
   alpha = .2, fill = "red")
 ```
 
-Maybe easier if we separate native and novice signers. 
+Maybe easier if we separate groups of signers. 
 
 ```{r}
 data %>%
-  ggplot(aes(x = secs, y = y, color = language)) + 
+  ggplot(aes(x = secs, y = y, color = maingroup, group = name)) + 
   scale_y_reverse() + 
-  geom_path(alpha = 0.5) + 
+  geom_line(alpha = 0.5) + 
   annotate("rect", xmin = 7.92, xmax = 8.92, ymin = 0, ymax = 900,
   alpha = .2, fill = "red") +
   annotate("rect", xmin = 10.6, xmax = 11.52, ymin = 0, ymax = 900,
   alpha = .2, fill = "red") +
   annotate("rect", xmin = 14.08, xmax = 15.2, ymin = 0, ymax = 900,
   alpha = .2, fill = "red") +
-  facet_grid(language ~ .)
+  facet_grid(maingroup ~ .)
 ```
 
-Hmm hmm. Novice ASL do have a lot of down shifts but they're not CLEARLY lining up with spatial referencing...or so we think. Let's separate out the Novice signers. 
+Hmm hmm. HearingNovice do have a lot of down shifts but they're not CLEARLY lining up with spatial referencing...or so we think. Let's separate out individual signers. 
 
 ```{r}
 data %>%
-  filter(language == "NoviceASL") %>%
-  ggplot(aes(x = secs, y = y, color = language)) + 
+  filter(maingroup == "DeafEarly") %>%
+  ggplot(aes(x = secs, y = y, group = name)) + 
   scale_y_reverse() + 
-  geom_path(alpha = 1) + 
+  geom_line(alpha = 1, color = "red") + 
   annotate("rect", xmin = 7.92, xmax = 8.92, ymin = 0, ymax = 900,
   alpha = .2, fill = "red") +
   annotate("rect", xmin = 10.6, xmax = 11.52, ymin = 0, ymax = 900,
   alpha = .2, fill = "red") +
   annotate("rect", xmin = 14.08, xmax = 15.2, ymin = 0, ymax = 900,
   alpha = .2, fill = "red") +
-  facet_grid(name ~ .)
+  facet_grid(name ~ .) +
+  ggtitle("DeafEarly")
 
 data %>%
-  filter(language == "EarlyASL") %>%
-  ggplot(aes(x = secs, y = y, color = language)) + 
+  filter(maingroup == "DeafLate") %>%
+  ggplot(aes(x = secs, y = y, group = name)) + 
   scale_y_reverse() + 
-  geom_path(alpha = 1) + 
+  geom_line(alpha = 1, color = "dark green") + 
   annotate("rect", xmin = 7.92, xmax = 8.92, ymin = 0, ymax = 900,
   alpha = .2, fill = "red") +
   annotate("rect", xmin = 10.6, xmax = 11.52, ymin = 0, ymax = 900,
   alpha = .2, fill = "red") +
   annotate("rect", xmin = 14.08, xmax = 15.2, ymin = 0, ymax = 900,
   alpha = .2, fill = "red") +
-  facet_grid(name ~ .)
+  facet_grid(name ~ .) +
+  ggtitle("DeafLate")
+
+data %>%
+  filter(maingroup == "HearingLate") %>%
+  ggplot(aes(x = secs, y = y, group = name)) + 
+  scale_y_reverse() + 
+  geom_line(alpha = 1, color = "blue") + 
+  annotate("rect", xmin = 7.92, xmax = 8.92, ymin = 0, ymax = 900,
+  alpha = .2, fill = "red") +
+  annotate("rect", xmin = 10.6, xmax = 11.52, ymin = 0, ymax = 900,
+  alpha = .2, fill = "red") +
+  annotate("rect", xmin = 14.08, xmax = 15.2, ymin = 0, ymax = 900,
+  alpha = .2, fill = "red") +
+  facet_grid(name ~ .) +
+  ggtitle("HearingLate")
+
+data %>%
+  filter(maingroup == "HearingNovice") %>%
+  ggplot(aes(x = secs, y = y, group = name)) + 
+  scale_y_reverse() + 
+  geom_line(alpha = 1, color = "purple") + 
+  annotate("rect", xmin = 7.92, xmax = 8.92, ymin = 0, ymax = 900,
+  alpha = .2, fill = "red") +
+  annotate("rect", xmin = 10.6, xmax = 11.52, ymin = 0, ymax = 900,
+  alpha = .2, fill = "red") +
+  annotate("rect", xmin = 14.08, xmax = 15.2, ymin = 0, ymax = 900,
+  alpha = .2, fill = "red") +
+  facet_grid(name ~ .) +
+  ggtitle("HearingNovice")
 ```
 
 Okay so with Early ASL obviously very steady gaze. NoviceASL has lot of downshifts. Some align with spatial referencing, some do not. We need more of them (let's look at other stories w better data). 
+
+# Midas Forward
+
+```{r}
+# Get Midas data
+data <- read_csv("../Adult Data/rawdata/midasfw.csv") %>%
+  clean_names() %>%
+  rename(y = gazepointy_mcspx,
+         language = x_language_value,
+         name = participantname,
+         group = x_group_value)
+
+# Pull clean names and join to data
+cleannames <- read_csv("partnames.csv") %>%
+  distinct() %>%
+  rename(name = participant)
+
+data <- data %>% left_join(cleannames, by = "name") %>%
+  select(-name) %>%
+  rename(name = new_participant) %>%
+  filter(!is.na(name))
+
+# Pull final group assignments and join to data
+cleangroups <- read_csv("finaldataset.csv") %>%
+  select(participant, maingroup) %>%
+  rename(name = participant) %>%
+  distinct()
+
+data <- data %>% left_join(cleangroups, by = "name") %>%
+  select(-group)
+
+# Let's find out who was NOT included in Three Bears
+excluded <- read_csv("finaldataset.csv") %>%
+  select(participant, maingroup, story, direction, eye_exclude) %>%
+  filter(story == "KingMidas" & direction == "forward") %>%
+  rename(name = participant) %>%
+  select(name, eye_exclude)
+
+data <- data %>% left_join(excluded, by = "name") %>%
+  filter(!eye_exclude) %>%
+  filter(!is.na(eye_exclude))
+
+data %>% select(name, maingroup) %>% distinct()
+```
+
+Now let's graph!! 
+
+Hm. One person seems wrong. 
+```{r}
+data %>%
+  ggplot(aes(x = gazepointindex, y = y, color = maingroup, group = name)) + geom_line() + scale_y_reverse()
+```
+Okay it's Jesse's data that seems off. We'll remove him for now and come back to it, figure out why. 
+```{r}
+data %>% filter(gazepointindex > 30000) %>% select(name) %>% distinct() %>% head()
+```
+
+```{r}
+data <- data %>%
+  filter(name != "Jesse")
+
+data %>%
+  ggplot(aes(x = gazepointindex, y = y, color = maingroup, group = name)) + geom_line() + 
+  scale_y_reverse() +
+  scale_x_continuous(limits = c(0,4500))
+```
+
+Next let's plot the moments where spatial referencing happens. Those are frames
+
+1. 248 to 427
+1. 460 to 508
+1. 512 to 560
+
+Like before, we'll convert gazepointindex to seconds (by dividing 120) and all frames to seconds (by dividing 25). 
+
+1. 9.92s to 17.08s
+1. 18.4s to 20.32s
+1. 20.48s to 22.4s 
+
+```{r}
+data <- data %>%
+  rowwise() %>%
+  mutate(secs = gazepointindex/120)
+
+data %>%
+  ggplot(aes(x = secs, y = y, color = maingroup, group = name)) + 
+  scale_y_reverse() + 
+  scale_x_continuous(limits = c(0, 37.5)) +
+  geom_line() + 
+  annotate("rect", xmin = 9.92, xmax = 17.08, ymin = 0, ymax = 900,
+  alpha = .2, fill = "red") +
+  annotate("rect", xmin = 18.4, xmax = 20.32, ymin = 0, ymax = 900,
+  alpha = .2, fill = "red") +
+  annotate("rect", xmin = 20.48, xmax = 22.4, ymin = 0, ymax = 900,
+  alpha = .2, fill = "red")
+```
+
+Maybe easier if we separate groups of signers. 
+
+```{r}
+data %>%
+  ggplot(aes(x = secs, y = y, color = maingroup, group = name)) + 
+  scale_y_reverse() + 
+  scale_x_continuous(limits = c(0, 37.5)) +
+  geom_line(alpha = 0.5) + 
+  annotate("rect", xmin = 9.92, xmax = 17.08, ymin = 0, ymax = 900,
+  alpha = .2, fill = "red") +
+  annotate("rect", xmin = 18.4, xmax = 20.32, ymin = 0, ymax = 900,
+  alpha = .2, fill = "red") +
+  annotate("rect", xmin = 20.48, xmax = 22.4, ymin = 0, ymax = 900,
+  alpha = .2, fill = "red") +
+  facet_grid(maingroup ~ .)
+```
+
+Individual signers. 
+
+```{r}
+data %>%
+  filter(maingroup == "DeafEarly") %>%
+  ggplot(aes(x = secs, y = y, group = name)) + 
+  scale_x_continuous(limits = c(0, 37.5)) +
+  scale_y_reverse() + 
+  geom_line(alpha = 1, color = "red") + 
+  annotate("rect", xmin = 9.92, xmax = 17.08, ymin = 0, ymax = 900,
+  alpha = .2, fill = "red") +
+  annotate("rect", xmin = 18.4, xmax = 20.32, ymin = 0, ymax = 900,
+  alpha = .2, fill = "red") +
+  annotate("rect", xmin = 20.48, xmax = 22.4, ymin = 0, ymax = 900,
+  alpha = .2, fill = "red") +
+  facet_grid(name ~ .) +
+  ggtitle("DeafEarly")
+
+data %>%
+  filter(maingroup == "DeafLate") %>%
+  ggplot(aes(x = secs, y = y, group = name)) + 
+  scale_y_reverse() + 
+  scale_x_continuous(limits = c(0, 37.5)) +
+  geom_line(alpha = 1, color = "dark green") + 
+  annotate("rect", xmin = 9.92, xmax = 17.08, ymin = 0, ymax = 900,
+  alpha = .2, fill = "red") +
+  annotate("rect", xmin = 18.4, xmax = 20.32, ymin = 0, ymax = 900,
+  alpha = .2, fill = "red") +
+  annotate("rect", xmin = 20.48, xmax = 22.4, ymin = 0, ymax = 900,
+  alpha = .2, fill = "red") +
+  facet_grid(name ~ .) +
+  ggtitle("DeafLate")
+
+data %>%
+  filter(maingroup == "HearingLate") %>%
+  ggplot(aes(x = secs, y = y, group = name)) + 
+  scale_y_reverse() + 
+  scale_x_continuous(limits = c(0, 37.5)) +
+  geom_line(alpha = 1, color = "blue") + 
+  annotate("rect", xmin = 9.92, xmax = 17.08, ymin = 0, ymax = 900,
+  alpha = .2, fill = "red") +
+  annotate("rect", xmin = 18.4, xmax = 20.32, ymin = 0, ymax = 900,
+  alpha = .2, fill = "red") +
+  annotate("rect", xmin = 20.48, xmax = 22.4, ymin = 0, ymax = 900,
+  alpha = .2, fill = "red") +
+  facet_grid(name ~ .) +
+  ggtitle("HearingLate")
+
+data %>%
+  filter(maingroup == "HearingNovice") %>%
+  ggplot(aes(x = secs, y = y, group = name)) + 
+  scale_y_reverse() + 
+  scale_x_continuous(limits = c(0, 37.5)) +
+  geom_line(alpha = 1, color = "purple") + 
+  annotate("rect", xmin = 9.92, xmax = 17.08, ymin = 0, ymax = 900,
+  alpha = .2, fill = "red") +
+  annotate("rect", xmin = 18.4, xmax = 20.32, ymin = 0, ymax = 900,
+  alpha = .2, fill = "red") +
+  annotate("rect", xmin = 20.48, xmax = 22.4, ymin = 0, ymax = 900,
+  alpha = .2, fill = "red") +
+  facet_grid(name ~ .) +
+  ggtitle("HearingNovice")
+```
