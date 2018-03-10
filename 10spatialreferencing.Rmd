@@ -17,7 +17,7 @@ Let's give this a shot!!
 # Three Bears Forward 
 First let's see who's in our dataset. This is Test 1 - 3 Bears - Forward. We're pulling cleaned-up names and assigned groups from our final dataset that we used in our AOI analysis. Then we are removing participants whose Three Bears Forward story wasn't included in our AOI analysis due to <25% looking time or other reasons. 
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 library(tidyverse)
 library(openxlsx)
 library(janitor)
@@ -185,7 +185,7 @@ Okay so with Early ASL obviously very steady gaze. NoviceASL has lot of downshif
 
 # Midas Forward
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 # Get Midas data
 data <- read_csv("../Adult Data/rawdata/midasfw.csv") %>%
   clean_names() %>%
