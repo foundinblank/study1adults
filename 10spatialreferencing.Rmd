@@ -12,6 +12,54 @@ output:
     toc_float: yes
 ---
 
+```{r}
+## Reads in AOI position text files from Toii
+## Will return tibble of columns sec, x, y, with rows for each timestamp/AOI position
+
+get_xy_timestamp <- function(z){
+
+x <- read_lines(z) %>%
+  as_tibble() %>%
+  rowid_to_column("ID")
+
+# pull out timestamp rows
+timestamps <- x %>%
+  filter(str_detect(value, "timestamp")) %>%
+  separate(value, into = c("throw","timestamp"), sep = " = ") %>%
+  separate(timestamp, into = c("one","two","sec"), sep = ":") %>%
+  select(sec) %>%
+  mutate(sec = as.numeric(sec))
+
+# Find AOI coordinate rows
+xys <- x %>%
+  mutate(find = str_detect(value, "X\tY"))
+
+# first vertex (2 rows after each "XY" line)
+xys_row <- which(xys$find) + 2
+
+xy1 <- x %>%
+  filter(ID %in% xys_row) %>%
+  separate(value, into = c("x1","y1"), sep = "\t") %>%
+  select(-ID)
+
+# opposite vertex (2 more rows down)
+xys_row <- xys_row + 2
+
+xy2 <- x %>%
+  filter(ID %in% xys_row) %>%
+  separate(value, into = c("x2","y2"), sep = "\t") %>%
+  select(-ID)
+
+# Now get average XY position per timestamp
+xys <- cbind(timestamps, xy1, xy2) %>%
+  mutate_all(as.numeric) %>%
+  rowwise() %>%
+  mutate(x = mean(x1,x2),
+         y = mean(y1, y2)) %>%
+  select(sec, x, y)
+}
+```
+
 Let's give this a shot!!
 
 # Three Bears Forward 
@@ -30,12 +78,14 @@ data <- read.xlsx("Test1_Cindy_bears_FW_Examine for Spatial Referencing.xlsx") %
          name = participantname,
          group = x_group_value)
 
-# Pull clean names and join to data
+# Pull clean names and join to data (and add Laura2 for Laura (missing stories))
 cleannames <- read_csv("partnames.csv") %>%
   distinct() %>%
-  rename(name = participant)
+  rename(name = participant) %>%
+  filter(name != "Laura2")
 
-data <- data %>% left_join(cleannames, by = "name") %>%
+data <- data %>% 
+  left_join(cleannames, by = "name") %>%
   select(-name) %>%
   rename(name = new_participant) %>%
   filter(!is.na(name))
@@ -69,7 +119,9 @@ Messy, I know, but already we can see some HearingNovice has big shifts downward
 
 ```{r}
 data %>%
-  ggplot(aes(x = gazepointindex, y = y, color = maingroup, group = name)) + geom_line() + scale_y_reverse()
+  ggplot(aes(x = gazepointindex, y = y, color = maingroup, group = name)) + geom_line() + 
+  scale_y_reverse() +
+  theme_bw()
 ```
 
 Next let's plot the moments where spatial referencing happens. Those are frames
@@ -102,7 +154,8 @@ data %>%
   annotate("rect", xmin = 10.6, xmax = 11.52, ymin = 0, ymax = 900,
   alpha = .2, fill = "red") +
   annotate("rect", xmin = 14.08, xmax = 15.2, ymin = 0, ymax = 900,
-  alpha = .2, fill = "red")
+  alpha = .2, fill = "red") +
+  theme_bw()
 ```
 
 Maybe easier if we separate groups of signers. 
@@ -118,70 +171,77 @@ data %>%
   alpha = .2, fill = "red") +
   annotate("rect", xmin = 14.08, xmax = 15.2, ymin = 0, ymax = 900,
   alpha = .2, fill = "red") +
-  facet_grid(maingroup ~ .)
+  facet_grid(maingroup ~ .) +
+  theme_bw() +
+  guides(color = FALSE)
+```
+
+Next, we're going to add AOI position information. We're going to pull in information on signers' right hand position (and then apply the same idea to other body parts). I successfully wrote a function called `get_xy_timestamp` to do this! Yay. I'm chuffed, as the British would say.
+
+Let's try this on Stephanie's data.
+
+```{r}
+rhand <- get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of Right Hand.txt")
+lhand <- get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of Left Hand.txt")
+mouth <- get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of mouth small.txt")
+
+steph <- filter(data, name == "Stephanie")
+
+steph %>%
+  ggplot(aes(x = secs, y = y)) + 
+  scale_y_reverse() + 
+  geom_line(alpha = 1, color = "purple") + 
+  annotate("rect", xmin = 7.92, xmax = 8.92, ymin = 0, ymax = 1200,
+  alpha = .2, fill = "red") +
+  annotate("rect", xmin = 10.6, xmax = 11.52, ymin = 0, ymax = 1200,
+  alpha = .2, fill = "red") +
+  annotate("rect", xmin = 14.08, xmax = 15.2, ymin = 0, ymax = 1200,
+  alpha = .2, fill = "red") +
+  geom_step(data = rhand, aes(x = sec, y = y), color = "red", linetype = "longdash", alpha = 0.5) + 
+  geom_step(data = lhand, aes(x = sec, y = y), color = "blue", linetype = "longdash", alpha = 0.5) + 
+  geom_step(data = mouth, aes(x = sec, y = y), color = "black", linetype = "longdash", alpha = 0.5) + 
+  annotate("text", label = "Right Hand", x = 3, y = 1000, color = "red", alpha = 0.5) +
+  annotate("text", label = "Left Hand", x = 3, y = 1100, color = "blue", alpha = 0.5) +
+  annotate("text", label = "Mouth", x = 3, y = 200, color = "black", alpha = 0.5) +
+  ggtitle("Stephanie") +
+  theme_bw() +
+  theme(panel.grid.minor.y = element_blank())
 ```
 
 Hmm hmm. HearingNovice do have a lot of down shifts but they're not CLEARLY lining up with spatial referencing...or so we think. Let's separate out individual signers. 
 
 ```{r}
-data %>%
-  filter(maingroup == "DeafEarly") %>%
-  ggplot(aes(x = secs, y = y, group = name)) + 
+make_signer_plots <- function(groupname, line_color) {
+  data %>%
+  filter(maingroup == groupname) %>%
+  ggplot(aes(x = secs, y = y)) + 
   scale_y_reverse() + 
-  geom_line(alpha = 1, color = "red") + 
+  geom_line(alpha = 1, color = line_color) + 
   annotate("rect", xmin = 7.92, xmax = 8.92, ymin = 0, ymax = 900,
   alpha = .2, fill = "red") +
   annotate("rect", xmin = 10.6, xmax = 11.52, ymin = 0, ymax = 900,
   alpha = .2, fill = "red") +
   annotate("rect", xmin = 14.08, xmax = 15.2, ymin = 0, ymax = 900,
   alpha = .2, fill = "red") +
+  geom_step(data = rhand, aes(x = sec, y = y), color = "red", linetype = "longdash", alpha = 0.5) + 
+  geom_step(data = lhand, aes(x = sec, y = y), color = "blue", linetype = "longdash", alpha = 0.5) + 
+  geom_step(data = mouth, aes(x = sec, y = y), color = "black", linetype = "longdash", alpha = 0.5) + 
+  annotate("text", label = "Right Hand", x = 3, y = 1000, color = "red", alpha = 0.5) +
+  annotate("text", label = "Left Hand", x = 3, y = 1100, color = "blue", alpha = 0.5) +
+  annotate("text", label = "Mouth", x = 3, y = 200, color = "black", alpha = 0.5) +
   facet_grid(name ~ .) +
-  ggtitle("DeafEarly")
+  ggtitle(groupname) +
+  theme_bw()
+}
 
-data %>%
-  filter(maingroup == "DeafLate") %>%
-  ggplot(aes(x = secs, y = y, group = name)) + 
-  scale_y_reverse() + 
-  geom_line(alpha = 1, color = "dark green") + 
-  annotate("rect", xmin = 7.92, xmax = 8.92, ymin = 0, ymax = 900,
-  alpha = .2, fill = "red") +
-  annotate("rect", xmin = 10.6, xmax = 11.52, ymin = 0, ymax = 900,
-  alpha = .2, fill = "red") +
-  annotate("rect", xmin = 14.08, xmax = 15.2, ymin = 0, ymax = 900,
-  alpha = .2, fill = "red") +
-  facet_grid(name ~ .) +
-  ggtitle("DeafLate")
-
-data %>%
-  filter(maingroup == "HearingLate") %>%
-  ggplot(aes(x = secs, y = y, group = name)) + 
-  scale_y_reverse() + 
-  geom_line(alpha = 1, color = "blue") + 
-  annotate("rect", xmin = 7.92, xmax = 8.92, ymin = 0, ymax = 900,
-  alpha = .2, fill = "red") +
-  annotate("rect", xmin = 10.6, xmax = 11.52, ymin = 0, ymax = 900,
-  alpha = .2, fill = "red") +
-  annotate("rect", xmin = 14.08, xmax = 15.2, ymin = 0, ymax = 900,
-  alpha = .2, fill = "red") +
-  facet_grid(name ~ .) +
-  ggtitle("HearingLate")
-
-data %>%
-  filter(maingroup == "HearingNovice") %>%
-  ggplot(aes(x = secs, y = y, group = name)) + 
-  scale_y_reverse() + 
-  geom_line(alpha = 1, color = "purple") + 
-  annotate("rect", xmin = 7.92, xmax = 8.92, ymin = 0, ymax = 900,
-  alpha = .2, fill = "red") +
-  annotate("rect", xmin = 10.6, xmax = 11.52, ymin = 0, ymax = 900,
-  alpha = .2, fill = "red") +
-  annotate("rect", xmin = 14.08, xmax = 15.2, ymin = 0, ymax = 900,
-  alpha = .2, fill = "red") +
-  facet_grid(name ~ .) +
-  ggtitle("HearingNovice")
+make_signer_plots("DeafEarly", "red")
+make_signer_plots("DeafLate", "dark green")
+make_signer_plots("HearingLate", "blue")
+make_signer_plots("HearingNovice", "purple")
 ```
 
 Okay so with Early ASL obviously very steady gaze. NoviceASL has lot of downshifts. Some align with spatial referencing, some do not. We need more of them (let's look at other stories w better data). 
+
 
 # Midas Forward
 
