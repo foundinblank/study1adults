@@ -27,41 +27,41 @@ library(lmerTest)
 library(png)
 library(grid)
 
-# Gather up the files
-files <- list.files(pattern = "\\.csv",path="rawdata")
-files <- str_c("rawdata/",files)
-rawdata <- do.call("rbind", lapply(files, read_csv))
-
-# Clean Up
-rawdataoriginal <- rawdata
-rawdata <- rawdataoriginal
-rawdata <- rawdata %>%
-  rename(participant = ParticipantName,
-         group = "[Group]Value",
-         language = "[Language]Value",
-         media = MediaName,
-         x = "GazePointX (MCSpx)",
-         y = "GazePointY (MCSpx)",
-         gazeindex = GazePointIndex) %>%
-  select(participant,group,language,media,x,y,gazeindex) %>%
-  add_column(story=NA,direction=NA,maingroup=NA) %>%
-  mutate(story = case_when(
-    str_detect(media,"bears") ~ "bears",
-    str_detect(media,"cinderella") ~ "cinderella",   
-    str_detect(media,"midas") ~ "midas",
-    str_detect(media,"redridinghood") ~ "redridinghood")) %>%
-  mutate(direction = case_when(
-    str_detect(media,"FW") ~ "forward",
-    str_detect(media,"ER") ~ "reversed")) %>%
-  mutate(media = str_c(story,direction, sep="_")) %>%
-  mutate(language = case_when(
-    str_detect(language,"EarlyASL") ~ "Early",
-    str_detect(language,"LateASL") ~ "Late",
-    str_detect(language,"NoviceASL_Trained") ~ "Trained",
-    str_detect(language,"NoviceASL") ~ "Novice")) %>%
-  mutate(maingroup = str_c(group,language, sep="")) %>%
-  filter(!is.na(maingroup))
-glimpse(rawdata)
+# # Gather up the files
+# files <- list.files(pattern = "\\.csv",path="../Adult Data/rawdata")
+# files <- str_c("rawdata/",files)
+# rawdata <- do.call("rbind", lapply(files, read_csv))
+# 
+# # Clean Up
+# rawdataoriginal <- rawdata
+# rawdata <- rawdataoriginal
+# rawdata <- rawdata %>%
+#   rename(participant = ParticipantName,
+#          group = "[Group]Value",
+#          language = "[Language]Value",
+#          media = MediaName,
+#          x = "GazePointX (MCSpx)",
+#          y = "GazePointY (MCSpx)",
+#          gazeindex = GazePointIndex) %>%
+#   select(participant,group,language,media,x,y,gazeindex) %>%
+#   add_column(story=NA,direction=NA,maingroup=NA) %>%
+#   mutate(story = case_when(
+#     str_detect(media,"bears") ~ "bears",
+#     str_detect(media,"cinderella") ~ "cinderella",   
+#     str_detect(media,"midas") ~ "midas",
+#     str_detect(media,"redridinghood") ~ "redridinghood")) %>%
+#   mutate(direction = case_when(
+#     str_detect(media,"FW") ~ "forward",
+#     str_detect(media,"ER") ~ "reversed")) %>%
+#   mutate(media = str_c(story,direction, sep="_")) %>%
+#   mutate(language = case_when(
+#     str_detect(language,"EarlyASL") ~ "Early",
+#     str_detect(language,"LateASL") ~ "Late",
+#     str_detect(language,"NoviceASL_Trained") ~ "Trained",
+#     str_detect(language,"NoviceASL") ~ "Novice")) %>%
+#   mutate(maingroup = str_c(group,language, sep="")) %>%
+#   filter(!is.na(maingroup))
+# glimpse(rawdata)
 ```
 
 Now that it's in the right format...it's easy to get what we need! :-D 
@@ -71,16 +71,18 @@ Now that it's in the right format...it's easy to get what we need! :-D
 First, let's trim each participant's data, getting rid of the first 30 samples (0.5 secs). Then we'll get the the mean x and y coordinate for each story for each participant.
 
 ```{r}
+
+#write_csv(rawdata,"adultviewingspaceraw.csv")
+rawdata <- read_csv("../Adult Data/rawdata/adultviewingspaceraw.csv")
+
 rawdata <- rawdata %>%
   arrange(participant,media,gazeindex) %>%
   group_by(participant,media) %>%
   slice(30:n())
 
-write_csv(rawdata,"adultviewingspaceraw.csv")
-
 means <- rawdata %>%
   group_by(participant,media) %>%
-  dplyr::summarize(x = mean(x,na.rm=TRUE),
+  summarise(x = mean(x,na.rm=TRUE),
             y = mean(y,na.rm=TRUE))
 head(means,10)
 ```
@@ -207,12 +209,12 @@ I want to learn how to make rectangle plots so here we go. Using each participan
 ```{r}
 # In this order, we'll get a grand median by taking a participant's median across their 4 stories, than the median for forward and reverse across all participants. 
 medians <- iqr %>%
-  group_by(participant,direction) %>%
+  group_by(maingroup, participant,direction) %>%
   dplyr::summarize(xIQR = median(xIQR,na.rm=TRUE),
                    yIQR = median(yIQR,na.rm=TRUE),
                    xmed = median(xmed,na.rm=TRUE),
                    ymed = median(ymed,na.rm=TRUE)) %>%
-  group_by(direction) %>% 
+  group_by(maingroup, direction) %>% 
   dplyr::summarize(xIQR = median(xIQR,na.rm=TRUE),
                    yIQR = median(yIQR,na.rm=TRUE),
                    x = median(xmed,na.rm=TRUE),
@@ -231,8 +233,10 @@ g <- rasterGrob(img, interpolate=TRUE, width=unit(1,"npc"), height=unit(1,"npc")
 ggplot(medians, aes(fill=direction,color=direction)) +
   annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
   geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
-  theme_minimal() + xlim(0,1440) + ylim(-1080,0)
-
+  theme_linedraw() + 
+  scale_x_continuous(limits = c(0,1440), expand = c(0, 0)) +
+  scale_y_continuous(limits = c(-1080,0), expand = c(0, 0)) +
+  facet_wrap("maingroup")
 
 # ggplot(iqr.global, aes(fill=direction,color=direction)) +
 #   annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
@@ -245,7 +249,6 @@ ggplot(medians, aes(fill=direction,color=direction)) +
 #   annotate(geom="text", x = 535, y = -1080+910, label = "height line") + 
 #   annotate(geom="rect", xmin = 535, xmax = 535+365, ymin = -525-551, ymax = -1080+525, fill="maroon", color="black", alpha=0.5) + 
 #   annotate(geom="text", x = 700, y = -900, label = "torso")
-
 ```
 
 Yayyy! It worked! A bit hard to see! Let's zoom in. 
@@ -351,3 +354,126 @@ ggplot(iqrsd.individuals, aes(fill=direction,color=direction)) +
 
 ```
 
+# XY Space Data - Multiple Plots
+
+First let's prep the data. 
+```{r}
+multiples <- rawdata %>%
+  filter(!is.na(x)) %>%
+  filter(!is.na(y)) %>%
+  rename(lang = maingroup,
+         name = participant) %>%
+  group_by(name, lang, direction, story) %>%
+  summarise(xIQR = IQR(x,na.rm=TRUE),
+            yIQR = IQR(y,na.rm=TRUE),
+            xmed = median(x, na.rm=TRUE),
+            ymed = median(y, na.rm=TRUE),
+            area = xIQR*yIQR,
+            x_90 = quantile(x, .95, na.rm=TRUE) - quantile(x, .05, na.rm=TRUE),
+            y_90 = quantile(y, .95, na.rm=TRUE) - quantile(y, .05, na.rm=TRUE),
+            area_90 = (x_90) * (y_90),
+            x_mean = mean(x, na.rm = TRUE),
+            y_mean = mean(y, na.rm = TRUE),
+            x_sd = sd(x, na.rm = TRUE),
+            y_sd = sd(y, na.rm = TRUE),
+            x_1sd = (x_mean+x_sd) - (x_mean-x_sd),
+            y_1sd = (y_mean+y_sd) - (y_mean-y_sd),
+            area_1sd = x_1sd * y_1sd,
+            x_2sd = (x_mean+(x_sd*2)) - (x_mean-(x_sd*2)),
+            y_2sd = (y_mean+(y_sd*2)) - (y_mean-(y_sd*2)),
+            area_2sd = x_2sd * y_2sd) %>%
+  group_by(name, lang, direction) %>%
+  summarise_if(is.double, funs(mean), na.rm = T) %>%
+  group_by(lang, direction) %>%
+  summarise_if(is.double, funs(mean), na.rm = T) %>%
+  filter(lang == "DeafEarly" || lang == "HearingNovice")
+
+img <- png::readPNG("cindy.png")
+g <- grid::rasterGrob(img, interpolate=TRUE, width=unit(1,"npc"), height=unit(1,"npc")) 
+
+```
+
+## IQR (Middle 50%)
+Let's see. 
+```{r}
+curr_data <- multiples %>% 
+  ungroup() %>%
+  select(lang, direction, xmed, ymed, xIQR, yIQR) %>%
+  group_by(lang, direction) %>%
+  summarise(xmin = xmed-(xIQR/2),
+         xmax = xmed+(xIQR/2),
+         ymin = -1*(ymed-(yIQR/2)),
+         ymax = -1*(ymed+(yIQR/2)))
+
+ggplot(curr_data, aes(fill=direction,color=direction)) +
+  annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
+  geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
+  theme_linedraw() +
+  scale_x_continuous(limits = c(0,1440), expand = c(0, 0)) +
+  scale_y_continuous(limits = c(-1080,0), expand = c(0, 0)) +
+  facet_wrap("lang")
+```
+
+## Middle 90%
+So I calculated the average median across, and the middle 90% of the data. 
+```{r}
+curr_data <- multiples %>% 
+  ungroup() %>%
+  select(lang, direction, xmed, ymed, x_90, y_90) %>%
+  group_by(lang, direction) %>%
+  summarise(xmin = xmed-(x_90/2),
+         xmax = xmed+(x_90/2),
+         ymin = -1*(ymed-(y_90/2)),
+         ymax = -1*(ymed+(y_90/2)))
+
+ggplot(curr_data, aes(fill=direction,color=direction)) +
+  annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
+  geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
+  theme_linedraw() +
+  scale_x_continuous(limits = c(0,1440), expand = c(0, 0)) +
+  scale_y_continuous(limits = c(-1080,0), expand = c(0, 0)) +
+  facet_wrap("lang")
+```
+
+
+## ±1 SD (Middle 68%)
+So this is using the mean of the means, plus or minus one SD.  This is equivalent to middle 68%. 
+```{r}
+curr_data <- multiples %>% 
+  ungroup() %>%
+  select(lang, direction, x_mean, y_mean, x_1sd, y_1sd) %>%
+  group_by(lang, direction) %>%
+  summarise(xmin = x_mean-(x_1sd/2),
+         xmax = x_mean+(x_1sd/2),
+         ymin = -1*(y_mean-(y_1sd/2)),
+         ymax = -1*(y_mean+(y_1sd/2)))
+
+ggplot(curr_data, aes(fill=direction,color=direction)) +
+  annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
+  geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
+  theme_linedraw() +
+  scale_x_continuous(limits = c(0,1440), expand = c(0, 0)) +
+  scale_y_continuous(limits = c(-1080,0), expand = c(0, 0)) +
+  facet_wrap("lang")
+```
+
+## ±2 SD (Middle 96%)
+And this is using the mean of the means, plus or minus two SD.  This is equivalent to middle 96%. 
+```{r}
+curr_data <- multiples %>% 
+  ungroup() %>%
+  select(lang, direction, x_mean, y_mean, x_2sd, y_2sd) %>%
+  group_by(lang, direction) %>%
+  summarise(xmin = x_mean-(x_2sd/2),
+         xmax = x_mean+(x_2sd/2),
+         ymin = -1*(y_mean-(y_2sd/2)),
+         ymax = -1*(y_mean+(y_2sd/2)))
+
+ggplot(curr_data, aes(fill=direction,color=direction)) +
+  annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
+  geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),alpha=.1) + 
+  theme_linedraw() +
+  scale_x_continuous(limits = c(0,1440), expand = c(0, 0)) +
+  scale_y_continuous(limits = c(-1080,0), expand = c(0, 0)) +
+  facet_wrap("lang")
+```

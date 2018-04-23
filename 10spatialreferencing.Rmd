@@ -178,12 +178,15 @@ data %>%
 
 Next, we're going to add AOI position information. We're going to pull in information on signers' right hand position (and then apply the same idea to other body parts). I successfully wrote a function called `get_xy_timestamp` to do this! Yay. I'm chuffed, as the British would say.
 
-Let's try this on Stephanie's data.
+Let's try this on Stephanie's data. Let's see if we can find a correlation between any of those and the eye gaze y-position. 
 
 ```{r}
-rhand <- get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of Right Hand.txt")
-lhand <- get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of Left Hand.txt")
-mouth <- get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of mouth small.txt")
+rhand <- get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of Right Hand.txt") %>%
+  add_row(sec = 21.5, x = 640.16, y = 1055.97)
+lhand <- get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of Left Hand.txt") %>%
+  add_row(sec = 21.5, x = 703.74, y = 1058.39)
+mouth <- get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of mouth small.txt") %>%
+  add_row(sec = 21.5, x = 656.37, y = 373.99)
 
 steph <- filter(data, name == "Stephanie")
 
@@ -208,7 +211,44 @@ steph %>%
   theme(panel.grid.minor.y = element_blank())
 ```
 
-Hmm hmm. HearingNovice do have a lot of down shifts but they're not CLEARLY lining up with spatial referencing...or so we think. Let's separate out individual signers. 
+Now let's work on correlations. First, our AOI vectors are not the same size as our eye gaze vectors, and the x/y position is irregularly spaced across time (irregularly spaced key frames). 
+```{r}
+time_index <- steph$secs
+closest <- function(x){
+  which.min(abs(time_index-x))
+}
+
+index_loc <- map_int(rhand$sec, closest)
+
+rhand <- cbind(rhand, time_index[index_loc]) %>%
+  select(-sec) %>%
+  rename(sec = "time_index[index_loc]") %>%
+  select(sec, x, y)
+
+rhand_full <- select(steph, secs) %>%
+  rename(sec = secs) %>%
+  left_join(rhand) %>%
+  fill(x) %>%
+  fill(y) %>%
+  slice(1:(nrow(.)-1))
+
+rhand_full <- rhand_full %>%
+  filter(sec < rhand$sec[172]) %>%
+  filter(sec >= rhand$sec[2])
+
+steph <- steph %>%
+  filter(secs < rhand$sec[172]) %>%
+  filter(secs >= rhand$sec[2])
+
+a <- rhand_full$y
+b <- steph$y
+
+cor(a,b, use = "complete.obs")
+that <- ccf(a,b, lag.max = 400, type = "correlation", na.action = na.pass, plot = T)
+```
+
+
+Let's separate out individual signers. 
 
 ```{r}
 make_signer_plots <- function(groupname, line_color) {
