@@ -73,10 +73,10 @@ library(janitor)
 # Get Three Bears data
 data <- read.xlsx("Test1_Cindy_bears_FW_Examine for Spatial Referencing.xlsx") %>%
   clean_names() %>%
-  rename(y = gazepointy_mcspx,
-         language = x_language_value,
-         name = participantname,
-         group = x_group_value)
+  rename(y = gaze_point_y_mc_spx,
+         language = language_value,
+         name = participant_name,
+         group = group_value)
 
 # Pull clean names and join to data (and add Laura2 for Laura (missing stories))
 cleannames <- read_csv("partnames.csv") %>%
@@ -119,7 +119,7 @@ Messy, I know, but already we can see some HearingNovice has big shifts downward
 
 ```{r}
 data %>%
-  ggplot(aes(x = gazepointindex, y = y, color = maingroup, group = name)) + geom_line() + 
+  ggplot(aes(x = gaze_point_index, y = y, color = maingroup, group = name)) + geom_line() + 
   scale_y_reverse() +
   theme_bw()
 ```
@@ -143,7 +143,7 @@ And plot those!
 ```{r}
 data <- data %>%
   rowwise() %>%
-  mutate(secs = gazepointindex/120)
+  mutate(secs = gaze_point_index/120)
 
 data %>%
   ggplot(aes(x = secs, y = y, color = maingroup, group = name)) + 
@@ -192,21 +192,81 @@ steph <- filter(data, name == "Stephanie")
 
 steph %>%
   ggplot(aes(x = secs, y = y)) + 
-  scale_y_reverse() + 
+  scale_y_reverse(limits = c(1200,0), expand = c(0,0)) + 
   geom_line(alpha = 1, color = "purple") + 
-  annotate("rect", xmin = 7.92, xmax = 8.92, ymin = 0, ymax = 1200,
-  alpha = .2, fill = "red") +
-  annotate("rect", xmin = 10.6, xmax = 11.52, ymin = 0, ymax = 1200,
-  alpha = .2, fill = "red") +
-  annotate("rect", xmin = 14.08, xmax = 15.2, ymin = 0, ymax = 1200,
-  alpha = .2, fill = "red") +
+  # annotate("rect", xmin = 7.92, xmax = 8.92, ymin = 0, ymax = 1200,
+  # alpha = .2, fill = "red") +
+  # annotate("rect", xmin = 10.6, xmax = 11.52, ymin = 0, ymax = 1200,
+  # alpha = .2, fill = "red") +
+  # annotate("rect", xmin = 14.08, xmax = 15.2, ymin = 0, ymax = 1200,
+  # alpha = .2, fill = "red") +
+  # geom_step(data = rhand, aes(x = sec, y = y), color = "red", linetype = "longdash", alpha = 0.5) + 
+  # geom_step(data = lhand, aes(x = sec, y = y), color = "blue", linetype = "longdash", alpha = 0.5) + 
+  # geom_step(data = mouth, aes(x = sec, y = y), color = "black", linetype = "longdash", alpha = 0.5) + 
+  # annotate("text", label = "Right Hand", x = 3, y = 1000, color = "red", alpha = 0.5) +
+  # annotate("text", label = "Left Hand", x = 3, y = 1100, color = "blue", alpha = 0.5) +
+  # annotate("text", label = "Mouth", x = 3, y = 200, color = "black", alpha = 0.5) +
+  ggtitle("Valerie") +
+  theme_bw() +
+  theme(panel.grid.minor.y = element_blank())
+
+steph %>%
+  ggplot(aes(x = secs, y = y)) + 
+  scale_y_reverse(limits = c(1200,0), expand = c(0,0)) + 
+  geom_line(alpha = 1, color = "purple") + 
+  # annotate("rect", xmin = 7.92, xmax = 8.92, ymin = 0, ymax = 1200,
+  # alpha = .2, fill = "red") +
+  # annotate("rect", xmin = 10.6, xmax = 11.52, ymin = 0, ymax = 1200,
+  # alpha = .2, fill = "red") +
+  # annotate("rect", xmin = 14.08, xmax = 15.2, ymin = 0, ymax = 1200,
+  # alpha = .2, fill = "red") +
+#  geom_step(data = rhand, aes(x = sec, y = y), color = "red", linetype = "longdash", alpha = 0.5) + 
+#  geom_step(data = lhand, aes(x = sec, y = y), color = "blue", linetype = "longdash", alpha = 0.5) + 
+  geom_step(data = mouth, aes(x = sec, y = y), color = "black", linetype = "longdash", alpha = 0.5) + 
+# annotate("text", label = "Right Hand", x = 3, y = 1000, color = "red", alpha = 0.5) +
+#  annotate("text", label = "Left Hand", x = 3, y = 1100, color = "blue", alpha = 0.5) +
+  annotate("text", label = "Mouth", x = 3, y = 250, color = "black", alpha = 0.5) +
+  ggtitle("Valerie") +
+  theme_bw() +
+  theme(panel.grid.minor.y = element_blank())
+
+steph %>%
+  ggplot(aes(x = secs, y = y)) + 
+  scale_y_reverse(limits = c(1200,0), expand = c(0,0)) + 
+  geom_line(alpha = 1, color = "purple") + 
+  # annotate("rect", xmin = 7.92, xmax = 8.92, ymin = 0, ymax = 1200,
+  # alpha = .2, fill = "red") +
+  # annotate("rect", xmin = 10.6, xmax = 11.52, ymin = 0, ymax = 1200,
+  # alpha = .2, fill = "red") +
+  # annotate("rect", xmin = 14.08, xmax = 15.2, ymin = 0, ymax = 1200,
+  # alpha = .2, fill = "red") +
+  geom_step(data = rhand, aes(x = sec, y = y), color = "red", linetype = "longdash", alpha = 0.5) + 
+#  geom_step(data = lhand, aes(x = sec, y = y), color = "blue", linetype = "longdash", alpha = 0.5) + 
+  geom_step(data = mouth, aes(x = sec, y = y), color = "black", linetype = "longdash", alpha = 0.5) + 
+  annotate("text", label = "Right Hand", x = 3, y = 1000, color = "red", alpha = 0.5) +
+#  annotate("text", label = "Left Hand", x = 3, y = 1100, color = "blue", alpha = 0.5) +
+  annotate("text", label = "Mouth", x = 3, y = 250, color = "black", alpha = 0.5) +
+  ggtitle("Valerie") +
+  theme_bw() +
+  theme(panel.grid.minor.y = element_blank())
+
+steph %>%
+  ggplot(aes(x = secs, y = y)) + 
+  scale_y_reverse(limits = c(1200,0), expand = c(0,0)) + 
+  geom_line(alpha = 1, color = "purple") + 
+  # annotate("rect", xmin = 7.92, xmax = 8.92, ymin = 0, ymax = 1200,
+  # alpha = .2, fill = "red") +
+  # annotate("rect", xmin = 10.6, xmax = 11.52, ymin = 0, ymax = 1200,
+  # alpha = .2, fill = "red") +
+  # annotate("rect", xmin = 14.08, xmax = 15.2, ymin = 0, ymax = 1200,
+  # alpha = .2, fill = "red") +
   geom_step(data = rhand, aes(x = sec, y = y), color = "red", linetype = "longdash", alpha = 0.5) + 
   geom_step(data = lhand, aes(x = sec, y = y), color = "blue", linetype = "longdash", alpha = 0.5) + 
   geom_step(data = mouth, aes(x = sec, y = y), color = "black", linetype = "longdash", alpha = 0.5) + 
   annotate("text", label = "Right Hand", x = 3, y = 1000, color = "red", alpha = 0.5) +
   annotate("text", label = "Left Hand", x = 3, y = 1100, color = "blue", alpha = 0.5) +
-  annotate("text", label = "Mouth", x = 3, y = 200, color = "black", alpha = 0.5) +
-  ggtitle("Stephanie") +
+  annotate("text", label = "Mouth", x = 3, y = 250, color = "black", alpha = 0.5) +
+  ggtitle("Valerie") +
   theme_bw() +
   theme(panel.grid.minor.y = element_blank())
 ```

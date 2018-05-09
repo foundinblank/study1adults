@@ -433,6 +433,20 @@ ggplot(curr_data, aes(fill=direction,color=direction)) +
   scale_x_continuous(limits = c(0,1440), expand = c(0, 0)) +
   scale_y_continuous(limits = c(-1080,0), expand = c(0, 0)) +
   facet_wrap("lang")
+
+# ggplot(filter(curr_data, lang == "DeafEarly"), aes(fill=direction,color=direction)) +
+#   annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
+#   geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),size = 1, alpha=.1) + 
+#   theme_linedraw() +
+#   scale_x_continuous(limits = c(0,1440), expand = c(0, 0)) +
+#   scale_y_continuous(limits = c(-1080,0), expand = c(0, 0))
+# 
+# ggplot(filter(curr_data, lang == "HearingNovice"), aes(fill=direction,color=direction)) +
+#   annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
+#   geom_rect(aes(xmin=xmin,ymin=ymin,xmax=xmax,ymax=ymax),size = 1, alpha=.1) + 
+#   theme_linedraw() +
+#   scale_x_continuous(limits = c(0,1440), expand = c(0, 0)) +
+#   scale_y_continuous(limits = c(-1080,0), expand = c(0, 0))
 ```
 
 

@@ -13,6 +13,7 @@ Here we're going to divide this into different "data notebooks" listed below:
 1. ["New Results"](06newresults.nb.html)
 1. [Four Groups](07fourgroups.nb.html)
 1. [Gist](08gist.nb.html)
-1. [Final Data??](09finaldata.nb.html)
+1. [Final Data](09finaldata.nb.html)
+1. [Spatial Referencing](10spatialreferencing.nb.html)
 
 Any questions? [Email Adam](mailto:amstone@ucsd.edu)
