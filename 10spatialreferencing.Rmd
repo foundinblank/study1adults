@@ -181,6 +181,8 @@ Next, we're going to add AOI position information. We're going to pull in inform
 Let's try this on Stephanie's data. Let's see if we can find a correlation between any of those and the eye gaze y-position. 
 
 ```{r}
+
+# We add one more row to the xy_timestamp data to align it with the end of the eye gaze data.
 rhand <- get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of Right Hand.txt") %>%
   add_row(sec = 21.5, x = 640.16, y = 1055.97)
 lhand <- get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of Left Hand.txt") %>%
@@ -188,6 +190,7 @@ lhand <- get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of Left Hand.txt
 mouth <- get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of mouth small.txt") %>%
   add_row(sec = 21.5, x = 656.37, y = 373.99)
 
+# Get Stephanie's data
 steph <- filter(data, name == "Stephanie")
 
 steph %>%
@@ -206,7 +209,7 @@ steph %>%
   # annotate("text", label = "Right Hand", x = 3, y = 1000, color = "red", alpha = 0.5) +
   # annotate("text", label = "Left Hand", x = 3, y = 1100, color = "blue", alpha = 0.5) +
   # annotate("text", label = "Mouth", x = 3, y = 200, color = "black", alpha = 0.5) +
-  ggtitle("Valerie") +
+  ggtitle("Stephanie") +
   theme_bw() +
   theme(panel.grid.minor.y = element_blank())
 
@@ -226,7 +229,7 @@ steph %>%
 # annotate("text", label = "Right Hand", x = 3, y = 1000, color = "red", alpha = 0.5) +
 #  annotate("text", label = "Left Hand", x = 3, y = 1100, color = "blue", alpha = 0.5) +
   annotate("text", label = "Mouth", x = 3, y = 250, color = "black", alpha = 0.5) +
-  ggtitle("Valerie") +
+  ggtitle("Stephanie") +
   theme_bw() +
   theme(panel.grid.minor.y = element_blank())
 
@@ -246,7 +249,7 @@ steph %>%
   annotate("text", label = "Right Hand", x = 3, y = 1000, color = "red", alpha = 0.5) +
 #  annotate("text", label = "Left Hand", x = 3, y = 1100, color = "blue", alpha = 0.5) +
   annotate("text", label = "Mouth", x = 3, y = 250, color = "black", alpha = 0.5) +
-  ggtitle("Valerie") +
+  ggtitle("Stephanie") +
   theme_bw() +
   theme(panel.grid.minor.y = element_blank())
 
@@ -266,13 +269,14 @@ steph %>%
   annotate("text", label = "Right Hand", x = 3, y = 1000, color = "red", alpha = 0.5) +
   annotate("text", label = "Left Hand", x = 3, y = 1100, color = "blue", alpha = 0.5) +
   annotate("text", label = "Mouth", x = 3, y = 250, color = "black", alpha = 0.5) +
-  ggtitle("Valerie") +
+  ggtitle("Stephanie") +
   theme_bw() +
   theme(panel.grid.minor.y = element_blank())
 ```
 
 Now let's work on correlations. First, our AOI vectors are not the same size as our eye gaze vectors, and the x/y position is irregularly spaced across time (irregularly spaced key frames). 
 ```{r}
+# The following code will "expand" the rhand data vectors to fit the length of Stephanie's data vectors.
 time_index <- steph$secs
 closest <- function(x){
   which.min(abs(time_index-x))
@@ -301,10 +305,12 @@ steph <- steph %>%
   filter(secs >= rhand$sec[2])
 
 a <- rhand_full$y
+a <- a[1:length(a)-1] # Shorten it by one element
 b <- steph$y
 
-cor(a,b, use = "complete.obs")
-that <- ccf(a,b, lag.max = 400, type = "correlation", na.action = na.pass, plot = T)
+# Then run correlations
+cor(a,b, use = "complete.obs") # basic correlation
+that <- ccf(a,b, lag.max = 400, type = "correlation", na.action = na.pass, plot = T) # auto-correlation
 ```
 
 
@@ -349,10 +355,10 @@ Okay so with Early ASL obviously very steady gaze. NoviceASL has lot of downshif
 # Get Midas data
 data <- read_csv("../Adult Data/rawdata/midasfw.csv") %>%
   clean_names() %>%
-  rename(y = gazepointy_mcspx,
-         language = x_language_value,
-         name = participantname,
-         group = x_group_value)
+  rename(y = gaze_point_y_mc_spx,
+         language = language_value,
+         name = participant_name,
+         group = group_value)
 
 # Pull clean names and join to data
 cleannames <- read_csv("partnames.csv") %>%
@@ -392,11 +398,11 @@ Now let's graph!!
 Hm. One person seems wrong. 
 ```{r}
 data %>%
-  ggplot(aes(x = gazepointindex, y = y, color = maingroup, group = name)) + geom_line() + scale_y_reverse()
+  ggplot(aes(x = gaze_point_index, y = y, color = maingroup, group = name)) + geom_line() + scale_y_reverse()
 ```
 Okay it's Jesse's data that seems off. We'll remove him for now and come back to it, figure out why. 
 ```{r}
-data %>% filter(gazepointindex > 30000) %>% select(name) %>% distinct() %>% head()
+data %>% filter(gaze_point_index > 30000) %>% select(name) %>% distinct() %>% head()
 ```
 
 ```{r}
@@ -404,7 +410,7 @@ data <- data %>%
   filter(name != "Jesse")
 
 data %>%
-  ggplot(aes(x = gazepointindex, y = y, color = maingroup, group = name)) + geom_line() + 
+  ggplot(aes(x = gaze_point_index, y = y, color = maingroup, group = name)) + geom_line() + 
   scale_y_reverse() +
   scale_x_continuous(limits = c(0,4500))
 ```
@@ -424,7 +430,7 @@ Like before, we'll convert gazepointindex to seconds (by dividing 120) and all f
 ```{r}
 data <- data %>%
   rowwise() %>%
-  mutate(secs = gazepointindex/120)
+  mutate(secs = gaze_point_index/120)
 
 data %>%
   ggplot(aes(x = secs, y = y, color = maingroup, group = name)) + 
