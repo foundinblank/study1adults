@@ -120,9 +120,168 @@ Messy, I know, but already we can see some HearingNovice has big shifts downward
 ```{r}
 data %>%
   ggplot(aes(x = gaze_point_index, y = y, color = maingroup, group = name)) + geom_line() + 
-  scale_y_reverse() +
+  scale_y_reverse(limits = c(1200,0)) +
   theme_bw()
 ```
+
+# Group Averages
+
+Next, let's make group averages. 
+
+```{r}
+averaged_y <- data %>%
+  group_by(maingroup, gaze_point_index) %>%
+  summarise(y_mean = mean(y, na.rm = T),
+            y_sd = sd(y, na.rm = T),
+            y_count = n(),
+            y_se = y_sd/sqrt(y_count))
+
+averaged_y %>%
+  ggplot() + 
+  geom_line(aes(x = gaze_point_index, y = y_mean, color = maingroup)) +
+  geom_ribbon(aes(x = gaze_point_index, 
+                  ymin = y_mean-y_se, 
+                  ymax = y_mean+y_se,
+                  fill = maingroup), alpha = 0.5) +
+  scale_y_reverse(limits = c(1200,0)) +
+  theme_bw() +
+  facet_wrap("maingroup")
+
+averaged_y %>%
+  ggplot() + 
+  geom_line(aes(x = gaze_point_index, y = y_mean, color = maingroup)) +
+  geom_ribbon(aes(x = gaze_point_index, 
+                  ymin = y_mean-y_se, 
+                  ymax = y_mean+y_se,
+                  fill = maingroup), alpha = 0.5) +
+  scale_y_reverse(limits = c(1200,0)) +
+  theme_bw()
+```
+
+# Group Averages With Smoothing
+
+So I'll back up and smooth each person's data using a moving average window of span = 5. Taken from our adult manuscript which had this: 
+
+> The data were then smoothed with a standard moving average noise reduction algorithm (window size = 5 samples) which acts as a low-pass filter that reduces the influence of microsaccades, blinks, and large data gaps (based on Yarbus, 1967). 
+
+The below chart shows Adam's data, blue is unsmoothed and red is smoothed. 
+
+
+```{r}
+data <- data %>%
+  group_by(maingroup, recording_name) %>%
+  mutate(y_ma = RcppRoll::roll_mean(y, n = 5, fill = 0))
+
+data %>%
+  filter(recording_name == "Adam_Good") %>%
+  ggplot() +
+  geom_line(aes(x = gaze_point_index, y = y), color = "blue", alpha = 0.25, size = 0.5) +
+  geom_line(aes(x = gaze_point_index, y = y_ma), color = "red", size = 0.2) +
+  scale_y_reverse(limits = c(475, 325)) +
+  theme_bw()
+```
+
+So that's nice. Let's go do group averages again. 
+
+```{r}
+averaged_y <- data %>%
+  group_by(maingroup, gaze_point_index) %>%
+  summarise(y_mean = mean(y_ma, na.rm = T),
+            y_sd = sd(y_ma, na.rm = T),
+            y_count = n(),
+            y_se = y_sd/sqrt(y_count))
+
+averaged_y %>%
+  ggplot() + 
+  geom_line(aes(x = gaze_point_index, y = y_mean, color = maingroup)) +
+  geom_ribbon(aes(x = gaze_point_index, 
+                  ymin = y_mean-y_se, 
+                  ymax = y_mean+y_se,
+                  fill = maingroup), alpha = 0.5) +
+  scale_y_reverse(limits = c(1200,0)) +
+  theme_bw() +
+  facet_wrap("maingroup")
+
+averaged_y %>%
+  ggplot() + 
+  geom_line(aes(x = gaze_point_index, y = y_mean, color = maingroup)) +
+  geom_ribbon(aes(x = gaze_point_index, 
+                  ymin = y_mean-y_se, 
+                  ymax = y_mean+y_se,
+                  fill = maingroup), alpha = 0.5) +
+  scale_y_reverse(limits = c(1200,0)) +
+  theme_bw()
+
+averaged_y %>%
+  filter(maingroup == "DeafEarly" | maingroup == "HearingNovice") %>%
+  ggplot() + 
+  geom_line(aes(x = gaze_point_index, y = y_mean, color = maingroup)) +
+  geom_ribbon(aes(x = gaze_point_index, 
+                  ymin = y_mean-y_se, 
+                  ymax = y_mean+y_se,
+                  fill = maingroup), alpha = 0.5) +
+  scale_y_reverse(limits = c(700,300)) +
+  theme_bw()
+```
+
+# Group Averages With More Smoothing
+
+Maybe we should smooth even more. Sample size = 10! 
+
+```{r}
+data <- data %>%
+  group_by(maingroup, recording_name) %>%
+  mutate(y_ma2 = RcppRoll::roll_mean(y, n = 10, fill = 0))
+
+# data %>%
+#   filter(recording_name == "Adam_Good") %>%
+#   ggplot() +
+#   geom_line(aes(x = gaze_point_index, y = y), color = "blue", alpha = 0.25, size = 0.5) +
+#   geom_line(aes(x = gaze_point_index, y = y_ma2), color = "red", size = 0.2) +
+#   scale_y_reverse(limits = c(475, 325)) +
+#   theme_bw()
+
+averaged_y <- data %>%
+  group_by(maingroup, gaze_point_index) %>%
+  summarise(y_mean = mean(y_ma2, na.rm = T),
+            y_sd = sd(y_ma2, na.rm = T),
+            y_count = n(),
+            y_se = y_sd/sqrt(y_count))
+
+averaged_y %>%
+  ggplot() + 
+  geom_line(aes(x = gaze_point_index, y = y_mean, color = maingroup)) +
+  geom_ribbon(aes(x = gaze_point_index, 
+                  ymin = y_mean-y_se, 
+                  ymax = y_mean+y_se,
+                  fill = maingroup), alpha = 0.5) +
+  scale_y_reverse(limits = c(1200,0)) +
+  theme_bw() +
+  facet_wrap("maingroup")
+
+averaged_y %>%
+  ggplot() + 
+  geom_line(aes(x = gaze_point_index, y = y_mean, color = maingroup)) +
+  geom_ribbon(aes(x = gaze_point_index, 
+                  ymin = y_mean-y_se, 
+                  ymax = y_mean+y_se,
+                  fill = maingroup), alpha = 0.5) +
+  scale_y_reverse(limits = c(1200,0)) +
+  theme_bw()
+
+averaged_y %>%
+  filter(maingroup == "DeafEarly" | maingroup == "HearingNovice") %>%
+  ggplot() + 
+  geom_line(aes(x = gaze_point_index, y = y_mean, color = maingroup)) +
+  geom_ribbon(aes(x = gaze_point_index, 
+                  ymin = y_mean-y_se, 
+                  ymax = y_mean+y_se,
+                  fill = maingroup), alpha = 0.5) +
+  scale_y_reverse(limits = c(700,300)) +
+  theme_bw()
+```
+
+# Everything Else That Was Already Here
 
 Next let's plot the moments where spatial referencing happens. Those are frames
 
