@@ -248,16 +248,19 @@ averaged_y <- data %>%
             y_count = n(),
             y_se = y_sd/sqrt(y_count))
 
+library(hrbrthemes)
 averaged_y %>%
   ggplot() + 
-  geom_line(aes(x = gaze_point_index, y = y_mean, color = maingroup)) +
+  geom_line(aes(x = gaze_point_index, y = y_mean, color = maingroup), size = 0.8) +
   geom_ribbon(aes(x = gaze_point_index, 
                   ymin = y_mean-y_se, 
                   ymax = y_mean+y_se,
                   fill = maingroup), alpha = 0.5) +
   scale_y_reverse(limits = c(1200,0)) +
-  theme_bw() +
-  facet_wrap("maingroup")
+  facet_wrap("maingroup") +
+  labs(x = "time (ms)", y = "pixels", title = "Figure 1. Vertical Eye Gaze Position Across One ASL Narrative") +
+  guides(color = F, fill = F) +
+  theme_ipsum_rc()
 
 averaged_y %>%
   ggplot() + 
@@ -272,13 +275,15 @@ averaged_y %>%
 averaged_y %>%
   filter(maingroup == "DeafEarly" | maingroup == "HearingNovice") %>%
   ggplot() + 
-  geom_line(aes(x = gaze_point_index, y = y_mean, color = maingroup)) +
+  geom_line(aes(x = gaze_point_index, y = y_mean, color = maingroup), size = 0.8) +
   geom_ribbon(aes(x = gaze_point_index, 
                   ymin = y_mean-y_se, 
                   ymax = y_mean+y_se,
-                  fill = maingroup), alpha = 0.5) +
+                  fill = maingroup), alpha = 0.1) +
   scale_y_reverse(limits = c(700,300)) +
-  theme_bw()
+  labs(x = "time (ms)", y = "pixels", title = "Figure 2. Deaf Early Signers vs. Hearing Novice Signers", color = "", fill = "") +
+  theme_ipsum_rc()
+
 ```
 
 # Everything Else That Was Already Here
