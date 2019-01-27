@@ -124,7 +124,7 @@ Let's graph everything, first of all.
 data %>%
   ggplot(aes(x = gaze_point_index, y = y, color = maingroup, group = name)) + 
   geom_line() + 
-  scale_y_reverse(limits = c(1200,0)) +
+  scale_y_reverse(limits = c(1080,0)) +
   theme_bw() +
   facet_wrap("name")
 ```
@@ -133,16 +133,28 @@ data %>%
 
 We're adding smoothing with two different moving average window sizes - 5 and 10. (y_ma5, y_ma10). Good for removing noise. We'll try using either and see where we go. 
 
+Then we'll eliminate 30 samples from the start and end (that's 0.25 seconds on both sides). 
+
 > The data were then smoothed with a standard moving average noise reduction algorithm (window size = 5 samples) which acts as a low-pass filter that reduces the influence of microsaccades, blinks, and large data gaps (based on Yarbus, 1967). 
 
 ```{r}
+
+min_gaze_point_index <- data %>% 
+  group_by(maingroup) %>%
+  summarise(max = max(gaze_point_index)) %>%
+  ungroup() %>%
+  summarise(min(max)) %>%
+  pull()
+
+bookend <- 30
+
 data <- data %>%
   as_tsibble(key = id(name), index = gaze_point_index) %>%
   group_by(maingroup, name) %>%
   mutate(y_ma5 = slide_dbl(y, ~ mean(., na.rm = T), .size = 5)) %>%
-  mutate(y_ma10 = slide_dbl(y, ~ mean(., na.rm = T), .size = 10)) %>%
   as_tibble() %>%
-  ungroup()
+  ungroup() %>%
+  filter(gaze_point_index > bookend & gaze_point_index < min_gaze_point_index - bookend)
 
 # data %>%
 #   ggplot(aes(x = gaze_point_index, y = y_ma5, color = maingroup, group = name)) +
@@ -165,7 +177,7 @@ data %>%
   ggplot(aes(x = gaze_point_index, y = y_position, color = metric)) +
   geom_line() +
   facet_wrap("metric", nrow = 3) +
-  scale_y_reverse(limits = c(1200,0)) +
+  scale_y_reverse(limits = c(1080,0)) +
   ggtitle("Adam")
 
 
@@ -176,34 +188,38 @@ data %>%
   ggplot(aes(x = gaze_point_index, y = y_position, color = metric)) +
   geom_line() +
   facet_wrap("metric", nrow = 3) +
-  scale_y_reverse(limits = c(1200,0)) +
+  scale_y_reverse(limits = c(1080,0)) +
   ggtitle("JJ")
 ```
 
-Also curious about missing data points. 
+Also curious about missing data points. This counts how many missing data points we have for each participant, at the three different measurements. Based on that, I probably should take out Lynnette, so much missing data there. We'll worry about that later. 
 
 ```{r}
 data %>%
-  group_by(name) %>%
-  summarise_at(vars(y, y_ma5, y_ma10), funs(sum(is.na(.))))
+  group_by(name, maingroup) %>%
+  summarise_at(vars(y, y_ma5, y_ma10), funs(sum(is.na(.)))) %>%
+  arrange(desc(y))
+
+data %>%
+  group_by(maingroup) %>%
+  summarise_at(vars(y, y_ma5, y_ma10), funs(sum(is.na(.)))) %>%
+  arrange(desc(y))
 ```
 
-## Playing with animation 
-
-Let's use group averages of y_ma10. 
+Playing with animation 
 
 ```{r}
-average_ma10 <- data %>%
+averaged_groups <- data %>%
   group_by(maingroup, gaze_point_index) %>%
   summarise(x = mean(x, na.rm = T),
-            y = mean(y_ma10, na.rm = T)) %>%
+            y = mean(y_ma5, na.rm = T)) %>%
   filter(!is.na(y))
   
 
-p <- ggplot(average_ma10, aes(x = x, y = y, color = maingroup, group = maingroup)) +
+p <- ggplot(averaged_groups, aes(x = x, y = y, color = maingroup, group = maingroup)) +
   geom_point() +
-  scale_x_continuous(limits = c(0,1600)) +
-  scale_y_reverse(limits = c(1200,0))
+  scale_x_continuous(limits = c(0,1440)) +
+  scale_y_reverse(limits = c(1080,0))
 
 p
 
@@ -215,4 +231,163 @@ anim <- p +
 #animate(anim, duration = 25.8)
 ```
 
+## DeafEarly as Baseline
+
+So I took group averages of each group's y-coordinates, and then established Deaf Early as the "baseline" by which all other groups are measured. I calculated the difference in y position between Deaf Early vs. Deaf Late, Deaf Early vs. Hearing Late, Deaf Early vs. Hearing Novice. 
+
+The charts below show the y-coordinate differences. 
+```{r}
+# First, calculate the baseline
+deafearly_baseline <- data %>%
+  group_by(maingroup, gaze_point_index) %>%
+  summarise(de_y = mean(y_ma5, na.rm = T)) %>%
+  filter(maingroup == "DeafEarly") %>%
+  ungroup() %>%
+  select(-maingroup)
+
+# Let's try...grouped averages first 
+grouped_baselines <- data %>%
+  filter(maingroup != "DeafEarly") %>%
+  group_by(maingroup, gaze_point_index) %>%
+  summarise(y = mean(y_ma5, na.rm = T)) %>%
+  left_join(deafearly_baseline, by = "gaze_point_index") %>%
+  mutate(diff_y = y - de_y)
+
+de_mean <- mean(deafearly_baseline$de_y, na.rm = T) * -1
+
+grouped_baselines %>%
+  ggplot(aes(x = gaze_point_index, y = diff_y, color = maingroup)) +
+  geom_line() +
+  scale_y_reverse(limits = c(1080 + de_mean, de_mean))
+
+grouped_baselines %>%
+  ggplot(aes(x = maingroup, y = diff_y, fill = maingroup)) +
+  geom_violin() +
+  geom_boxplot(width = 0.2, fill = "white") +
+  scale_y_reverse(limits = c(1080 + de_mean, de_mean)) +
+  geom_hline(yintercept = 0)
+
+```
+
+I'm doing to do this again, but use the Deaf Early baselinea against the *individual* gaze data, not the grouped gaze data. That also lets us do statistics.
+
+```{r}
+individual_baselines <- data %>%
+  filter(maingroup != "DeafEarly") %>%
+  left_join(deafearly_baseline, by = "gaze_point_index") %>%
+  group_by(name, maingroup, gaze_point_index) %>%
+  mutate(diff_y = y_ma5 - de_y)
+
+individual_baselines %>%
+  ggplot(aes(x = gaze_point_index, y = diff_y, color = maingroup, group = name)) + 
+  geom_line() + 
+  scale_y_reverse(limits = c(1080 + de_mean, de_mean)) +
+  theme_bw() +
+  facet_wrap("name")
+
+individual_baselines %>%
+  ggplot(aes(x = maingroup, y = diff_y, fill = maingroup)) +
+  geom_violin() +
+  geom_boxplot(width = 0.2, fill = "white") +
+  scale_y_reverse(limits = c(1080 + de_mean, de_mean)) +
+  geom_hline(yintercept = 0)
+```
+
+I tried a regular mixed model here. The good news is that the intercept - the average of Deaf Early - is nearly exactly what I calculated via averaging it myself (which was `r round(de_mean)`, off by just half a pixel!). It does not find a signfiicant difference for any group, which I guess is disappointing, then again the y-positions are not independent of one another so. Anyway! 
+
+```{r}
+library(lme4)
+library(broom)
+
+m <- lmer(y_ma5 ~ maingroup + (1|name), data = data)
+tidy(m) %>%
+  mutate_if(is.numeric, vars(round(.,2)))
+```
+
+## All 4 Stories
+
+I'm going to try looking at all 4 FW stories together. Let's just do that. 
+
+```{r}
+library(glue)
+# A lot of data loading here. 
+files <- list.files("../Adult Data/rawdata/rawdataXLSX/", "fw") %>%
+  paste0("../Adult Data/rawdata/rawdataXLSX/", .)
+
+# Let's find out who was excluded for which stories
+fw_excluded <- read_csv("finaldataset.csv") %>%
+  filter(direction == "forward") %>%
+  select(participant, maingroup, story, direction, eye_exclude) %>%
+  rename(name = participant) %>%
+  select(name, story, eye_exclude) %>%
+  filter(eye_exclude)
+
+# Alicia and Josh have double recordings of RedRidingHood, need to exclude
+two_more_excluded <- tribble(
+  ~name, ~recording_name,
+  "Josh", "Rec 24",
+  "Alicia", "Alicia_DontUseFirst_Good"
+)
+
+# Same as above...load, clean up names and groups, exclude
+fw_data_raw <- map_dfr(files, read.xlsx) %>%
+  clean_names() %>%
+  rename(x = gaze_point_x_mc_spx,
+         y = gaze_point_y_mc_spx,
+         language = language_value,
+         name = participant_name,
+         group = group_value,
+         story = media_name) %>%
+  left_join(cleannames, by = "name") %>%
+  select(-name) %>%
+  rename(name = new_participant) %>%
+  filter(!is.na(name)) %>%
+  left_join(cleangroups, by = "name") %>%
+  select(-group) %>%
+  mutate(story = case_when(
+    story == "Cindy_bears_FW_xvid.avi" ~ "Goldilocks",
+    story == "midas_FW_xvid.avi" ~ "KingMidas",
+    story == "Cindy_cinderella_FW_xvid.avi" ~ "Cinderella",
+    story == "Cindy_redridinghood_FW_xvid.avi" ~ "RedRidingHood"
+  )) %>%
+  anti_join(fw_excluded, by = c("name", "story")) %>%
+  anti_join(two_more_excluded, by = c("name", "recording_name")) %>%
+  select(name, maingroup, story, gaze_point_index, x, y) %>%
+  mutate_at(vars(name, maingroup, story), as.factor) %>%
+  mutate_at(vars(gaze_point_index, x, y), as.integer)
+
+skim(fw_data_raw)
+```
+
+Next, do moving average filtering and trim ends. 
+
+```{r}
+trimming <- fw_data %>% 
+  group_by(story, maingroup) %>%
+  summarise(max = max(gaze_point_index)) %>%
+  ungroup() %>%
+  group_by(story) %>%
+  summarise(max = min(max) - 30) %>%
+  add_column(min = 30)
+
+
+# MA filter
+fw_data <- fw_data_raw %>%
+  as_tsibble(key = id(name, story), index = gaze_point_index) %>%
+  group_by(name, story) %>%
+  mutate(y_ma5 = slide_dbl(y, ~ mean(., na.rm = T), .size = 5)) %>%
+  as_tibble() %>%
+  ungroup() %>%
+  left_join(trimming, by = c("story")) %>%
+  filter(gaze_point_index > min & gaze_point_index < max) %>%
+  select(-c(min, max))
+
+
+fw_data %>%
+  ggplot(aes(x = maingroup, y = y_ma5, fill = maingroup)) +
+  geom_boxplot() +
+  facet_wrap("story") +
+  scale_y_reverse()
+
+```
 
