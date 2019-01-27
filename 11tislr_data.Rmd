@@ -131,7 +131,7 @@ data %>%
 
 ## Smoothing
 
-We're adding smoothing with two different moving average window sizes - 5 and 10. (y_ma5, y_ma10). Good for removing noise. We'll try using either and see where we go. 
+We're adding smoothing with a moving average window size - 5. (y_ma5). Good for removing noise. We'll try using either and see where we go. 
 
 Then we'll eliminate 30 samples from the start and end (that's 0.25 seconds on both sides). 
 
@@ -173,7 +173,7 @@ data <- data %>%
 data %>%
   filter(name == "Adam") %>%
   ungroup() %>%
-  gather(key = "metric", value = "y_position", c(y, y_ma5, y_ma10)) %>%
+  gather(key = "metric", value = "y_position", c(y, y_ma5)) %>%
   ggplot(aes(x = gaze_point_index, y = y_position, color = metric)) +
   geom_line() +
   facet_wrap("metric", nrow = 3) +
@@ -184,7 +184,7 @@ data %>%
 data %>%
   filter(name == "JJ") %>%
   ungroup() %>%
-  gather(key = "metric", value = "y_position", c(y, y_ma5, y_ma10)) %>%
+  gather(key = "metric", value = "y_position", c(y, y_ma5)) %>%
   ggplot(aes(x = gaze_point_index, y = y_position, color = metric)) +
   geom_line() +
   facet_wrap("metric", nrow = 3) +
@@ -197,12 +197,12 @@ Also curious about missing data points. This counts how many missing data points
 ```{r}
 data %>%
   group_by(name, maingroup) %>%
-  summarise_at(vars(y, y_ma5, y_ma10), funs(sum(is.na(.)))) %>%
+  summarise_at(vars(y, y_ma5), funs(sum(is.na(.)))) %>%
   arrange(desc(y))
 
 data %>%
   group_by(maingroup) %>%
-  summarise_at(vars(y, y_ma5, y_ma10), funs(sum(is.na(.)))) %>%
+  summarise_at(vars(y, y_ma5), funs(sum(is.na(.)))) %>%
   arrange(desc(y))
 ```
 
@@ -359,7 +359,7 @@ fw_data_raw <- map_dfr(files, read.xlsx) %>%
 skim(fw_data_raw)
 ```
 
-Next, do moving average filtering and trim ends. 
+Next, do moving average filtering and trim ends. How many missing data per participant now?
 
 ```{r}
 trimming <- fw_data %>% 
@@ -382,12 +382,48 @@ fw_data <- fw_data_raw %>%
   filter(gaze_point_index > min & gaze_point_index < max) %>%
   select(-c(min, max))
 
+fw_data %>%
+  group_by(name, maingroup, story) %>%
+  summarise_at(vars(y_ma5), funs(sum(is.na(.)))) %>%
+  arrange(desc(y_ma5))
 
 fw_data %>%
-  ggplot(aes(x = maingroup, y = y_ma5, fill = maingroup)) +
-  geom_boxplot() +
-  facet_wrap("story") +
-  scale_y_reverse()
+  group_by(maingroup, story) %>%
+  summarise_at(vars(y_ma5), funs(sum(is.na(.)))) %>%
+  arrange(desc(y_ma5)) %>%
+  spread(story, y_ma5)
+  
+# fw_data %>%
+#   ggplot(aes(x = maingroup, y = y_ma5, fill = maingroup)) +
+#   geom_boxplot() +
+#   facet_wrap("story") +
+#   scale_y_reverse()
+```
+
+Now we're going to do baselines of Deaf Early for all 4 stories. 
+
+```{r}
+de_baselines <- fw_data %>%
+  filter(maingroup == "DeafEarly") %>%
+  group_by(story, gaze_point_index) %>%
+  summarise(de_y = mean(y_ma5, na.rm = T))
+
+individual_baselines <- fw_data %>%
+  filter(maingroup != "DeafEarly") %>%
+  left_join(de_baselines, by = c("story", "gaze_point_index")) %>%
+  group_by(name, maingroup, story, gaze_point_index) %>%
+  mutate(diff_y = y_ma5 - de_y)
+
+individual_baselines %>%
+  ggplot(aes(x = maingroup, y = diff_y, fill = maingroup)) +
+  geom_violin() +
+  geom_boxplot(width = 0.2, fill = "white") +
+  scale_y_reverse(limits = c(1080 + de_mean, de_mean)) +
+  geom_hline(yintercept = 0)
+
+m <- lmer(y_ma5 ~ maingroup + (1|name), data = fw_data)
+tidy(m) %>%
+  mutate_if(is.numeric, vars(round(.,2)))
 
 ```
 
