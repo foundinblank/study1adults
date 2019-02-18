@@ -568,6 +568,11 @@ mauro %>%
 
 # Let's try umm. heartbeat area plots
 
+This is what I wanted instead! It’s just the heartbeat chart but this time it’s an area chart instead of a line chart. Easier to see downward shifts I think
+
+and there’s a shift down around 750 and 1300, that’s 6.25s and 10.83s respectively
+
+
 ```{r}
 easygroup %>%
   filter(maingroup == "HearingNovice") %>%
@@ -580,8 +585,5 @@ easygroup %>%
   geom_vline(xintercept = 1250)
 
 
-# This is what I wanted instead! It’s just the heartbeat chart but this time it’s an area chart instead of a line chart. Easier to see downward shifts I think
-
-# and there’s a shift down around 750 and 1300, that’s 6.25s and 10.83s respectively
 ```
 
