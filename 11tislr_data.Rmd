@@ -295,7 +295,7 @@ individual_baselines %>%
 
 I tried a regular mixed model here. The good news is that the intercept - the average of Deaf Early - is nearly exactly what I calculated via averaging it myself (which was `r round(de_mean)`, off by just half a pixel!). It does not find a signfiicant difference for any group, which I guess is disappointing, then again the y-positions are not independent of one another so. Anyway! 
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 library(lme4)
 library(broom)
 
@@ -308,7 +308,7 @@ tidy(m) %>%
 
 I'm going to try looking at all 4 FW stories together. Let's just do that. 
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 library(glue)
 # A lot of data loading here. 
 files <- list.files("../Adult Data/rawdata/rawdataXLSX/", "fw") %>%
@@ -362,7 +362,7 @@ skim(fw_data_raw)
 Next, do moving average filtering and trim ends. How many missing data per participant now?
 
 ```{r}
-trimming <- fw_data %>% 
+trimming <- fw_data_raw %>% 
   group_by(story, maingroup) %>%
   summarise(max = max(gaze_point_index)) %>%
   ungroup() %>%
@@ -375,7 +375,8 @@ trimming <- fw_data %>%
 fw_data <- fw_data_raw %>%
   as_tsibble(key = id(name, story), index = gaze_point_index) %>%
   group_by(name, story) %>%
-  mutate(y_ma5 = slide_dbl(y, ~ mean(., na.rm = T), .size = 5)) %>%
+  mutate(y_ma5 = slide_dbl(y, ~ mean(., na.rm = T), .size = 5),
+         y_ma30 = slide_dbl(y, ~ mean(., na.rm = T), .size = 30)) %>%
   as_tibble() %>%
   ungroup() %>%
   left_join(trimming, by = c("story")) %>%
@@ -402,20 +403,22 @@ fw_data %>%
 
 Now we're going to do baselines of Deaf Early for all 4 stories. 
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 de_baselines <- fw_data %>%
   filter(maingroup == "DeafEarly") %>%
   group_by(story, gaze_point_index) %>%
-  summarise(de_y = mean(y_ma5, na.rm = T))
+  summarise(de_y_ma5 = mean(y_ma5, na.rm = T),
+            de_y_ma30 = mean(y_ma30, na.rm = T))
 
 individual_baselines <- fw_data %>%
   filter(maingroup != "DeafEarly") %>%
   left_join(de_baselines, by = c("story", "gaze_point_index")) %>%
   group_by(name, maingroup, story, gaze_point_index) %>%
-  mutate(diff_y = y_ma5 - de_y)
+  mutate(diff_y_ma5 = y_ma5 - de_y_ma5,
+         diff_y_ma30 = y_ma30 - de_y_ma30)
 
 individual_baselines %>%
-  ggplot(aes(x = maingroup, y = diff_y, fill = maingroup)) +
+  ggplot(aes(x = maingroup, y = diff_y_ma5, fill = maingroup)) +
   geom_violin() +
   geom_boxplot(width = 0.2, fill = "white") +
   scale_y_reverse(limits = c(1080 + de_mean, de_mean)) +
@@ -425,5 +428,160 @@ m <- lmer(y_ma5 ~ maingroup + (1|name), data = fw_data)
 tidy(m) %>%
   mutate_if(is.numeric, vars(round(.,2)))
 
+```
+
+# Ridgeplots
+
+Try ridgeplots. First I'll use the baselined data but that means we have to cut off all data below or above zero. 
+
+```{r message=FALSE, warning=FALSE}
+library(ggridges)
+goldilocks_ridge <- fw_data %>%
+  ungroup()
+
+row_nums <- goldilocks_ridge %>%
+  select(maingroup, story, name) %>%
+  distinct() %>%
+  group_by(maingroup, story) %>%
+  arrange(maingroup, story, name) %>%
+  ungroup() %>%
+  mutate(rownum = row_number())
+
+goldilocks_ridge <- goldilocks_ridge %>%
+  left_join(row_nums, by = c("maingroup", "name", "story")) %>%
+  mutate(name = fct_reorder(name, rownum))
+
+ggplot(goldilocks_ridge) +
+  aes(x = y, y = name, fill = maingroup) +
+  geom_density_ridges() +
+  facet_wrap("story", scales = "free")
+
+goldilocks_ridge %>%
+  filter(name != "Joe") %>%
+  ggplot() +
+  aes(x = y, y = maingroup, fill = maingroup) +
+  geom_density_ridges() +
+  facet_wrap("story")
+```
+
+# Aligning peaks and then finding local maxima
+
+So we have good ridgeplots! We can then look at local maxima (small peaks) to see what was going on at that time of the video. But grouped ridgeplots mask individual differences so maybe we should align the peaks of a group first and then look again at the grouped ridgeplot? 
+
+Let's try this first with an easy group - Deaf Early & Red Riding Hood
+
+```{r}
+easygroup <- fw_data %>%
+  ungroup() %>%
+  filter(story == "RedRidingHood")
+
+easygroup %>%
+  ggplot() +
+  aes(x = y, y = name, fill = maingroup) +
+  geom_density_ridges()
+  
+
+ggplot(easygroup) +
+  aes(x = y, fill = name) +
+  geom_histogram() +
+  facet_wrap("name")
+```
+
+How to align one particiant's data based on the density peak.
+
+```{r}
+# https://ianmadd.github.io/pages/PeakDensityDistribution.html
+michael <- easygroup %>%
+  filter(name == "Michael") %>%
+  drop_na() %>%
+  mutate(y = y_ma30)
+
+ggplot(michael) +
+  geom_density(aes(x = y))
+
+d <- density(michael$y)
+which.max(d$y)
+maxval <- d$x[which.max(d$y)]
+
+michael <- michael %>%
+  mutate(y2 = y + (400 - maxval))
+
+ggplot(michael) +
+  aes(x = y2) +
+  geom_density()
+```
+
+I'm testing aligning all peaks onto the 400 px line. 
+
+```{r}
+testing <- easygroup %>%
+  mutate(name = as.character(name)) %>%
+  nest(-name) %>%
+  mutate(density = map(data, ~ density(.$y, na.rm = T))) %>%
+  mutate(max_y = map_int(density, ~ which.max(.$y))) %>%
+  mutate(max_val = map2_dbl(density, max_y, ~ .x$x[[.y]])) %>%
+  select(-density) %>%
+  unnest() %>%
+  mutate(y2 = y_ma30 + (400 - max_val))
+
+ggplot(testing) +
+  aes(x = y2, y = name, fill = maingroup) +
+  geom_density_ridges()
+```
+
+So I won't align peaks. Let's just try to find local maxima. Let's use Mauro.
+
+```{r}
+mauro <- easygroup %>%
+  filter(name == "Mauro")
+
+to_hist <- density(mauro$y_ma30)$y
+
+hist(to_hist)
+
+ggplot(mauro, aes(x=y_ma30, y=1, fill=0.5 - abs(0.5-..ecdf..))) +
+  stat_density_ridges(geom = "density_ridges_gradient", calc_ecdf = TRUE) +
+  scale_fill_viridis(name = "Tail probability", direction = -1)
+
+```
+
+```{r}
+# https://gist.github.com/ramhiser/5316385
+find_peaks <- function(x, ...) {
+  x <- as.vector(x)
+  dens <- density(x, ..., na.rm = T)
+
+  second_deriv <- diff(sign(diff(dens$y)))
+  dens$x[which(second_deriv == -2) + 1]
+}
+
+vlines <- find_peaks(mauro$y_ma30)
+
+ggplot(mauro, aes(x = y_ma30, y = 1)) +
+  geom_density_ridges() +
+  geom_vline(xintercept = vlines, alpha = 0.5)
+
+last_peak = vlines[length(vlines)]
+mauro %>%
+  filter(y_ma30 <= last_peak + 10 & y_ma30 >= last_peak-10)
+```
+
+# Let's try umm. heartbeat area plots
+
+```{r}
+easygroup %>%
+  filter(maingroup == "HearingNovice") %>%
+  ggplot() +
+  aes(x = gaze_point_index, y = y_ma30, fill = name, group = name) +
+  geom_area() +
+  scale_y_reverse() +
+  facet_grid(name ~ .) +
+  geom_vline(xintercept = 750) +
+  geom_vline(xintercept = 1250)
+
+
+# This is what I wanted instead! It’s just the heartbeat chart but this time it’s an area chart instead of a line chart. Easier to see downward shifts I think
+
+# and there’s a shift down around 750 and 1300, that’s 6.25s and 10.83s respectively
 ```
 
