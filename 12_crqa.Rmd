@@ -1,0 +1,262 @@
+---
+title: "CRQA Analysis"
+author: "Adam Stone, PhD"
+date: '`r format(Sys.Date(), "%m-%d-%Y")`'
+output:
+  html_notebook:
+    code_folding: hide
+    highlight: tango
+    theme: cosmo
+    toc: yes
+    toc_depth: 2
+    toc_float: yes
+---
+
+```{r}
+get_xy_timestamp <- function(z){
+
+x <- read_lines(z) %>%
+  as_tibble() %>%
+  rowid_to_column("ID")
+
+# pull out timestamp rows
+timestamps <- x %>%
+  filter(str_detect(value, "timestamp")) %>%
+  separate(value, into = c("throw","timestamp"), sep = " = ") %>%
+  separate(timestamp, into = c("one","two","sec"), sep = ":") %>%
+  select(sec) %>%
+  mutate(sec = as.numeric(sec))
+
+# Find AOI coordinate rows
+xys <- x %>%
+  mutate(find = str_detect(value, "X\tY"))
+
+# first vertex (2 rows after each "XY" line)
+xys_row <- which(xys$find) + 2
+
+xy1 <- x %>%
+  filter(ID %in% xys_row) %>%
+  separate(value, into = c("x1","y1"), sep = "\t") %>%
+  select(-ID)
+
+# opposite vertex (2 more rows down)
+xys_row <- xys_row + 2
+
+xy2 <- x %>%
+  filter(ID %in% xys_row) %>%
+  separate(value, into = c("x2","y2"), sep = "\t") %>%
+  select(-ID)
+
+# Now get average XY position per timestamp
+xys <- cbind(timestamps, xy1, xy2) %>%
+  mutate_all(as.numeric) %>%
+  rowwise() %>%
+  mutate(x = mean(x1,x2),
+         y = mean(y1, y2)) %>%
+  select(sec, x, y)
+}
+```
+
+# Three Bears Data
+
+
+Setting up the dataset:
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(openxlsx)
+library(janitor)
+library(skimr)
+library(gganimate)
+library(tsibble)
+
+# Get Three Bears data
+rawdata <- read.xlsx("Test1_Cindy_bears_FW_Examine for Spatial Referencing.xlsx") %>%
+  clean_names() %>%
+  rename(x = gaze_point_x_mc_spx,
+         y = gaze_point_y_mc_spx,
+         language = language_value,
+         name = participant_name,
+         group = group_value)
+
+# Pull clean names (and handle Laura2 for Laura (missing stories))
+cleannames <- read_csv("partnames.csv") %>%
+  distinct() %>%
+  rename(name = participant) %>%
+  filter(name != "Laura2")
+
+# Pull final group assignments
+cleangroups <- read_csv("finaldataset.csv") %>%
+  select(participant, maingroup) %>%
+  rename(name = participant) %>%
+  distinct()
+
+# Join both to rawdata
+data <- rawdata %>%
+  left_join(cleannames, by = "name") %>%
+  select(-name) %>%
+  rename(name = new_participant) %>%
+  filter(!is.na(name)) %>%
+  left_join(cleangroups, by = "name") %>%
+  select(-group)
+
+# Let's find out who was NOT included in Three Bears
+excluded <- read_csv("finaldataset.csv") %>%
+  select(participant, maingroup, story, direction, eye_exclude) %>%
+  filter(story == "Goldilocks" & direction == "forward") %>%
+  rename(name = participant) %>%
+  select(name, eye_exclude)
+
+data <- data %>% left_join(excluded, by = "name") %>%
+  filter(!eye_exclude) %>%
+  filter(!is.na(eye_exclude)) %>%
+  select(-c(eye_exclude, recording_name)) %>%
+  mutate_at(vars(language, maingroup, name), as.factor)
+
+data %>% distinct(name, maingroup) %>% count(maingroup)
+
+skim(data)
+```
+
+Let's graph everything, first of all. 
+
+```{r warning=FALSE}
+data %>%
+  ggplot(aes(x = gaze_point_index, y = y, color = maingroup, group = name)) + 
+  geom_line() + 
+  scale_y_reverse(limits = c(1080,0)) +
+  theme_bw() +
+  facet_wrap("name")
+```
+
+# Smoothing
+
+We're adding smoothing with a moving average window size - 5. (y_ma5). Good for removing noise.
+
+Then we'll eliminate 30 samples from the start and end (that's 0.25 seconds on both sides). 
+
+> The data were then smoothed with a standard moving average noise reduction algorithm (window size = 5 samples) which acts as a low-pass filter that reduces the influence of microsaccades, blinks, and large data gaps (based on Yarbus, 1967). 
+
+```{r}
+
+min_gaze_point_index <- data %>% 
+  group_by(maingroup) %>%
+  summarise(max = max(gaze_point_index)) %>%
+  ungroup() %>%
+  summarise(min(max)) %>%
+  pull()
+
+bookend <- 30
+
+data_ma <- data %>%
+  as_tsibble(key = id(name), index = gaze_point_index) %>%
+  group_by(maingroup, name) %>%
+  mutate(y_ma5 = slide_dbl(y, ~ mean(., na.rm = T), .size = 5)) %>%
+  mutate(y_ma5 = na_if(y_ma5, 'NaN')) %>%
+  as_tibble() %>%
+  ungroup() %>%
+  filter(gaze_point_index > bookend & gaze_point_index < min_gaze_point_index - bookend)
+
+# data_ma %>%
+#   ggplot(aes(x = gaze_point_index, y = y_ma5, color = maingroup, group = name)) +
+#   geom_line() + 
+#   scale_y_reverse(limits = c(1200,0)) +
+#   theme_bw() +
+#   facet_wrap("name")
+# 
+# data_ma %>%
+#   ggplot(aes(x = gaze_point_index, y = y_ma10, color = maingroup, group = name)) +
+#   geom_line() + 
+#   scale_y_reverse(limits = c(1200,0)) +
+#   theme_bw() +
+#   facet_wrap("name")
+
+data_ma %>%
+  filter(name == "Erin") %>%
+  ungroup() %>%
+  gather(key = "metric", value = "y_position", c(y, y_ma5)) %>%
+  ggplot(aes(x = gaze_point_index, y = y_position, color = metric)) +
+  geom_line() +
+  facet_wrap("metric", nrow = 3) +
+  scale_y_reverse(limits = c(1080,0)) +
+  ggtitle("Erin")
+
+
+data_ma %>%
+  filter(name == "Monica") %>%
+  ungroup() %>%
+  gather(key = "metric", value = "y_position", c(y, y_ma5)) %>%
+  ggplot(aes(x = gaze_point_index, y = y_position, color = metric)) +
+  geom_line() +
+  facet_wrap("metric", nrow = 3) +
+  scale_y_reverse(limits = c(1080,0)) +
+  ggtitle("Monica")
+```
+
+Also curious about missing data points. This counts how many missing data points we have for each participant, at the three different measurements. Based on that, I probably should take out Lynnette, so much missing data there. We'll worry about that later. 
+
+```{r}
+data_ma %>%
+  group_by(name, maingroup) %>%
+  summarise_at(vars(y, y_ma5), list(~sum(is.na(.)))) %>%
+  ungroup() %>%
+  arrange(desc(y))
+
+data_ma %>%
+  group_by(maingroup) %>%
+  summarise_at(vars(y, y_ma5), list(~sum(is.na(.)))) %>%
+  ungroup() %>%
+  arrange(desc(y))
+```
+
+# CRQA: Comparing Erin & Monica
+
+Both Erin and Monica have no missing data. Let's go with them (their graphs are above). 
+
+```{r message=FALSE, warning=FALSE}
+library(crqa)
+
+erin <- filter(data_ma, name == "Erin") %>%
+  pull(y)
+erin_ma5 <- filter(data_ma, name == "Erin") %>%
+  pull(y_ma5)
+monica <- filter(data_ma, name == "Monica") %>%
+  pull(y)
+monica_ma5 <- filter(data_ma, name == "Monica") %>%
+  pull(y_ma5)
+
+results <- crqa(erin, monica, delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
+
+dcrp <- drpdfromts(erin_ma5, monica_ma5, ws = 60, datatype = 'continuous', radius = 0.05)
+plot(-60:60, dcrp$profile, type = 'l', xlab = "Lag", ylab = "%Rec")
+```
+
+# CRQA: Comparing Monica & Right Hand
+
+```{r}
+rhand <- get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of Right Hand.txt") %>%
+  mutate(sec = floor(sec*120)) %>%
+  mutate(sec = sec + 1) %>%
+  add_row(sec = length(monica)) %>%
+  fill(x, y)
+
+rhand_expanded <- seq(1, max(rhand$sec)) %>%
+  enframe(name = NULL, value = 'sec') %>%
+  left_join(rhand, by = 'sec') %>%
+  fill(x, y)
+
+rhand_y <- rhand_expanded %>% pull(y)
+
+results <- crqa(monica_ma5, rhand_y, delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
+results$RR
+
+results_shuffled <- crqa(sample(monica_ma5), sample(rhand_y), delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
+results_shuffled$RR
+
+dcrp <- drpdfromts(monica_ma5, rhand_y, ws = 60, datatype = 'continuous', radius = 0.5)
+plot(-60:60, dcrp$profile, type = 'l', xlab = "Lag", ylab = "%Rec")
+```
+
+# Next time
+
+Try picking a hearing novice and do crqa with rhand_y then compare the RR thingy ... hmmm 
