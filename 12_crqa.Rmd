@@ -231,32 +231,140 @@ dcrp <- drpdfromts(erin_ma5, monica_ma5, ws = 60, datatype = 'continuous', radiu
 plot(-60:60, dcrp$profile, type = 'l', xlab = "Lag", ylab = "%Rec")
 ```
 
-# CRQA: Comparing Monica & Right Hand
+# CRQA: 
+
+## Comparing Monica & Right Hand
 
 ```{r}
+
+# Prepare rhand, lhand, and mouth data: 
+rows_to_use <- data_ma %>% filter(name == "Adam") %>% nrow()
+
 rhand <- get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of Right Hand.txt") %>%
   mutate(sec = floor(sec*120)) %>%
   mutate(sec = sec + 1) %>%
-  add_row(sec = length(monica)) %>%
+  add_row(sec = rows_to_use) %>%
   fill(x, y)
-
 rhand_expanded <- seq(1, max(rhand$sec)) %>%
   enframe(name = NULL, value = 'sec') %>%
   left_join(rhand, by = 'sec') %>%
   fill(x, y)
-
 rhand_y <- rhand_expanded %>% pull(y)
 
+lhand <- get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of Left Hand.txt") %>%
+  mutate(sec = floor(sec*120)) %>%
+  mutate(sec = sec + 1) %>%
+  add_row(sec = rows_to_use) %>%
+  fill(x, y)
+lhand_expanded <- seq(1, max(lhand$sec)) %>%
+  enframe(name = NULL, value = 'sec') %>%
+  left_join(lhand, by = 'sec') %>%
+  fill(x, y)
+lhand_y <- lhand_expanded %>% pull(y)
+
+mouth <- get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of mouth small.txt") %>%
+  mutate(sec = floor(sec*120)) %>%
+  mutate(sec = sec + 1) %>%
+  add_row(sec = rows_to_use) %>%
+  fill(x, y)
+mouth_expanded <- seq(1, max(mouth$sec)) %>%
+  enframe(name = NULL, value = 'sec') %>%
+  left_join(mouth, by = 'sec') %>%
+  fill(x, y)
+mouth_y <- mouth_expanded %>% pull(y)
+
+
+# Compare Monica to RHand
 results <- crqa(monica_ma5, rhand_y, delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
 results$RR
 
+# Shuffle to get baseline measure of cross-recurrences
 results_shuffled <- crqa(sample(monica_ma5), sample(rhand_y), delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
 results_shuffled$RR
+```
 
-dcrp <- drpdfromts(monica_ma5, rhand_y, ws = 60, datatype = 'continuous', radius = 0.5)
+## CRQA for all participants
+
+To make this work, we have to fill in all missing values - CRQA doesn't like them. So umm, let's just, for now, do a fill-in where any NA takes the most recent valid value preceding it. 
+
+```{r}
+# Functions for running CRQA on the right hand
+crqa_rhand <- function(x){
+  crqa_results <- crqa(x, rhand_y, delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
+  crqa_results$RR
+}
+
+crqa_rhand_shuffled <- function(x){
+  crqa_results <- crqa(sample(x), sample(rhand_y), delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
+  crqa_results$RR
+}
+
+crqa_mouth <- function(x){
+  crqa_results <- crqa(x, mouth_y, delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
+  crqa_results$RR
+}
+
+crqa_mouth_shuffled <- function(x){
+  crqa_results <- crqa(sample(x), sample(mouth_y), delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
+  crqa_results$RR
+}
+
+
+library(furrr)
+plan(multiprocess)
+data_nested <- data_ma %>%
+  fill(y_ma5) %>%
+  group_by(name) %>%
+  nest(y_ma5) %>%
+  mutate(RR_rhand = future_map_dbl(data, crqa_rhand),
+         RR_rhand_shuffled = future_map_dbl(data, crqa_rhand_shuffled),
+         RR_mouth = future_map_dbl(data, crqa_mouth),
+         RR_mouth_shuffled = future_map_dbl(data, crqa_mouth_shuffled))
+
+data_nested_results <- data_nested %>%
+  select(-data) %>%
+  left_join(data, by = "name") %>%
+  select(name, maingroup, RR_rhand, RR_rhand_shuffled, RR_mouth, RR_mouth_shuffled) %>%
+  distinct() 
+
+#data_nested_results
+
+data_nested_results_group <- data_nested_results %>%
+  group_by(maingroup) %>%
+  mutate(participants = n()) %>%
+  group_by(maingroup, participants) %>%
+  summarise_if(is.double, funs(mean))
+
+data_nested_results_group
+
+data_nested_results %>%
+  ggplot(aes(x = maingroup, y = RR_rhand, fill = maingroup)) +
+  geom_boxplot() +
+  geom_jitter(width = 0.1, alpha = 0.5) +
+  guides(fill = F) +
+  labs(x = "",
+       y = "Percent Recurrence (%REC)",
+       title = "Recurrence with position of right hand")
+
+data_nested_results %>%
+  ggplot(aes(x = maingroup, y = RR_mouth, fill = maingroup)) +
+  geom_boxplot() +
+  geom_jitter(width = 0.1, alpha = 0.5) +
+  guides(fill = F) +
+  labs(x = "",
+       y = "Percent Recurrence (%REC)",
+       title = "Recurrence with position of mouth")
+
+
+# data_nested_results %>%
+#   ggplot(aes(x = maingroup, y = diff)) +
+#   geom_boxplot()
+```
+
+
+# DCRP
+```{r}
+dcrp <- drpdfromts(erin_ma5, rhand_y, ws = 60, datatype = 'continuous', radius = 0.5)
 plot(-60:60, dcrp$profile, type = 'l', xlab = "Lag", ylab = "%Rec")
 ```
 
-# Next time
-
-Try picking a hearing novice and do crqa with rhand_y then compare the RR thingy ... hmmm 
