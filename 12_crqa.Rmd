@@ -12,11 +12,13 @@ output:
     toc_float: yes
 ---
 
-```{r}
+```{r eval=FALSE, include=FALSE}
+
+# This block is to generated clean x-y coordinates for every timestamp, for each AOI 
 get_xy_timestamp <- function(z){
 
 x <- read_lines(z) %>%
-  as_tibble() %>%
+  enframe(name = NULL) %>%
   rowid_to_column("ID")
 
 # pull out timestamp rows
@@ -55,20 +57,36 @@ xys <- cbind(timestamps, xy1, xy2) %>%
          y = mean(y1, y2)) %>%
   select(sec, x, y)
 }
+
+# Process each and save to file
+get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of Right Hand.txt") %>%
+  write_csv("aoi_position/aoi_bears_right_hand.csv")
+
+get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of Left Hand.txt") %>%
+  write_csv("aoi_position/aoi_bears_left_hand.csv")
+
+get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of mouth small.txt") %>%
+  write_csv("aoi_position/aoi_bears_mouth.csv")
 ```
 
-# Three Bears Data
+# Intro
 
+So we had a bunch of people watch a video of a person telling a story (Three Bears) in American Sign Language (ASL).  We recorded their eye gaze as (x,y) coordinate data. We also have the positions of the signer's right hand, left hand, and mouth throughout the video. We want to measure the relationship between the participant/watcher’s eye gaze, and the position of different elements in the video they are watching. In other words, do the position of the hands in the video "tug" on the watcher's eye gaze? E.g., if the signer's hands get really low near the hips, would the watcher shift their eye gaze downward? We're super curious if this behavior (if exists) is found more often in new signers than fluent signers.
 
-Setting up the dataset:
+Here's a diagram from [our ICSLA poster](https://twitter.com/foundinblank/status/1012331346558160896).
+
+![Diagram of watching videos](diagram_of_watching_videos.png)
+
+# Setting up 
+Setting up the dataset. Here's our participants (this is just 1 out of 4 stories so it's not many, we'll fatten it up later).
 
 ```{r message=FALSE, warning=FALSE}
 library(tidyverse)
 library(openxlsx)
 library(janitor)
 library(skimr)
-library(gganimate)
 library(tsibble)
+library(crqa)
 
 # Get Three Bears data
 rawdata <- read.xlsx("Test1_Cindy_bears_FW_Examine for Spatial Referencing.xlsx") %>%
@@ -113,12 +131,12 @@ data <- data %>% left_join(excluded, by = "name") %>%
   select(-c(eye_exclude, recording_name)) %>%
   mutate_at(vars(language, maingroup, name), as.factor)
 
-data %>% distinct(name, maingroup) %>% count(maingroup)
+data %>% distinct(name, maingroup) %>% count(maingroup) %>% rename(participants = n)
 
-skim(data)
+#skim(data)
 ```
 
-Let's graph everything, first of all. 
+Let's graph each of our participants' eye gaze on the y dimension. 
 
 ```{r warning=FALSE}
 data %>%
@@ -126,14 +144,14 @@ data %>%
   geom_line() + 
   scale_y_reverse(limits = c(1080,0)) +
   theme_bw() +
-  facet_wrap("name")
+  facet_wrap("name") +
+  labs(title = "Participants' eye gaze along y-axis",
+       x = "time")
 ```
 
 # Smoothing
 
-We're adding smoothing with a moving average window size - 5. (y_ma5). Good for removing noise.
-
-Then we'll eliminate 30 samples from the start and end (that's 0.25 seconds on both sides). 
+We're adding smoothing with a moving average window size - 5. (y_ma5). Good for removing noise. Then we'll eliminate 30 samples from the start and end (that's 0.25 seconds on both sides). 
 
 > The data were then smoothed with a standard moving average noise reduction algorithm (window size = 5 samples) which acts as a low-pass filter that reduces the influence of microsaccades, blinks, and large data gaps (based on Yarbus, 1967). 
 
@@ -171,15 +189,15 @@ data_ma <- data %>%
 #   theme_bw() +
 #   facet_wrap("name")
 
-data_ma %>%
-  filter(name == "Erin") %>%
-  ungroup() %>%
-  gather(key = "metric", value = "y_position", c(y, y_ma5)) %>%
-  ggplot(aes(x = gaze_point_index, y = y_position, color = metric)) +
-  geom_line() +
-  facet_wrap("metric", nrow = 3) +
-  scale_y_reverse(limits = c(1080,0)) +
-  ggtitle("Erin")
+# data_ma %>%
+#   filter(name == "Erin") %>%
+#   ungroup() %>%
+#   gather(key = "metric", value = "y_position", c(y, y_ma5)) %>%
+#   ggplot(aes(x = gaze_point_index, y = y_position, color = metric)) +
+#   geom_line() +
+#   facet_wrap("metric", nrow = 3) +
+#   scale_y_reverse(limits = c(1080,0)) +
+#   ggtitle("Erin")
 
 
 data_ma %>%
@@ -187,13 +205,12 @@ data_ma %>%
   ungroup() %>%
   gather(key = "metric", value = "y_position", c(y, y_ma5)) %>%
   ggplot(aes(x = gaze_point_index, y = y_position, color = metric)) +
-  geom_line() +
-  facet_wrap("metric", nrow = 3) +
-  scale_y_reverse(limits = c(1080,0)) +
-  ggtitle("Monica")
+  geom_line(alpha = 0.5) +
+  scale_y_reverse() +
+  ggtitle("Monica - see effect of smoothing with MA = 5")
 ```
 
-Also curious about missing data points. This counts how many missing data points we have for each participant, at the three different measurements. Based on that, I probably should take out Lynnette, so much missing data there. We'll worry about that later. 
+Also I'm curious about missing data points. This counts how many missing data points we have for each participant, at the three different measurements. Based on that, I probably should take out Lynnette, so much missing data there. We'll worry about that later. 
 
 ```{r}
 data_ma %>%
@@ -209,38 +226,25 @@ data_ma %>%
   arrange(desc(y))
 ```
 
-# CRQA: Comparing Erin & Monica
+# CRQA
 
-Both Erin and Monica have no missing data. Let's go with them (their graphs are above). 
+## Visualizing Right Hand, Left Hand, Mouth. 
 
-```{r message=FALSE, warning=FALSE}
-library(crqa)
+So we want to measure the relationship between the watcher's eye gaze (in this case, Monica), and the position of differnet elements in the sign language video they are watching. We're focused on three elements: the signer's left hand, right hand, and mouth. Would the watcher's eye gaze somehow be correlated with the position of the signer's hands as the hands move around in 2-D space? 
 
-erin <- filter(data_ma, name == "Erin") %>%
-  pull(y)
-erin_ma5 <- filter(data_ma, name == "Erin") %>%
-  pull(y_ma5)
-monica <- filter(data_ma, name == "Monica") %>%
-  pull(y)
-monica_ma5 <- filter(data_ma, name == "Monica") %>%
-  pull(y_ma5)
+We're only focusing on y-axis measurements (up vs down, head vs torso). We don't see a lot of movement along the x-axis (left to right side). 
 
-results <- crqa(erin, monica, delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
-
-dcrp <- drpdfromts(erin_ma5, monica_ma5, ws = 60, datatype = 'continuous', radius = 0.05)
-plot(-60:60, dcrp$profile, type = 'l', xlab = "Lag", ylab = "%Rec")
-```
-
-# CRQA: 
-
-## Comparing Monica & Right Hand
+Let's visualize this first of all. 
 
 ```{r}
+# Get rhand, lhand, mouth data 
+rows_to_use <- data_ma %>% filter(name == "Monica") %>% nrow()
 
-# Prepare rhand, lhand, and mouth data: 
-rows_to_use <- data_ma %>% filter(name == "Adam") %>% nrow()
-
-rhand <- get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of Right Hand.txt") %>%
+rhand <- read_csv("aoi_position/aoi_bears_right_hand.csv",
+                  col_types = cols(sec = col_double(),
+                                   x = col_double(),
+                                   y = col_double()
+                                   )) %>%
   mutate(sec = floor(sec*120)) %>%
   mutate(sec = sec + 1) %>%
   add_row(sec = rows_to_use) %>%
@@ -249,9 +253,12 @@ rhand_expanded <- seq(1, max(rhand$sec)) %>%
   enframe(name = NULL, value = 'sec') %>%
   left_join(rhand, by = 'sec') %>%
   fill(x, y)
-rhand_y <- rhand_expanded %>% pull(y)
 
-lhand <- get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of Left Hand.txt") %>%
+lhand <- read_csv("aoi_position/aoi_bears_left_hand.csv",
+                  col_types = cols(sec = col_double(),
+                                   x = col_double(),
+                                   y = col_double()
+                                   )) %>%
   mutate(sec = floor(sec*120)) %>%
   mutate(sec = sec + 1) %>%
   add_row(sec = rows_to_use) %>%
@@ -260,84 +267,157 @@ lhand_expanded <- seq(1, max(lhand$sec)) %>%
   enframe(name = NULL, value = 'sec') %>%
   left_join(lhand, by = 'sec') %>%
   fill(x, y)
-lhand_y <- lhand_expanded %>% pull(y)
 
-mouth <- get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of mouth small.txt") %>%
-  mutate(sec = floor(sec*120)) %>%
+mouth <- read_csv("aoi_position/aoi_bears_mouth.csv",
+                  col_types = cols(sec = col_double(),
+                                   x = col_double(),
+                                   y = col_double()
+                                   )) %>%
+  mutate(sec = floor(sec * 120)) %>%
   mutate(sec = sec + 1) %>%
   add_row(sec = rows_to_use) %>%
   fill(x, y)
 mouth_expanded <- seq(1, max(mouth$sec)) %>%
-  enframe(name = NULL, value = 'sec') %>%
-  left_join(mouth, by = 'sec') %>%
+  enframe(name = NULL, value = "sec") %>%
+  left_join(mouth, by = "sec") %>%
   fill(x, y)
+
+# Subset Monica's data and reset so gaze_point_index starts with 1
+monica <- data_ma %>%
+  filter(name == "Monica") %>%
+  mutate(gaze_point_index = gaze_point_index - 30)
+
+# Visualize
+monica %>%
+  ggplot(aes(x = gaze_point_index, y = y)) +
+  scale_y_reverse(limits = c(1200,0), expand = c(0,0)) +
+  geom_line(alpha = 1, color = "purple") +
+  geom_step(data = rhand_expanded, aes(x = sec, y = y), color = "red", linetype = "longdash", alpha = 0.5) +
+  annotate("text", label = "Right Hand", x = 3, y = 1000, color = "red", alpha = 0.5) +
+  labs(title = "Monica's Eye Gaze vs. Signer's Right Hand") +
+  theme_bw() +
+  theme(panel.grid.minor.y = element_blank())
+
+monica %>%
+  ggplot(aes(x = gaze_point_index, y = y)) +
+  scale_y_reverse(limits = c(1200,0), expand = c(0,0)) +
+  geom_line(alpha = 1, color = "purple") +
+  geom_step(data = lhand_expanded, aes(x = sec, y = y), color = "blue", linetype = "longdash", alpha = 0.5) +
+  annotate("text", label = "Left Hand", x = 3, y = 1000, color = "blue", alpha = 0.5) +
+  labs(title = "Monica's Eye Gaze vs. Signer's Left Hand") +
+  theme_bw() +
+  theme(panel.grid.minor.y = element_blank())
+
+monica %>%
+  ggplot(aes(x = gaze_point_index, y = y)) +
+  scale_y_reverse(limits = c(1200,0), expand = c(0,0)) +
+  geom_line(alpha = 1, color = "purple") +
+  geom_step(data = mouth_expanded, aes(x = sec, y = y), color = "black", linetype = "longdash", alpha = 0.5) +
+  annotate("text", label = "Mouth", x = 3, y = 300, color = "black", alpha = 0.5) +
+  labs(title = "Monica's Eye Gaze vs. Signer's Mouth") +
+  theme_bw() +
+  theme(panel.grid.minor.y = element_blank())
+```
+
+Is it a problem, however, that the right-hand and left-hand y-position values are completely different from the eye gaze? It's like between 400 and 800, while eye gaze is between 300-400. WONDERING.
+
+## CRQA Time: Monica vs. Right Hand
+
+We'll do CRQA, using the parameters from [Wallot & Leonardi 2018](https://www.frontiersin.org/articles/10.3389/fpsyg.2018.02232/full). Two CRQAs: (1) normal, and (2) with both time-series shuffled. 
+
+So we've got a RR of 46.59 above a random RR of 22.47. That's good, I think? "RR - repetition of elements across the two sequences." 
+
+Regular DET is 99.68 over 40.05 (random). Again, think that's good? "DET - how many of the individual repetitions co-occur in connected trajectories."
+```{r}
+
+# Get vectors of Monica's and AOIs y-positions
+monica_y <- monica %>% pull(y_ma5)
+rhand_y <- rhand_expanded %>% pull(y)
+lhand_y <- lhand_expanded %>% pull(y)
 mouth_y <- mouth_expanded %>% pull(y)
 
-
 # Compare Monica to RHand
-results <- crqa(monica_ma5, rhand_y, delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
-results$RR
+results <- crqa(monica_y, rhand_y, delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
 
 # Shuffle to get baseline measure of cross-recurrences
-results_shuffled <- crqa(sample(monica_ma5), sample(rhand_y), delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
-results_shuffled$RR
+results_shuffled <- crqa(sample(monica_y), sample(rhand_y), delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
+
+results_tbl <- as_tibble(results[1:9]) %>%
+  bind_rows(as_tibble(results_shuffled[1:9])) %>%
+  add_column(CRQA = c('regular', 'shuffled')) %>%
+  select(CRQA, everything())
+
+results_tbl %>%
+  mutate_if(is.double, round, 2)
 ```
 
 ## CRQA for all participants
 
-To make this work, we have to fill in all missing values - CRQA doesn't like them. So umm, let's just, for now, do a fill-in where any NA takes the most recent valid value preceding it. 
+Okay, I'm running CRQA (using same parameters) for ALL participants, against right hand, left hand, and mouth, with regular vs. shuffled versions. So each participant gets 6 CRQAs. PURRRR to the rescue! 
+
+Eye gaze data has missing values though, and CRQA doesn't like them. So umm, let's just, for now, do a fill-in where NAs takes the most recent valid value preceding it.
 
 ```{r}
 # Functions for running CRQA on the right hand
 crqa_rhand <- function(x){
-  crqa_results <- crqa(x, rhand_y, delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
-  crqa_results$RR
+  crqa(x, rhand_y, delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
 }
 
 crqa_rhand_shuffled <- function(x){
-  crqa_results <- crqa(sample(x), sample(rhand_y), delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
-  crqa_results$RR
+  crqa(sample(x), sample(rhand_y), delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
+}
+
+crqa_lhand <- function(x){
+  crqa(x, lhand_y, delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
+}
+
+crqa_lhand_shuffled <- function(x){
+  crqa(sample(x), sample(lhand_y), delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
 }
 
 crqa_mouth <- function(x){
-  crqa_results <- crqa(x, mouth_y, delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
-  crqa_results$RR
+  crqa(x, mouth_y, delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
 }
 
 crqa_mouth_shuffled <- function(x){
-  crqa_results <- crqa(sample(x), sample(mouth_y), delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
-  crqa_results$RR
+  crqa(sample(x), sample(mouth_y), delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
 }
 
 
 library(furrr)
 plan(multiprocess)
-data_nested <- data_ma %>%
+crqa_data <- data_ma %>%
   fill(y_ma5) %>%
   group_by(name) %>%
   nest(y_ma5) %>%
-  mutate(RR_rhand = future_map_dbl(data, crqa_rhand),
-         RR_rhand_shuffled = future_map_dbl(data, crqa_rhand_shuffled),
-         RR_mouth = future_map_dbl(data, crqa_mouth),
-         RR_mouth_shuffled = future_map_dbl(data, crqa_mouth_shuffled))
+  mutate(crqa_rhand = future_map(data, crqa_rhand),
+         crqa_rhand_sh = future_map(data, crqa_rhand_shuffled),
+         crqa_lhand = future_map(data, crqa_lhand),
+         crqa_lhand_sh = future_map(data, crqa_lhand_shuffled),
+         crqa_mouth = future_map(data, crqa_mouth),
+         crqa_mouth_sh = future_map(data, crqa_mouth_shuffled))
 
-data_nested_results <- data_nested %>%
+crqa_results <- crqa_data %>%
   select(-data) %>%
   left_join(data, by = "name") %>%
-  select(name, maingroup, RR_rhand, RR_rhand_shuffled, RR_mouth, RR_mouth_shuffled) %>%
-  distinct() 
+  select(name, maingroup, crqa_rhand:crqa_mouth_sh) 
+```
 
-#data_nested_results
+Not finished yet... 
 
-data_nested_results_group <- data_nested_results %>%
+```{r eval=FALSE, include=FALSE}
+
+# I have to rewrite all this code, it worked before I started listing all CRQA results instead of just returning the RR value... 
+
+crqa_results_group <- crqa_results %>%
   group_by(maingroup) %>%
   mutate(participants = n()) %>%
   group_by(maingroup, participants) %>%
   summarise_if(is.double, funs(mean))
 
-data_nested_results_group
+crqa_results_group
 
-data_nested_results %>%
+crqa_results %>%
   ggplot(aes(x = maingroup, y = RR_rhand, fill = maingroup)) +
   geom_boxplot() +
   geom_jitter(width = 0.1, alpha = 0.5) +
@@ -346,7 +426,7 @@ data_nested_results %>%
        y = "Percent Recurrence (%REC)",
        title = "Recurrence with position of right hand")
 
-data_nested_results %>%
+crqa_results %>%
   ggplot(aes(x = maingroup, y = RR_mouth, fill = maingroup)) +
   geom_boxplot() +
   geom_jitter(width = 0.1, alpha = 0.5) +
@@ -363,8 +443,11 @@ data_nested_results %>%
 
 
 # DCRP
+
+I tried this (Monica's eye gaze vs. right hand position), but with ws = 60 (60 samples per second, so the window size is one second on either side, right?). So it's telling me there's a probable lag around +30 (half a second). In which direction, not sure, and the REC looks so tiny...  
+
 ```{r}
-dcrp <- drpdfromts(erin_ma5, rhand_y, ws = 60, datatype = 'continuous', radius = 0.5)
+dcrp <- drpdfromts(monica_y, rhand_y, ws = 60, datatype = 'continuous', radius = 0.5)
 plot(-60:60, dcrp$profile, type = 'l', xlab = "Lag", ylab = "%Rec")
 ```
 
