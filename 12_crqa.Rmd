@@ -246,7 +246,7 @@ lhand_expanded <- seq(1, max(lhand$sec)) %>%
   left_join(lhand, by = 'sec') %>%
   fill(x, y)
 
-mouth <- read_csv("aoi_position/aoi_bears.csv",
+mouth <- read_csv("aoi_position/aoi_bears_mouth.csv",
                   col_types = cols(sec = col_double(),
                                    x = col_double(),
                                    y = col_double()
@@ -316,9 +316,11 @@ mouth_y <- mouth_expanded %>% pull(y)
 
 # Compare Monica to RHand
 results <- crqa(monica_y, rhand_y, delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
+#results <- crqa(monica_y, rhand_y, delay = 6, embed = 13, rescale = 2, radius = 34, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
 
 # Shuffle to get baseline measure of cross-recurrences
 results_shuffled <- crqa(sample(monica_y), sample(rhand_y), delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
+#results_shuffled <- crqa(sample(monica_y), sample(rhand_y), delay = 6, embed = 13, rescale = 2, radius = 34, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
 
 results_tbl <- as_tibble(results[1:9]) %>%
   bind_rows(as_tibble(results_shuffled[1:9])) %>%
@@ -391,15 +393,19 @@ Not finished yet...
 ```{r eval=FALSE, include=FALSE}
 
 # I have to rewrite all this code, it worked before I started listing all CRQA results instead of just returning the RR value... 
-crqa_results <- read_rds("~/Desktop/crqa.rds")
+crqa_results <- read_rds("~/Desktop/crqa.rds") 
 
-that <- crqa_results %>%
+crqa_results <- crqa_results %>%
   mutate(rhand_rr = map_dbl(rhand, pluck, "RR"),
          rhand_det = map_dbl(rhand, pluck, "DET"),
          rhand_sh_rr = map_dbl(rhand_sh, pluck, "RR"),
-         rhand_sh_det = map_dbl(rhand_sh, pluck, "DET"))
+         rhand_sh_det = map_dbl(rhand_sh, pluck, "DET")) %>%
+  mutate(rhand_rr_diff = rhand_rr - rhand_sh_rr,
+         rhand_det_diff = rhand_det - rhand_sh_det) %>%
+  select(-rhand, -rhand_sh)
 
 crqa_results_group <- crqa_results %>%
+  select(-rhand, -rhand_sh) %>%
   group_by(maingroup) %>%
   mutate(participants = n()) %>%
   group_by(maingroup, participants) %>%
@@ -408,27 +414,21 @@ crqa_results_group <- crqa_results %>%
 crqa_results_group
 
 crqa_results %>%
-  ggplot(aes(x = maingroup, y = RR_rhand, fill = maingroup)) +
+  select(maingroup, rhand_rr, rhand_sh_rr) %>%
+  rename(normal = rhand_rr,
+         shuffled = rhand_sh_rr) %>%
+  gather(metric, value, normal:shuffled) %>%
+  ggplot(aes(x = maingroup, y = value, fill = metric)) +
   geom_boxplot() +
-  geom_jitter(width = 0.1, alpha = 0.5) +
-  guides(fill = F) +
   labs(x = "",
        y = "Percent Recurrence (%REC)",
        title = "Recurrence with position of right hand")
 
-crqa_results %>%
-  ggplot(aes(x = maingroup, y = RR_mouth, fill = maingroup)) +
-  geom_boxplot() +
-  geom_jitter(width = 0.1, alpha = 0.5) +
-  guides(fill = F) +
-  labs(x = "",
-       y = "Percent Recurrence (%REC)",
-       title = "Recurrence with position of mouth")
+ggstatsplot::ggbetweenstats(data = crqa_results, x = maingroup, y = rhand_rr)
+ggstatsplot::ggbetweenstats(data = crqa_results, x = maingroup, y = rhand_det)
+ggstatsplot::ggbetweenstats(data = crqa_results, x = maingroup, y = rhand_rr_diff)
+ggstatsplot::ggbetweenstats(data = crqa_results, x = maingroup, y = rhand_det_diff)
 
-
-# data_nested_results %>%
-#   ggplot(aes(x = maingroup, y = diff)) +
-#   geom_boxplot()
 ```
 
 
