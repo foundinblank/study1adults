@@ -1,0 +1,1826 @@
+AOI name: Small Mouth
+
+Number of Keyframes: 182
+Number of Vertices: 4
+
+Keyframe timestamp = 00:00:00.000
+Active: True
+
+X	Y
+
+664.51	394.06
+704.51	394.06
+704.51	434.06
+664.51	434.06
+
+Keyframe timestamp = 00:00:00.166
+Active: True
+
+X	Y
+
+668.7	390.69
+708.7	390.69
+708.7	430.69
+668.7	430.69
+
+Keyframe timestamp = 00:00:00.534
+Active: True
+
+X	Y
+
+673.26	392.6
+713.26	392.6
+713.26	432.6
+673.26	432.6
+
+Keyframe timestamp = 00:00:00.567
+Active: True
+
+X	Y
+
+675.26	382.6
+715.26	382.6
+715.26	422.6
+675.26	422.6
+
+Keyframe timestamp = 00:00:00.634
+Active: True
+
+X	Y
+
+677.26	376.6
+717.26	376.6
+717.26	416.6
+677.26	416.6
+
+Keyframe timestamp = 00:00:00.701
+Active: True
+
+X	Y
+
+680.26	369.6
+720.26	369.6
+720.26	409.6
+680.26	409.6
+
+Keyframe timestamp = 00:00:00.834
+Active: True
+
+X	Y
+
+687.26	366.6
+727.26	366.6
+727.26	406.6
+687.26	406.6
+
+Keyframe timestamp = 00:00:01.001
+Active: True
+
+X	Y
+
+688.26	375.6
+728.26	375.6
+728.26	415.6
+688.26	415.6
+
+Keyframe timestamp = 00:00:01.101
+Active: True
+
+X	Y
+
+692.26	369.6
+732.26	369.6
+732.26	409.6
+692.26	409.6
+
+Keyframe timestamp = 00:00:01.268
+Active: True
+
+X	Y
+
+693.26	376.6
+733.26	376.6
+733.26	416.6
+693.26	416.6
+
+Keyframe timestamp = 00:00:01.368
+Active: True
+
+X	Y
+
+692.26	389.6
+732.26	389.6
+732.26	429.6
+692.26	429.6
+
+Keyframe timestamp = 00:00:01.468
+Active: True
+
+X	Y
+
+689.26	398.6
+729.26	398.6
+729.26	438.6
+689.26	438.6
+
+Keyframe timestamp = 00:00:01.535
+Active: True
+
+X	Y
+
+692.26	405.6
+732.26	405.6
+732.26	445.6
+692.26	445.6
+
+Keyframe timestamp = 00:00:01.736
+Active: True
+
+X	Y
+
+688.26	399.6
+728.26	399.6
+728.26	439.6
+688.26	439.6
+
+Keyframe timestamp = 00:00:01.869
+Active: True
+
+X	Y
+
+687.26	407.6
+727.26	407.6
+727.26	447.6
+687.26	447.6
+
+Keyframe timestamp = 00:00:01.936
+Active: True
+
+X	Y
+
+683.26	416.6
+723.26	416.6
+723.26	456.6
+683.26	456.6
+
+Keyframe timestamp = 00:00:02.103
+Active: True
+
+X	Y
+
+689.26	406.6
+729.26	406.6
+729.26	446.6
+689.26	446.6
+
+Keyframe timestamp = 00:00:02.170
+Active: True
+
+X	Y
+
+676.26	395.6
+716.26	395.6
+716.26	435.6
+676.26	435.6
+
+Keyframe timestamp = 00:00:02.303
+Active: True
+
+X	Y
+
+668.26	392.6
+708.26	392.6
+708.26	432.6
+668.26	432.6
+
+Keyframe timestamp = 00:00:02.503
+Active: True
+
+X	Y
+
+659.26	387.6
+699.26	387.6
+699.26	427.6
+659.26	427.6
+
+Keyframe timestamp = 00:00:02.570
+Active: True
+
+X	Y
+
+649.26	380.6
+689.26	380.6
+689.26	420.6
+649.26	420.6
+
+Keyframe timestamp = 00:00:02.770
+Active: True
+
+X	Y
+
+656.26	374.6
+696.26	374.6
+696.26	414.6
+656.26	414.6
+
+Keyframe timestamp = 00:00:02.871
+Active: True
+
+X	Y
+
+665.26	370.6
+705.26	370.6
+705.26	410.6
+665.26	410.6
+
+Keyframe timestamp = 00:00:02.971
+Active: True
+
+X	Y
+
+685.26	356.6
+725.26	356.6
+725.26	396.6
+685.26	396.6
+
+Keyframe timestamp = 00:00:03.071
+Active: True
+
+X	Y
+
+696.26	356.6
+736.26	356.6
+736.26	396.6
+696.26	396.6
+
+Keyframe timestamp = 00:00:03.138
+Active: True
+
+X	Y
+
+707.26	359.6
+747.26	359.6
+747.26	399.6
+707.26	399.6
+
+Keyframe timestamp = 00:00:03.204
+Active: True
+
+X	Y
+
+706.26	367.6
+746.26	367.6
+746.26	407.6
+706.26	407.6
+
+Keyframe timestamp = 00:00:03.505
+Active: True
+
+X	Y
+
+699.26	364.6
+739.26	364.6
+739.26	404.6
+699.26	404.6
+
+Keyframe timestamp = 00:00:03.572
+Active: True
+
+X	Y
+
+690.26	381.6
+730.26	381.6
+730.26	421.6
+690.26	421.6
+
+Keyframe timestamp = 00:00:03.672
+Active: True
+
+X	Y
+
+675.26	380.6
+715.26	380.6
+715.26	420.6
+675.26	420.6
+
+Keyframe timestamp = 00:00:03.772
+Active: True
+
+X	Y
+
+656.26	381.6
+696.26	381.6
+696.26	421.6
+656.26	421.6
+
+Keyframe timestamp = 00:00:03.872
+Active: True
+
+X	Y
+
+644.26	379.6
+684.26	379.6
+684.26	419.6
+644.26	419.6
+
+Keyframe timestamp = 00:00:03.939
+Active: True
+
+X	Y
+
+631.26	388.6
+671.26	388.6
+671.26	428.6
+631.26	428.6
+
+Keyframe timestamp = 00:00:04.039
+Active: True
+
+X	Y
+
+617.26	383.6
+657.26	383.6
+657.26	423.6
+617.26	423.6
+
+Keyframe timestamp = 00:00:04.139
+Active: True
+
+X	Y
+
+611.26	374.6
+651.26	374.6
+651.26	414.6
+611.26	414.6
+
+Keyframe timestamp = 00:00:04.273
+Active: True
+
+X	Y
+
+624.26	378.6
+664.26	378.6
+664.26	418.6
+624.26	418.6
+
+Keyframe timestamp = 00:00:04.340
+Active: True
+
+X	Y
+
+644.26	373.6
+684.26	373.6
+684.26	413.6
+644.26	413.6
+
+Keyframe timestamp = 00:00:04.373
+Active: True
+
+X	Y
+
+657.26	352.6
+697.26	352.6
+697.26	392.6
+657.26	392.6
+
+Keyframe timestamp = 00:00:04.473
+Active: True
+
+X	Y
+
+678.26	339.6
+718.26	339.6
+718.26	379.6
+678.26	379.6
+
+Keyframe timestamp = 00:00:04.540
+Active: True
+
+X	Y
+
+688.26	333.6
+728.26	333.6
+728.26	373.6
+688.26	373.6
+
+Keyframe timestamp = 00:00:04.640
+Active: True
+
+X	Y
+
+689.26	345.6
+729.26	345.6
+729.26	385.6
+689.26	385.6
+
+Keyframe timestamp = 00:00:04.707
+Active: True
+
+X	Y
+
+689.26	359.6
+729.26	359.6
+729.26	399.6
+689.26	399.6
+
+Keyframe timestamp = 00:00:04.740
+Active: True
+
+X	Y
+
+689.26	372.6
+729.26	372.6
+729.26	412.6
+689.26	412.6
+
+Keyframe timestamp = 00:00:05.041
+Active: True
+
+X	Y
+
+698.26	386.6
+738.26	386.6
+738.26	426.6
+698.26	426.6
+
+Keyframe timestamp = 00:00:05.341
+Active: True
+
+X	Y
+
+684.26	393.6
+724.26	393.6
+724.26	433.6
+684.26	433.6
+
+Keyframe timestamp = 00:00:05.541
+Active: True
+
+X	Y
+
+691.26	395.6
+731.26	395.6
+731.26	435.6
+691.26	435.6
+
+Keyframe timestamp = 00:00:05.742
+Active: True
+
+X	Y
+
+680.26	402.6
+720.26	402.6
+720.26	442.6
+680.26	442.6
+
+Keyframe timestamp = 00:00:05.842
+Active: True
+
+X	Y
+
+685.26	396.6
+725.26	396.6
+725.26	436.6
+685.26	436.6
+
+Keyframe timestamp = 00:00:06.009
+Active: True
+
+X	Y
+
+677.26	387.6
+717.26	387.6
+717.26	427.6
+677.26	427.6
+
+Keyframe timestamp = 00:00:06.109
+Active: True
+
+X	Y
+
+674.26	402.6
+714.26	402.6
+714.26	442.6
+674.26	442.6
+
+Keyframe timestamp = 00:00:06.209
+Active: True
+
+X	Y
+
+668.26	406.6
+708.26	406.6
+708.26	446.6
+668.26	446.6
+
+Keyframe timestamp = 00:00:06.343
+Active: True
+
+X	Y
+
+651.26	406.6
+691.26	406.6
+691.26	446.6
+651.26	446.6
+
+Keyframe timestamp = 00:00:06.576
+Active: True
+
+X	Y
+
+660.26	390.6
+700.26	390.6
+700.26	430.6
+660.26	430.6
+
+Keyframe timestamp = 00:00:06.643
+Active: True
+
+X	Y
+
+662.26	377.6
+702.26	377.6
+702.26	417.6
+662.26	417.6
+
+Keyframe timestamp = 00:00:06.677
+Active: True
+
+X	Y
+
+667.26	367.6
+707.26	367.6
+707.26	407.6
+667.26	407.6
+
+Keyframe timestamp = 00:00:06.710
+Active: True
+
+X	Y
+
+669.26	356.6
+709.26	356.6
+709.26	396.6
+669.26	396.6
+
+Keyframe timestamp = 00:00:06.777
+Active: True
+
+X	Y
+
+679.26	350.6
+719.26	350.6
+719.26	390.6
+679.26	390.6
+
+Keyframe timestamp = 00:00:06.910
+Active: True
+
+X	Y
+
+685.26	361.6
+725.26	361.6
+725.26	401.6
+685.26	401.6
+
+Keyframe timestamp = 00:00:07.010
+Active: True
+
+X	Y
+
+690.26	372.6
+730.26	372.6
+730.26	412.6
+690.26	412.6
+
+Keyframe timestamp = 00:00:07.077
+Active: True
+
+X	Y
+
+697.26	390.6
+737.26	390.6
+737.26	430.6
+697.26	430.6
+
+Keyframe timestamp = 00:00:07.144
+Active: True
+
+X	Y
+
+706.26	399.6
+746.26	399.6
+746.26	439.6
+706.26	439.6
+
+Keyframe timestamp = 00:00:07.244
+Active: True
+
+X	Y
+
+715.26	409.6
+755.26	409.6
+755.26	449.6
+715.26	449.6
+
+Keyframe timestamp = 00:00:07.378
+Active: True
+
+X	Y
+
+724.26	417.6
+764.26	417.6
+764.26	457.6
+724.26	457.6
+
+Keyframe timestamp = 00:00:07.511
+Active: True
+
+X	Y
+
+719.26	413.6
+759.26	413.6
+759.26	453.6
+719.26	453.6
+
+Keyframe timestamp = 00:00:07.611
+Active: True
+
+X	Y
+
+711.26	406.6
+751.26	406.6
+751.26	446.6
+711.26	446.6
+
+Keyframe timestamp = 00:00:07.678
+Active: True
+
+X	Y
+
+681.26	399.6
+721.26	399.6
+721.26	439.6
+681.26	439.6
+
+Keyframe timestamp = 00:00:07.745
+Active: True
+
+X	Y
+
+668.26	395.6
+708.26	395.6
+708.26	435.6
+668.26	435.6
+
+Keyframe timestamp = 00:00:07.812
+Active: True
+
+X	Y
+
+661.26	395.6
+701.26	395.6
+701.26	435.6
+661.26	435.6
+
+Keyframe timestamp = 00:00:07.912
+Active: True
+
+X	Y
+
+677.26	398.6
+717.26	398.6
+717.26	438.6
+677.26	438.6
+
+Keyframe timestamp = 00:00:07.979
+Active: True
+
+X	Y
+
+680.26	408.6
+720.26	408.6
+720.26	448.6
+680.26	448.6
+
+Keyframe timestamp = 00:00:08.045
+Active: True
+
+X	Y
+
+677.26	420.6
+717.26	420.6
+717.26	460.6
+677.26	460.6
+
+Keyframe timestamp = 00:00:08.246
+Active: True
+
+X	Y
+
+686.26	415.6
+726.26	415.6
+726.26	455.6
+686.26	455.6
+
+Keyframe timestamp = 00:00:08.713
+Active: True
+
+X	Y
+
+682.26	410.6
+722.26	410.6
+722.26	450.6
+682.26	450.6
+
+Keyframe timestamp = 00:00:08.780
+Active: True
+
+X	Y
+
+679.26	399.6
+719.26	399.6
+719.26	439.6
+679.26	439.6
+
+Keyframe timestamp = 00:00:08.847
+Active: True
+
+X	Y
+
+674.26	392.6
+714.26	392.6
+714.26	432.6
+674.26	432.6
+
+Keyframe timestamp = 00:00:08.947
+Active: True
+
+X	Y
+
+671.26	381.6
+711.26	381.6
+711.26	421.6
+671.26	421.6
+
+Keyframe timestamp = 00:00:09.214
+Active: True
+
+X	Y
+
+669.26	373.6
+709.26	373.6
+709.26	413.6
+669.26	413.6
+
+Keyframe timestamp = 00:00:09.614
+Active: True
+
+X	Y
+
+677.26	372.6
+717.26	372.6
+717.26	412.6
+677.26	412.6
+
+Keyframe timestamp = 00:00:09.781
+Active: True
+
+X	Y
+
+687.26	377.6
+727.26	377.6
+727.26	417.6
+687.26	417.6
+
+Keyframe timestamp = 00:00:09.881
+Active: True
+
+X	Y
+
+702.26	381.6
+742.26	381.6
+742.26	421.6
+702.26	421.6
+
+Keyframe timestamp = 00:00:10.149
+Active: True
+
+X	Y
+
+708.26	390.6
+748.26	390.6
+748.26	430.6
+708.26	430.6
+
+Keyframe timestamp = 00:00:10.449
+Active: True
+
+X	Y
+
+696.26	386.6
+736.26	386.6
+736.26	426.6
+696.26	426.6
+
+Keyframe timestamp = 00:00:10.549
+Active: True
+
+X	Y
+
+706.26	385.6
+746.26	385.6
+746.26	425.6
+706.26	425.6
+
+Keyframe timestamp = 00:00:10.616
+Active: True
+
+X	Y
+
+707.26	379.6
+747.26	379.6
+747.26	419.6
+707.26	419.6
+
+Keyframe timestamp = 00:00:10.683
+Active: True
+
+X	Y
+
+721.26	379.6
+761.26	379.6
+761.26	419.6
+721.26	419.6
+
+Keyframe timestamp = 00:00:10.850
+Active: True
+
+X	Y
+
+715.26	393.6
+755.26	393.6
+755.26	433.6
+715.26	433.6
+
+Keyframe timestamp = 00:00:10.916
+Active: True
+
+X	Y
+
+714.26	402.6
+754.26	402.6
+754.26	442.6
+714.26	442.6
+
+Keyframe timestamp = 00:00:10.983
+Active: True
+
+X	Y
+
+711.26	416.6
+751.26	416.6
+751.26	456.6
+711.26	456.6
+
+Keyframe timestamp = 00:00:11.183
+Active: True
+
+X	Y
+
+708.26	407.6
+748.26	407.6
+748.26	447.6
+708.26	447.6
+
+Keyframe timestamp = 00:00:11.317
+Active: True
+
+X	Y
+
+719.26	410.6
+759.26	410.6
+759.26	450.6
+719.26	450.6
+
+Keyframe timestamp = 00:00:11.584
+Active: True
+
+X	Y
+
+712.26	407.6
+752.26	407.6
+752.26	447.6
+712.26	447.6
+
+Keyframe timestamp = 00:00:11.718
+Active: True
+
+X	Y
+
+703.26	396.6
+743.26	396.6
+743.26	436.6
+703.26	436.6
+
+Keyframe timestamp = 00:00:11.751
+Active: True
+
+X	Y
+
+697.26	389.6
+737.26	389.6
+737.26	429.6
+697.26	429.6
+
+Keyframe timestamp = 00:00:11.784
+Active: True
+
+X	Y
+
+688.26	377.6
+728.26	377.6
+728.26	417.6
+688.26	417.6
+
+Keyframe timestamp = 00:00:11.851
+Active: True
+
+X	Y
+
+669.26	369.6
+709.26	369.6
+709.26	409.6
+669.26	409.6
+
+Keyframe timestamp = 00:00:11.885
+Active: True
+
+X	Y
+
+655.26	362.6
+695.26	362.6
+695.26	402.6
+655.26	402.6
+
+Keyframe timestamp = 00:00:11.951
+Active: True
+
+X	Y
+
+639.26	356.6
+679.26	356.6
+679.26	396.6
+639.26	396.6
+
+Keyframe timestamp = 00:00:12.018
+Active: True
+
+X	Y
+
+632.26	358.6
+672.26	358.6
+672.26	398.6
+632.26	398.6
+
+Keyframe timestamp = 00:00:12.118
+Active: True
+
+X	Y
+
+648.26	381.6
+688.26	381.6
+688.26	421.6
+648.26	421.6
+
+Keyframe timestamp = 00:00:12.152
+Active: True
+
+X	Y
+
+669.26	390.6
+709.26	390.6
+709.26	430.6
+669.26	430.6
+
+Keyframe timestamp = 00:00:12.185
+Active: True
+
+X	Y
+
+685.26	395.6
+725.26	395.6
+725.26	435.6
+685.26	435.6
+
+Keyframe timestamp = 00:00:12.252
+Active: True
+
+X	Y
+
+696.26	415.6
+736.26	415.6
+736.26	455.6
+696.26	455.6
+
+Keyframe timestamp = 00:00:12.452
+Active: True
+
+X	Y
+
+703.26	419.6
+743.26	419.6
+743.26	459.6
+703.26	459.6
+
+Keyframe timestamp = 00:00:12.719
+Active: True
+
+X	Y
+
+698.26	406.6
+738.26	406.6
+738.26	446.6
+698.26	446.6
+
+Keyframe timestamp = 00:00:12.786
+Active: True
+
+X	Y
+
+698.26	391.6
+738.26	391.6
+738.26	431.6
+698.26	431.6
+
+Keyframe timestamp = 00:00:12.886
+Active: True
+
+X	Y
+
+702.26	378.6
+742.26	378.6
+742.26	418.6
+702.26	418.6
+
+Keyframe timestamp = 00:00:13.153
+Active: True
+
+X	Y
+
+693.26	384.6
+733.26	384.6
+733.26	424.6
+693.26	424.6
+
+Keyframe timestamp = 00:00:13.320
+Active: True
+
+X	Y
+
+693.26	369.6
+733.26	369.6
+733.26	409.6
+693.26	409.6
+
+Keyframe timestamp = 00:00:13.554
+Active: True
+
+X	Y
+
+687.26	378.6
+727.26	378.6
+727.26	418.6
+687.26	418.6
+
+Keyframe timestamp = 00:00:13.587
+Active: True
+
+X	Y
+
+691.26	369.6
+731.26	369.6
+731.26	409.6
+691.26	409.6
+
+Keyframe timestamp = 00:00:13.654
+Active: True
+
+X	Y
+
+685.26	379.6
+725.26	379.6
+725.26	419.6
+685.26	419.6
+
+Keyframe timestamp = 00:00:13.687
+Active: True
+
+X	Y
+
+695.26	380.6
+735.26	380.6
+735.26	420.6
+695.26	420.6
+
+Keyframe timestamp = 00:00:13.821
+Active: True
+
+X	Y
+
+687.26	380.6
+727.26	380.6
+727.26	420.6
+687.26	420.6
+
+Keyframe timestamp = 00:00:13.954
+Active: True
+
+X	Y
+
+693.26	379.6
+733.26	379.6
+733.26	419.6
+693.26	419.6
+
+Keyframe timestamp = 00:00:14.088
+Active: True
+
+X	Y
+
+705.26	372.6
+745.26	372.6
+745.26	412.6
+705.26	412.6
+
+Keyframe timestamp = 00:00:14.222
+Active: True
+
+X	Y
+
+721.26	379.6
+761.26	379.6
+761.26	419.6
+721.26	419.6
+
+Keyframe timestamp = 00:00:14.288
+Active: True
+
+X	Y
+
+736.26	402.6
+776.26	402.6
+776.26	442.6
+736.26	442.6
+
+Keyframe timestamp = 00:00:14.355
+Active: True
+
+X	Y
+
+756.26	404.6
+796.26	404.6
+796.26	444.6
+756.26	444.6
+
+Keyframe timestamp = 00:00:14.555
+Active: True
+
+X	Y
+
+767.26	402.6
+807.26	402.6
+807.26	442.6
+767.26	442.6
+
+Keyframe timestamp = 00:00:14.814
+Active: True
+
+X	Y
+
+760.26	398.6
+800.26	398.6
+800.26	438.6
+760.26	438.6
+
+Keyframe timestamp = 00:00:14.881
+Active: True
+
+X	Y
+
+737.26	397.6
+777.26	397.6
+777.26	437.6
+737.26	437.6
+
+Keyframe timestamp = 00:00:14.948
+Active: True
+
+X	Y
+
+718.26	395.6
+758.26	395.6
+758.26	435.6
+718.26	435.6
+
+Keyframe timestamp = 00:00:15.048
+Active: True
+
+X	Y
+
+703.26	392.6
+743.26	392.6
+743.26	432.6
+703.26	432.6
+
+Keyframe timestamp = 00:00:15.081
+Active: True
+
+X	Y
+
+693.26	388.6
+733.26	388.6
+733.26	428.6
+693.26	428.6
+
+Keyframe timestamp = 00:00:15.115
+Active: True
+
+X	Y
+
+686.26	384.6
+726.26	384.6
+726.26	424.6
+686.26	424.6
+
+Keyframe timestamp = 00:00:15.148
+Active: True
+
+X	Y
+
+680.26	374.6
+720.26	374.6
+720.26	414.6
+680.26	414.6
+
+Keyframe timestamp = 00:00:15.248
+Active: True
+
+X	Y
+
+672.26	368.6
+712.26	368.6
+712.26	408.6
+672.26	408.6
+
+Keyframe timestamp = 00:00:15.281
+Active: True
+
+X	Y
+
+654.26	359.6
+694.26	359.6
+694.26	399.6
+654.26	399.6
+
+Keyframe timestamp = 00:00:15.348
+Active: True
+
+X	Y
+
+636.26	350.6
+676.26	350.6
+676.26	390.6
+636.26	390.6
+
+Keyframe timestamp = 00:00:15.448
+Active: True
+
+X	Y
+
+625.26	345.6
+665.26	345.6
+665.26	385.6
+625.26	385.6
+
+Keyframe timestamp = 00:00:15.482
+Active: True
+
+X	Y
+
+611.26	345.6
+651.26	345.6
+651.26	385.6
+611.26	385.6
+
+Keyframe timestamp = 00:00:15.682
+Active: True
+
+X	Y
+
+619.26	353.6
+659.26	353.6
+659.26	393.6
+619.26	393.6
+
+Keyframe timestamp = 00:00:15.749
+Active: True
+
+X	Y
+
+637.26	362.6
+677.26	362.6
+677.26	402.6
+637.26	402.6
+
+Keyframe timestamp = 00:00:15.849
+Active: True
+
+X	Y
+
+646.26	370.6
+686.26	370.6
+686.26	410.6
+646.26	410.6
+
+Keyframe timestamp = 00:00:15.882
+Active: True
+
+X	Y
+
+667.26	369.6
+707.26	369.6
+707.26	409.6
+667.26	409.6
+
+Keyframe timestamp = 00:00:15.916
+Active: True
+
+X	Y
+
+680.26	367.6
+720.26	367.6
+720.26	407.6
+680.26	407.6
+
+Keyframe timestamp = 00:00:15.983
+Active: True
+
+X	Y
+
+701.26	368.6
+741.26	368.6
+741.26	408.6
+701.26	408.6
+
+Keyframe timestamp = 00:00:16.016
+Active: True
+
+X	Y
+
+692.93	366.6
+732.93	366.6
+732.93	406.6
+692.93	406.6
+
+Keyframe timestamp = 00:00:16.083
+Active: True
+
+X	Y
+
+721.26	365.6
+761.26	365.6
+761.26	405.6
+721.26	405.6
+
+Keyframe timestamp = 00:00:16.149
+Active: True
+
+X	Y
+
+711.26	368.6
+751.26	368.6
+751.26	408.6
+711.26	408.6
+
+Keyframe timestamp = 00:00:16.283
+Active: True
+
+X	Y
+
+685.26	368.6
+725.26	368.6
+725.26	408.6
+685.26	408.6
+
+Keyframe timestamp = 00:00:16.350
+Active: True
+
+X	Y
+
+671.26	370.6
+711.26	370.6
+711.26	410.6
+671.26	410.6
+
+Keyframe timestamp = 00:00:16.450
+Active: True
+
+X	Y
+
+647.26	376.6
+687.26	376.6
+687.26	416.6
+647.26	416.6
+
+Keyframe timestamp = 00:00:16.483
+Active: True
+
+X	Y
+
+628.26	380.6
+668.26	380.6
+668.26	420.6
+628.26	420.6
+
+Keyframe timestamp = 00:00:16.583
+Active: True
+
+X	Y
+
+607.26	380.6
+647.26	380.6
+647.26	420.6
+607.26	420.6
+
+Keyframe timestamp = 00:00:16.617
+Active: True
+
+X	Y
+
+615.26	381.6
+655.26	381.6
+655.26	421.6
+615.26	421.6
+
+Keyframe timestamp = 00:00:16.650
+Active: True
+
+X	Y
+
+601.26	379.6
+641.26	379.6
+641.26	419.6
+601.26	419.6
+
+Keyframe timestamp = 00:00:16.684
+Active: True
+
+X	Y
+
+591.26	375.6
+631.26	375.6
+631.26	415.6
+591.26	415.6
+
+Keyframe timestamp = 00:00:16.784
+Active: True
+
+X	Y
+
+614.26	365.6
+654.26	365.6
+654.26	405.6
+614.26	405.6
+
+Keyframe timestamp = 00:00:16.851
+Active: True
+
+X	Y
+
+632.26	366.6
+672.26	366.6
+672.26	406.6
+632.26	406.6
+
+Keyframe timestamp = 00:00:16.884
+Active: True
+
+X	Y
+
+670.26	374.6
+710.26	374.6
+710.26	414.6
+670.26	414.6
+
+Keyframe timestamp = 00:00:16.917
+Active: True
+
+X	Y
+
+680.26	384.6
+720.26	384.6
+720.26	424.6
+680.26	424.6
+
+Keyframe timestamp = 00:00:16.951
+Active: True
+
+X	Y
+
+676.26	375.6
+716.26	375.6
+716.26	415.6
+676.26	415.6
+
+Keyframe timestamp = 00:00:17.084
+Active: True
+
+X	Y
+
+692.26	365.6
+732.26	365.6
+732.26	405.6
+692.26	405.6
+
+Keyframe timestamp = 00:00:17.251
+Active: True
+
+X	Y
+
+683.26	354.6
+723.26	354.6
+723.26	394.6
+683.26	394.6
+
+Keyframe timestamp = 00:00:17.485
+Active: True
+
+X	Y
+
+671.26	355.6
+711.26	355.6
+711.26	395.6
+671.26	395.6
+
+Keyframe timestamp = 00:00:17.652
+Active: True
+
+X	Y
+
+672.26	367.6
+712.26	367.6
+712.26	407.6
+672.26	407.6
+
+Keyframe timestamp = 00:00:17.752
+Active: True
+
+X	Y
+
+676.26	360.6
+716.26	360.6
+716.26	400.6
+676.26	400.6
+
+Keyframe timestamp = 00:00:17.885
+Active: True
+
+X	Y
+
+694.26	357.6
+734.26	357.6
+734.26	397.6
+694.26	397.6
+
+Keyframe timestamp = 00:00:17.952
+Active: True
+
+X	Y
+
+683.26	362.6
+723.26	362.6
+723.26	402.6
+683.26	402.6
+
+Keyframe timestamp = 00:00:18.052
+Active: True
+
+X	Y
+
+693.26	366.6
+733.26	366.6
+733.26	406.6
+693.26	406.6
+
+Keyframe timestamp = 00:00:18.119
+Active: True
+
+X	Y
+
+675.26	376.6
+715.26	376.6
+715.26	416.6
+675.26	416.6
+
+Keyframe timestamp = 00:00:18.219
+Active: True
+
+X	Y
+
+685.26	374.6
+725.26	374.6
+725.26	414.6
+685.26	414.6
+
+Keyframe timestamp = 00:00:18.319
+Active: True
+
+X	Y
+
+676.26	365.6
+716.26	365.6
+716.26	405.6
+676.26	405.6
+
+Keyframe timestamp = 00:00:18.520
+Active: True
+
+X	Y
+
+665.26	379.6
+705.26	379.6
+705.26	419.6
+665.26	419.6
+
+Keyframe timestamp = 00:00:18.720
+Active: True
+
+X	Y
+
+636.26	379.6
+676.26	379.6
+676.26	419.6
+636.26	419.6
+
+Keyframe timestamp = 00:00:18.854
+Active: True
+
+X	Y
+
+622.26	385.6
+662.26	385.6
+662.26	425.6
+622.26	425.6
+
+Keyframe timestamp = 00:00:18.887
+Active: True
+
+X	Y
+
+615.26	406.6
+655.26	406.6
+655.26	446.6
+615.26	446.6
+
+Keyframe timestamp = 00:00:18.954
+Active: True
+
+X	Y
+
+615.26	427.6
+655.26	427.6
+655.26	467.6
+615.26	467.6
+
+Keyframe timestamp = 00:00:19.087
+Active: True
+
+X	Y
+
+611.26	417.6
+651.26	417.6
+651.26	457.6
+611.26	457.6
+
+Keyframe timestamp = 00:00:19.187
+Active: True
+
+X	Y
+
+628.26	407.6
+668.26	407.6
+668.26	447.6
+628.26	447.6
+
+Keyframe timestamp = 00:00:19.288
+Active: True
+
+X	Y
+
+642.26	393.6
+682.26	393.6
+682.26	433.6
+642.26	433.6
+
+Keyframe timestamp = 00:00:19.354
+Active: True
+
+X	Y
+
+658.26	387.6
+698.26	387.6
+698.26	427.6
+658.26	427.6
+
+Keyframe timestamp = 00:00:19.388
+Active: True
+
+X	Y
+
+658.26	381.6
+698.26	381.6
+698.26	421.6
+658.26	421.6
+
+Keyframe timestamp = 00:00:19.455
+Active: True
+
+X	Y
+
+671.26	382.6
+711.26	382.6
+711.26	422.6
+671.26	422.6
+
+Keyframe timestamp = 00:00:19.488
+Active: True
+
+X	Y
+
+681.26	379.6
+721.26	379.6
+721.26	419.6
+681.26	419.6
+
+Keyframe timestamp = 00:00:19.621
+Active: True
+
+X	Y
+
+685.26	385.6
+725.26	385.6
+725.26	425.6
+685.26	425.6
+
+Keyframe timestamp = 00:00:19.722
+Active: True
+
+X	Y
+
+685.26	395.6
+725.26	395.6
+725.26	435.6
+685.26	435.6
+
+Keyframe timestamp = 00:00:19.822
+Active: True
+
+X	Y
+
+686.26	385.6
+726.26	385.6
+726.26	425.6
+686.26	425.6
+
+Keyframe timestamp = 00:00:19.989
+Active: True
+
+X	Y
+
+676.26	379.6
+716.26	379.6
+716.26	419.6
+676.26	419.6
+
+Keyframe timestamp = 00:00:20.122
+Active: True
+
+X	Y
+
+674.26	374.6
+714.26	374.6
+714.26	414.6
+674.26	414.6
+
+Keyframe timestamp = 00:00:20.222
+Active: True
+
+X	Y
+
+674.26	367.6
+714.26	367.6
+714.26	407.6
+674.26	407.6
+
+

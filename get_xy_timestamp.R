@@ -43,4 +43,5 @@ xys <- cbind(timestamps, xy1, xy2) %>%
          y = mean(y1, y2)) %>%
   select(sec, x, y)
 
+xys
 }

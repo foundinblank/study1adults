@@ -12,61 +12,39 @@ output:
     toc_float: yes
 ---
 
-```{r eval=FALSE, include=FALSE}
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 
 # This block is to generated clean x-y coordinates for every timestamp, for each AOI 
-get_xy_timestamp <- function(z){
 
-x <- read_lines(z) %>%
-  enframe(name = NULL) %>%
-  rowid_to_column("ID")
+# Source the get_xy_timestamp() function
+source("get_xy_timestamp.R")
 
-# pull out timestamp rows
-timestamps <- x %>%
-  filter(str_detect(value, "timestamp")) %>%
-  separate(value, into = c("throw","timestamp"), sep = " = ") %>%
-  separate(timestamp, into = c("one","two","sec"), sep = ":") %>%
-  select(sec) %>%
-  mutate(sec = as.numeric(sec))
-
-# Find AOI coordinate rows
-xys <- x %>%
-  mutate(find = str_detect(value, "X\tY"))
-
-# first vertex (2 rows after each "XY" line)
-xys_row <- which(xys$find) + 2
-
-xy1 <- x %>%
-  filter(ID %in% xys_row) %>%
-  separate(value, into = c("x1","y1"), sep = "\t") %>%
-  select(-ID)
-
-# opposite vertex (2 more rows down)
-xys_row <- xys_row + 2
-
-xy2 <- x %>%
-  filter(ID %in% xys_row) %>%
-  separate(value, into = c("x2","y2"), sep = "\t") %>%
-  select(-ID)
-
-# Now get average XY position per timestamp
-xys <- cbind(timestamps, xy1, xy2) %>%
-  mutate_all(as.numeric) %>%
-  rowwise() %>%
-  mutate(x = mean(x1,x2),
-         y = mean(y1, y2)) %>%
-  select(sec, x, y)
-}
+# File list df
+files_to_process <- tribble(
+  ~aoi_data, ~to_save_as,
+  "Cindy_bears_FW_xvid_Left Hand.txt", "aoi_bears_left.csv",             
+  "Cindy_bears_FW_xvid_Right Hand.txt", "aoi_bears_right.csv",
+  "Cindy_bears_FW_xvid_Small Mouth.txt", "aoi_bears_mouth.csv",
+  "Cindy_cinderella_FW_xvid_Left Hand.txt", "aoi_cinderella_left.csv",
+  "Cindy_cinderella_FW_xvid_Right Hand.txt", "aoi_cinderella_right.csv",
+  "Cindy_cinderella_FW_xvid_Small Mouth.txt", "aoi_cinderella_mouth.csv",
+  "Cindy_redridinghood_FW_xvid_Left Hand.txt", "aoi_redridinghood_left.csv",
+  "Cindy_redridinghood_FW_xvid_Right Hand.txt", "aoi_redridinghood_right.csv",
+  "Cindy_redridinghood_FW_xvid_Small Mouth.txt", "aoi_redridinghood_mouth.csv",
+  "midas_FW_xvid_Left Hand.txt", "aoi_midas_left.csv",
+  "midas_FW_xvid_Right Hand.txt", "aoi_midas_right.csv",
+  "midas_FW_xvid_Small Mouth.txt", "aoi_midas_mouth.csv"
+)
 
 # Process each and save to file
-get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of Right Hand.txt") %>%
-  write_csv("aoi_position/aoi_bears_right_hand.csv")
+aoi_folder <- "aoi_position/"
 
-get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of Left Hand.txt") %>%
-  write_csv("aoi_position/aoi_bears_left_hand.csv")
+batch_get_xy_timestamps <- function(x,y){
+  get_xy_timestamp(glue::glue("{aoi_folder}{x}")) %>%
+  write_csv(glue::glue("{aoi_folder}{y}"))
+}
 
-get_xy_timestamp("aoi_position/Cindy_bears_FW_Position of mouth small.txt") %>%
-  write_csv("aoi_position/aoi_bears_mouth.csv")
+map2(files_to_process$aoi_data, files_to_process$to_save_as, batch_get_xy_timestamps)
 ```
 
 # Intro
@@ -240,7 +218,7 @@ Let's visualize this first of all.
 # Get rhand, lhand, mouth data 
 rows_to_use <- data_ma %>% filter(name == "Monica") %>% nrow()
 
-rhand <- read_csv("aoi_position/aoi_bears_right_hand.csv",
+rhand <- read_csv("aoi_position/aoi_bears_right.csv",
                   col_types = cols(sec = col_double(),
                                    x = col_double(),
                                    y = col_double()
@@ -254,7 +232,7 @@ rhand_expanded <- seq(1, max(rhand$sec)) %>%
   left_join(rhand, by = 'sec') %>%
   fill(x, y)
 
-lhand <- read_csv("aoi_position/aoi_bears_left_hand.csv",
+lhand <- read_csv("aoi_position/aoi_bears_left.csv",
                   col_types = cols(sec = col_double(),
                                    x = col_double(),
                                    y = col_double()
@@ -268,7 +246,7 @@ lhand_expanded <- seq(1, max(lhand$sec)) %>%
   left_join(lhand, by = 'sec') %>%
   fill(x, y)
 
-mouth <- read_csv("aoi_position/aoi_bears_mouth.csv",
+mouth <- read_csv("aoi_position/aoi_bears.csv",
                   col_types = cols(sec = col_double(),
                                    x = col_double(),
                                    y = col_double()
@@ -359,27 +337,27 @@ Eye gaze data has missing values though, and CRQA doesn't like them. So umm, let
 
 ```{r}
 # Functions for running CRQA on the right hand
-crqa_rhand <- function(x){
+run_crqa_rhand <- function(x){
   crqa(x, rhand_y, delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
 }
 
-crqa_rhand_shuffled <- function(x){
+run_crqa_rhand_shuffled <- function(x){
   crqa(sample(x), sample(rhand_y), delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
 }
 
-crqa_lhand <- function(x){
+run_crqa_lhand <- function(x){
   crqa(x, lhand_y, delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
 }
 
-crqa_lhand_shuffled <- function(x){
+run_crqa_lhand_shuffled <- function(x){
   crqa(sample(x), sample(lhand_y), delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
 }
 
-crqa_mouth <- function(x){
+run_crqa_mouth <- function(x){
   crqa(x, mouth_y, delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
 }
 
-crqa_mouth_shuffled <- function(x){
+run_crqa_mouth_shuffled <- function(x){
   crqa(sample(x), sample(mouth_y), delay = 9, embed = 3, rescale = 2, radius = 20, normalize = 2, mindiagline = 2, minvertline = 2, tw = 0, whiteline = FALSE, recpt = FALSE, side = 'both')
 }
 
@@ -390,17 +368,22 @@ crqa_data <- data_ma %>%
   fill(y_ma5) %>%
   group_by(name) %>%
   nest(y_ma5) %>%
-  mutate(crqa_rhand = future_map(data, crqa_rhand),
-         crqa_rhand_sh = future_map(data, crqa_rhand_shuffled),
-         crqa_lhand = future_map(data, crqa_lhand),
-         crqa_lhand_sh = future_map(data, crqa_lhand_shuffled),
-         crqa_mouth = future_map(data, crqa_mouth),
-         crqa_mouth_sh = future_map(data, crqa_mouth_shuffled))
+  mutate(rhand = future_map(data, run_crqa_rhand),
+         rhand_sh = future_map(data, run_crqa_rhand_shuffled))
+#         lhand = future_map(data, run_crqa_lhand),
+#         lhand_sh = future_map(data, run_crqa_lhand_shuffled),
+#         mouth = future_map(data, run_crqa_mouth),
+#         mouth_sh = future_map(data, run_crqa_mouth_shuffled))
+
+participants <- data %>%
+  distinct(name, maingroup)
 
 crqa_results <- crqa_data %>%
   select(-data) %>%
-  left_join(data, by = "name") %>%
-  select(name, maingroup, crqa_rhand:crqa_mouth_sh) 
+  left_join(participants, by = "name") %>%
+  select(name, maingroup, everything())
+
+write_rds(crqa_results, "~/Desktop/crqa.rds")
 ```
 
 Not finished yet... 
@@ -408,6 +391,13 @@ Not finished yet...
 ```{r eval=FALSE, include=FALSE}
 
 # I have to rewrite all this code, it worked before I started listing all CRQA results instead of just returning the RR value... 
+crqa_results <- read_rds("~/Desktop/crqa.rds")
+
+that <- crqa_results %>%
+  mutate(rhand_rr = map_dbl(rhand, pluck, "RR"),
+         rhand_det = map_dbl(rhand, pluck, "DET"),
+         rhand_sh_rr = map_dbl(rhand_sh, pluck, "RR"),
+         rhand_sh_det = map_dbl(rhand_sh, pluck, "DET"))
 
 crqa_results_group <- crqa_results %>%
   group_by(maingroup) %>%
