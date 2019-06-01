@@ -49,7 +49,7 @@ map2(files_to_process$aoi_data, files_to_process$to_save_as, batch_get_xy_timest
 
 # Intro
 
-So we had a bunch of people watch a video of a person telling a story (Three Bears) in American Sign Language (ASL).  We recorded their eye gaze as (x,y) coordinate data. We also have the positions of the signer's right hand, left hand, and mouth throughout the video. We want to measure the relationship between the participant/watcher’s eye gaze, and the position of different elements in the video they are watching. In other words, do the position of the hands in the video "tug" on the watcher's eye gaze? E.g., if the signer's hands get really low near the hips, would the watcher shift their eye gaze downward? We're super curious if this behavior (if exists) is found more often in new signers than fluent signers.
+So we had a bunch of people watch a video of a person telling a story (Three Bears) in American Sign Language (ASL).  We recorded their eye gaze as (x,y) coordinate data. We also have the positions of the signer's right hand, left hand, and mouth throughout the video. We want to measure the relationship between the participant/watcher’s eye gaze, and the position of different elements in the video they are watching. In other words, do the position of the hands in the video "tug" on the watcher's eye gaze? E.g., if the signer's hands get really low near the hips, would the watcher shift their eye gaze downward? We're super curious if this behavior (if exists) is found more often in new signers than fluent signers. (Tobii X120 eye tracker at 120 Hz)
 
 Here's a diagram from [our ICSLA poster](https://twitter.com/foundinblank/status/1012331346558160896).
 
@@ -302,6 +302,8 @@ Is it a problem, however, that the right-hand and left-hand y-position values ar
 ## CRQA Time: Monica vs. Right Hand
 
 We'll do CRQA, using the parameters from [Wallot & Leonardi 2018](https://www.frontiersin.org/articles/10.3389/fpsyg.2018.02232/full). Two CRQAs: (1) normal, and (2) with both time-series shuffled. 
+
+We don't need to normalize the time series beforehand, because the `normalize = 2` argument will rescale based on z-scores. Easy. 
 
 So we've got a RR of 46.59 above a random RR of 22.47. That's good, I think? "RR - repetition of elements across the two sequences." 
 
