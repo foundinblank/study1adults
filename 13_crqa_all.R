@@ -8,6 +8,7 @@ library(furrr)
 library(ggstatsplot)
 library(lme4)
 
+# The results I like come from lines 315-355
 
 # Load All Participants' Eye Tracking Data --------------------------------
 
