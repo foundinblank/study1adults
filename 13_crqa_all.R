@@ -5,6 +5,9 @@ library(skimr)
 library(zoo)
 library(crqa)
 library(furrr)
+library(ggstatsplot)
+library(lme4)
+
 
 # Load All Participants' Eye Tracking Data --------------------------------
 
@@ -234,7 +237,8 @@ data_lists %>%
 
 # Establish CRQA Parameters -----------------------------------------------
 # We will work with forward stories only to establish their parameters, as that's the baseline. 
-# We will establish 4 sets of parameters, one for each story. 
+# We will establish 8 sets of parameters, one for each story and direction. 
+# Note - I re-ran with moving average = 10 and the parameters barely changed so if we want to experiment with more smoothed data, we dont' need to change the parameters for now
 
 mlpar <- list(lgM = 120, 
               radiusspan = 100, 
@@ -250,20 +254,22 @@ mlpar <- list(lgM = 120,
               typeami = "maxlag")
 
 # We might have issues so let's go through each of the 8 batches one by one
-# fw bears - ok (34, 14, 117)
-# fw rrh - phase-space
-# fw cinderella - ok (28, 14, 110)
-# fw midas - ok (20, 10, 120) - took a long time
-# rv bears - ok (19, 14, 117)
-# rv rrh - phase-space
-# rv cinderella (32, 13, 104) with filter(name != "Valerie" & name != "Jesse")
-# rv midas - ok (18, 10, 120)
+# fw bears - (34, 14, 117)
+# fw rrh - (23, 10, 120) with filter(name != "Cami")
+# fw cinderella - (28, 14, 110)
+# fw midas - (20, 10, 120) - took a long time
+# rv bears - (19, 14, 117)
+# rv rrh - (25, 9, 120) with filter(name != "Allison" & name != "Rebecca")
+# rv cinderella - (32, 13, 104) with filter(name != "Valerie" & name != "Jesse")
+# rv midas - (18, 10, 120)
 
+# I use this to help catch when specific people throw phase-space errors
+# my_optimize_params <- safely(optimizeParam)
 
 plan(multiprocess)
 optimize_params <- data_lists %>%
-  filter(direction == "rv") %>%
-  filter(story == "redridinghood") %>%
+  filter(direction == "fw") %>%
+  filter(story == "bears") %>%
   mutate(params = future_map2(eye_y, rhand_y, ~ optimizeParam(.x, .y, mlpar)))
 
 output_params <- optimize_params %>%
@@ -279,3 +285,189 @@ param_means <- output_params %>%
             delay_mean = ceiling(mean(delay)))
 
 param_means
+
+# Collect all our parameters (yes, it's manual, deal with it.)
+story_parameters <- tribble(
+  ~story, ~direction, ~r, ~embeddim, ~delay,
+  "bears", "fw", 34, 14, 117,
+  "redridinghood", "fw", 23, 10, 120,
+  "cinderella", "fw", 28, 14, 110, 
+  "midas", "fw", 20, 10, 120,
+  "bears", "rv", 19, 14, 117, 
+  "redridinghood", "rv", 25, 9, 120,
+  "cinderella", "rv", 32, 13, 104,
+  "midas", "rv", 18, 10, 120
+)
+
+# There are many ways we could do this:
+# 1. One parameter for all 8 videos
+# 2. One averaged forward parameter for all 8 videos
+# 3. Use story's forward parameter for each story, in both fw/rv directions
+# 4. Use each story and each direction's parameter for that story/direction
+# 5. One averaged reversed parameter for all videos (hmm?)
+
+# I am feeling #3 is best. But I think the CRQA authors would think #4. 
+
+# CRQA on All Stories -----------------------------------------------------
+
+# Now let's run CRQA on everything! Eee! 
+# We'll do #1 first. 
+# For #2 just add filter(story == "fw") %>% to our_params thing
+
+our_params <- story_parameters %>%
+  summarise(r = ceiling(mean(r)),
+            embeddim = max(embeddim),
+            delay = ceiling(mean(delay)))
+
+run_crqa <- function(x, y){
+  crqa(x, 
+       y, 
+       delay = our_params$delay, 
+       embed = our_params$embeddim, 
+       rescale = 2, 
+       radius = our_params$r, 
+       normalize = 2, 
+       mindiagline = 2, 
+       minvertline = 2, 
+       tw = 0, 
+       whiteline = FALSE, 
+       recpt = FALSE, 
+       side = 'both')
+}
+
+crqa_data <- data_lists %>%
+  mutate(rhand = future_map2(rhand_y, eye_y, run_crqa))
+
+crqa_results <- crqa_data %>%
+  mutate(rhand_rr = map_dbl(rhand, pluck, "RR"),
+         rhand_det = map_dbl(rhand, pluck, "DET")) %>%
+  select(name, maingroup, story, direction, rhand_rr, rhand_det)
+
+crqa_results %>%
+  ggbetweenstats(x = maingroup, 
+                 y = rhand_rr,
+                 pairwise.comparisons = TRUE,
+                 pairwise.annotation = "p.value",
+                 p.adjust.method = "holm")
+
+m1 <- lm(data = crqa_results, rhand_det ~ maingroup)
+summary(m1)
+m1 <- lmer(data = crqa_results, rhand_det ~ maingroup + (1|story) + (1|name))
+summary(m1)
+
+# This is #3
+
+our_params <- story_parameters %>%
+  filter(direction == "fw") %>%
+  group_by(story) %>%
+  summarise(r = ceiling(mean(r)),
+            embeddim = max(embeddim),
+            delay = ceiling(mean(delay)))
+
+
+current_story <- "midas"
+
+run_crqa <- function(x, y){
+  crqa(x, 
+       y, 
+       delay = filter(our_params, story == current_story)$delay, 
+       embed = filter(our_params, story == current_story)$embeddim, 
+       rescale = 2, 
+       radius = filter(our_params, story == current_story)$r, 
+       normalize = 2, 
+       mindiagline = 2, 
+       minvertline = 2, 
+       tw = 0, 
+       whiteline = FALSE, 
+       recpt = FALSE, 
+       side = 'both')
+  }
+
+crqa_data <- data_lists %>%
+  filter(story == current_story) %>%
+  mutate(rhand = future_map2(eye_y, rhand_y, run_crqa))
+
+# Change name of assigned df
+crqa_results_midas <- crqa_data %>%
+  mutate(rhand_rr = map_dbl(rhand, pluck, "RR"),
+         rhand_det = map_dbl(rhand, pluck, "DET")) %>%
+  select(name, maingroup, story, direction, rhand_rr, rhand_det)
+
+crqa_results <- bind_rows(crqa_results_bears,
+                          crqa_results_redridinghood,
+                          crqa_results_cinderella,
+                          crqa_results_midas)
+
+
+# Visualization and testing...
+crqa_results %>%
+  group_by(maingroup) %>%
+  summarise(rr = mean(rhand_rr),
+            det = mean(rhand_det, na.rm = T))
+
+crqa_results %>%
+  ggplot(aes(x = maingroup, y = rhand_rr, color = maingroup, fill = maingroup)) +
+  geom_boxplot()
+
+crqa_results %>%
+  ggbetweenstats(x = maingroup, 
+                 y = rhand_det,
+                 pairwise.comparisons = TRUE,
+                 pairwise.annotation = "p.value",
+                 p.adjust.method = "holm")
+
+crqa_results %>%
+  grouped_ggbetweenstats(x = maingroup, 
+                         y = rhand_det,
+                         grouping.var = story,
+                         pairwise.comparisons = TRUE,
+                         pairwise.annotation = "p.value",
+                         p.adjust.method = "holm")
+
+m1 <- lmer(data = crqa_results, rhand_det ~ maingroup + (1|story) + (1|name))
+summary(m1)
+
+
+# I'm gonna try #4 - using each story/direction's parameter for that story & direction
+run_crqa_per_story <- function(a, b, c, d, e){
+  crqa(ts1 = a, 
+       ts2 = b, 
+       delay = c, 
+       embed = d, 
+       rescale = 2, 
+       radius = e, 
+       normalize = 2, 
+       mindiagline = 2, 
+       minvertline = 2, 
+       tw = 0, 
+       whiteline = FALSE, 
+       recpt = FALSE, 
+       side = 'both')
+}
+
+data_lists_with_params <- data_lists %>%
+  left_join(story_parameters, by = c("story", "direction"))
+
+plan(multiprocess)
+crqa_results_per_video <- data_lists_with_params %>%
+  mutate(rhand = future_pmap(list(eye_y, 
+                                  rhand_y, 
+                                  delay, 
+                                  embeddim, 
+                                  r), 
+                             run_crqa_per_story))
+
+crqa_results_per_video <- crqa_results_per_video %>%
+  mutate(rhand_rr = map_dbl(rhand, pluck, "RR"),
+         rhand_det = map_dbl(rhand, pluck, "DET")) %>%
+  select(-eye_y, -rhand_y, -rhand)
+
+crqa_results_per_video %>%
+  ggplot(aes(x = rhand_rr)) +
+  geom_histogram(binwidth = 0.5) +
+  geom_vline(xintercept = 1) +
+  geom_vline(xintercept = 5) +
+  facet_grid(story ~ direction)
+
+m2 <- lmer(data = crqa_results_per_video, rhand_det ~ maingroup * direction + (1|story) + (1|name))
+summary(m2)
