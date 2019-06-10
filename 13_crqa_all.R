@@ -241,18 +241,18 @@ data_lists %>%
 # We will establish 8 sets of parameters, one for each story and direction. 
 # Note - I re-ran with moving average = 10 and the parameters barely changed so if we want to experiment with more smoothed data, we dont' need to change the parameters for now
 
-mlpar <- list(lgM = 120, 
-              radiusspan = 100, 
-              radiussample = 10, 
-              normalize = 2, 
-              rescale = 2, 
-              mindiagline = 2, 
-              minvertline = 2, 
-              tw = 0, 
-              whiteline = FALSE, 
-              recpt = FALSE, 
-              fnnpercent = 10, 
-              typeami = "maxlag")
+# mlpar <- list(lgM = 120, 
+#               radiusspan = 100, 
+#               radiussample = 10, 
+#               normalize = 2, 
+#               rescale = 2, 
+#               mindiagline = 2, 
+#               minvertline = 2, 
+#               tw = 0, 
+#               whiteline = FALSE, 
+#               recpt = FALSE, 
+#               fnnpercent = 10, 
+#               typeami = "maxlag")
 
 # We might have issues so let's go through each of the 8 batches one by one
 # fw bears - (34, 14, 117)
@@ -267,25 +267,25 @@ mlpar <- list(lgM = 120,
 # I use this to help catch when specific people throw phase-space errors
 # my_optimize_params <- safely(optimizeParam)
 
-plan(multiprocess)
-optimize_params <- data_lists %>%
-  filter(direction == "fw") %>%
-  filter(story == "bears") %>%
-  mutate(params = future_map2(eye_y, rhand_y, ~ optimizeParam(.x, .y, mlpar)))
-
-output_params <- optimize_params %>%
-  group_by(name) %>%
-  mutate(r = pluck(params, 1, 1),
-         dim = pluck(params, 1, 2),
-         delay = pluck(params, 1, 3))
-
-param_means <- output_params %>%
-  ungroup() %>%
-  summarise(r_mean = ceiling(mean(r)),
-            dim_mean = ceiling(mean(dim)),
-            delay_mean = ceiling(mean(delay)))
-
-param_means
+# plan(multiprocess)
+# optimize_params <- data_lists %>%
+#   filter(direction == "fw") %>%
+#   filter(story == "bears") %>%
+#   mutate(params = future_map2(eye_y, rhand_y, ~ optimizeParam(.x, .y, mlpar)))
+# 
+# output_params <- optimize_params %>%
+#   group_by(name) %>%
+#   mutate(r = pluck(params, 1, 1),
+#          dim = pluck(params, 1, 2),
+#          delay = pluck(params, 1, 3))
+# 
+# param_means <- output_params %>%
+#   ungroup() %>%
+#   summarise(r_mean = ceiling(mean(r)),
+#             dim_mean = ceiling(mean(dim)),
+#             delay_mean = ceiling(mean(delay)))
+# 
+# param_means
 
 # Collect all our parameters (yes, it's manual, deal with it.)
 story_parameters <- tribble(
@@ -308,6 +308,129 @@ story_parameters <- tribble(
 # 5. One averaged reversed parameter for all videos (hmm?)
 
 # I am feeling #3 is best. But I think the CRQA authors would think #4. 
+
+
+
+# Optimizing Radius  ------------------------------------------------------
+# Per Wallot & Leonardi, we're going to run multiple CRQAs on each participant using 
+# the averaged CRQA parameters for embeddim & delay, fixing the target
+# %REC (that's RR) at 5.0% and then optimizing the radius. 
+# Then we'll run CRQA again using that radius. 
+
+test_radius <- list(seq(5,60))
+
+run_crqa_return_rr <- function(a, b, c, d, e){
+  results <- crqa(a, 
+                  b, 
+                  delay = d, 
+                  embed = c, 
+                  rescale = 2, 
+                  radius = e, 
+                  normalize = 2, 
+                  mindiagline = 2, 
+                  minvertline = 2, 
+                  tw = 0, 
+                  whiteline = FALSE, 
+                  recpt = FALSE, 
+                  side = 'both')
+  return(results[['RR']])
+}
+
+plan(multiprocess)
+start_time <- Sys.time()
+optimizing_radius <- data_lists %>%
+  left_join(story_parameters, by = c("story", "direction")) %>%
+  select(-r) %>%
+  add_column(test_radius) %>%
+  unnest(test_radius, .drop = F) %>%
+  group_by(name, story, direction) %>%
+  mutate(rr_values = future_pmap_dbl(list(eye_y,
+                                          rhand_y,
+                                          embeddim,
+                                          delay,
+                                          test_radius), run_crqa_return_rr))
+end_time <- Sys.time()
+end_time - start_time
+# Time difference of 2.501935 hours
+
+saveRDS(optimizing_radius, "crqa.RDS")
+
+target_radius <- optimizing_radius %>%
+  select(name, story, direction, test_radius, rr_values) %>%
+  mutate(diff = abs(5 - rr_values)) %>%
+  group_by(name, story, direction) %>%
+  filter(diff == min(diff)) %>%
+  ungroup() %>%
+  select(name, story, direction, test_radius)
+
+
+
+
+# CRQA on All Stories All Directions --------------------------------------
+
+data_lists_optimized <- data_lists %>%
+  left_join(story_parameters, by = c("story", "direction")) %>%
+  select(-r) %>%
+  left_join(target_radius, by = c("name", "story", "direction")) %>%
+  rename(optimized_r = test_radius)
+
+run_crqa <- function(a, b, c, d, e){
+  crqa(a, 
+       b, 
+       radius = c, 
+       embed = d, 
+       delay = e, 
+       rescale = 2, 
+       normalize = 2, 
+       mindiagline = 2, 
+       minvertline = 2, 
+       tw = 0, 
+       whiteline = FALSE, 
+       recpt = FALSE, 
+       side = 'both')
+}
+
+crqa_data <- data_lists_optimized %>%
+  mutate(rhand = future_pmap(list(eye_y, rhand_y, optimized_r, embeddim, delay),
+                             run_crqa))
+
+crqa_results <- crqa_data %>%
+  mutate(rhand_rr = map_dbl(rhand, pluck, "RR"),
+         rhand_det = map_dbl(rhand, pluck, "DET"),
+         rhand_nrline = map_dbl(rhand, pluck, "NRLINE"),
+         rhand_maxl = map_dbl(rhand, pluck, "maxL"),
+         rhand_l = map_dbl(rhand, pluck, "L"),
+         rhand_entr = map_dbl(rhand, pluck, "ENTR"),
+         rhand_r_ENTR = map_dbl(rhand, pluck, "rENTR"),
+         rhand_lam = map_dbl(rhand, pluck, "LAM"),
+         rhand_tt = map_dbl(rhand, pluck, "TT")) %>%
+  select(name, maingroup, story, direction, embeddim, delay, optimized_r, rhand_rr:rhand_tt)
+
+write_csv(crqa_results, "crqa_results.csv")
+crqa_results <- read_csv("crqa_results.csv")
+
+plot(crqa_results[,5:16])
+
+library(lmerTest)
+m1 <- lmer(data = crqa_results, optimized_r ~ maingroup * direction + (1|story) + (1|name))
+summary(m1)
+
+crqa_results %>%
+  ggbetweenstats(x = maingroup, 
+                 y = optimized_r,
+                 pairwise.comparisons = TRUE,
+                 pairwise.annotation = "p.value",
+                 p.adjust.method = "holm")
+
+crqa_results %>%
+  grouped_ggbetweenstats(x = maingroup, 
+                         y = optimized_r,
+                         grouping.var = direction,
+                         pairwise.comparisons = TRUE,
+                         pairwise.annotation = "p.value",
+                         p.adjust.method = "holm")
+
+
 
 # CRQA on All Stories -----------------------------------------------------
 

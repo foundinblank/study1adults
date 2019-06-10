@@ -1,0 +1,128 @@
+---
+title: "CRQA Results Writeup"
+author: "Adam Stone, PhD"
+date: '`r format(Sys.Date(), "%m-%d-%Y")`'
+output:
+  html_notebook:
+    code_folding: hide
+    highlight: tango
+    theme: cosmo
+    toc: yes
+    toc_depth: 2
+    toc_float: yes
+---
+
+# Overview 
+
+I ran CRQA on lots of participants on all 4 stories, in both 2 directions. We get a lot of outcome variables. 
+
+Specifically, when figuring out the parameters, I did a two-pass system: 
+
+1. Ran parameter opitimization individually on all participants/stories/directions
+2. Averaged together the embeddim and delay parameters for each story & direction (so 8 sets total)
+3. Ran CRQA on all participants/stories/directions, varying the radius parameter between 10 and 60 and using the averaged embeedim and delay parameters for that story & direction.
+4. Selected the "optimized radius" that resulted in a %REC = 5.0 per [Wallot & Leonardi 2018](https://www.frontiersin.org/articles/10.3389/fpsyg.2018.02232/full). (See quote below.)
+5. Ran CRQA using the averaged embeddim & delay parameter for that story/direction, and the optimized radius for that particular time-series. 
+
+The current dataset is 179 time-series, so that's 179 CRQAs!
+
+> If the data sets cannot be reasonably fitted with a single radius parameter – that is, for some value of r, some of the data sets are at or close to %REC = 100%, and at the same time some are at or close to %REC = 0%, one can adjust the radius for each data set individually in order to keep the percentage of recurrence constant across all data sets (e.g., fixed percent recurrence of %REC = 5% for each data set). Of course, in this case, %REC needs to be omitted from the inferential statistical analysis, as it should be very similar (or the same) across pairings in all samples, but the other measures, such as %DET, ADL, and MDL can be still analyzed (as a stand-in for %REC, one can instead include analysis of the radius parameter r that is now different across pairs of groups of time-series. However, this might not yield the same results, as r and %REC do not scale linearly with each other).
+
+Here's an idea of our raw results: 
+
+```{r message=FALSE}
+library(tidyverse)
+library(lme4)
+library(lmerTest)
+library(ggstatsplot)
+
+crqa <- read_csv("crqa_results.csv")
+crqa
+```
+
+And our participants: 
+
+```{r}
+crqa %>%
+  group_by(maingroup) %>%
+  distinct(name) %>%
+  count(maingroup)
+```
+
+# Radius
+
+>  The radius parameter r effectively specifies the interval within which two values are counted as being recurrent. 
+
+It's a parameter that tells us how close or far apart the two time-series, at any point in time, can be while still being considered recurrent. We allowed this to vary whil keeping the %REC = 5% (sum of recurrent points in the time-series). A smaller radius indicates the threshold is lower for the two time-series to exhibit 5% REC, so they are more "alike" while a larger radius indicates a higher threshold, meaning the two time-series are more dissimilar and thus we had to make the radius bigger in order to achieve 5% REC. 
+
+The random effects model tell us of some small effects of direction where reversed video has smaller radius (meaning tighter coupling), and Hearing Novice seem to have more tight coupling (smaller radius) overall. 
+```{r}
+crqa %>%
+  group_by(maingroup, direction) %>%
+  summarise(mean = mean(optimized_r)) %>%
+  spread(direction, mean)
+
+crqa %>%
+  ggplot(aes(x = maingroup,
+             y = optimized_r,
+             fill = direction)) +
+  geom_boxplot() +
+  facet_wrap("direction")
+
+m1 <- lmer(data = crqa, optimized_r ~ maingroup * direction + (1|story) + (1|name))
+summary(m1)
+```
+
+# Determinism 
+
+"How many of the individual repetitions co-occur in connected trajectories." It is the sum of diagonally adjacent recurrent points. 
+
+> Counting all recurrent points that have other, diagonally adjacent recurrent points and dividing them by %REC tells us something about the degree to which elements that occur in one sequence as larger, connected patterns also occur in the other sequence in the same order. This quantity is called percent determinism (%DET).
+
+No strong patterns here - all have pretty high determinism, which may indicate that the system is very predictive, hand position does predict eye location well, but the degree of coupling varies (the radius). Or it doesn't at all. Dunno. 
+
+```{r}
+crqa %>%
+  group_by(maingroup, direction) %>%
+  summarise(mean = mean(rhand_det)) %>%
+  spread(direction, mean)
+
+crqa %>%
+  ggplot(aes(x = maingroup,
+             y = rhand_det,
+             fill = direction)) +
+  geom_boxplot() +
+  facet_wrap("direction")
+
+m1 <- lmer(data = crqa, rhand_det ~ maingroup * direction + (1|story) + (1|name))
+summary(m1)
+```
+
+
+# Average Size of Shared Patterns
+
+"How long the average cross-repeating trajectory is" 
+> Counting the average length of all diagonal lines of cross-recurrence points tells us something about the average size of the shared patterns (Average Diagonal Line, ADL).
+
+No strong results or patterns here...
+
+```{r}
+crqa %>%
+  group_by(maingroup, direction) %>%
+  summarise(mean = mean(rhand_l)) %>%
+  spread(direction, mean)
+
+crqa %>%
+  ggplot(aes(x = maingroup,
+             y = rhand_l,
+             fill = direction)) +
+  geom_boxplot() +
+  facet_wrap("direction")
+
+m1 <- lmer(data = crqa, rhand_l ~ maingroup * direction + (1|story) + (1|name))
+summary(m1)
+```
+
+# DRCP
+
+Next I'd like to try DRCP. 
