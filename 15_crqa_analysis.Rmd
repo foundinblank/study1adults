@@ -82,8 +82,76 @@ final <- results %>%
 rm('results')
 rm('input_data')
 
+# Print summaries
+skim_with(numeric = list(p25 = NULL,
+                         p75 = NULL),
+          integer = list(p25 = NULL,
+                         p75 = NULL))
 skim(final)
 ```
 
+# Radius Values
 
+Because we fixed the %REC (`RR`) to 5.0, that means the radius varies for each row. See below:
+
+> If the data sets cannot be reasonably fitted with a single radius parameter...one can adjust the radius for each data set individually in order to keep the percentage of recurrence constant across all data sets (e.g., fixed percent recurrence of %REC = 5% for each data set). Of course, in this case, %REC needs to be omitted from the inferential statistical analysis, as it should be very similar (or the same) across pairings in all samples, but the other measures, such as %DET, ADL, and MDL can be still analyzed (as a stand-in for %REC, one can instead include analysis of the radius parameter r that is now different across pairs of groups of time-series. However, this might not yield the same results, as r and %REC do not scale linearly with each other).
+
+So we can use radius as an outcome variable. What does radius mean? 
+
+> The radius parameter r effectively specifies the interval within which two values are counted as being recurrent. 
+
+So in other words, if we kept %REC = 5.0, that forces the radius to vary so that 5.0% of all possible points show recurrence. If the radius is high, that means the two time-series were "farther apart" and the higher radius was necessary in order to bring those two time-series into 5.0% recurrence. Conversely, a low radius indicates the two time-series do share more recurrence and thus a tighter radius still achieved 5.0% recurrence. 
+
+Let's model that!
+
+* Predictors: maingroup & direction
+* Grouping variables (random intercepts): name & story
+* Random slopes: hand (for name...so for each participant we allow the slope to vary for right vs. left)
+
+```{r message=FALSE, warning=FALSE}
+
+# Plot means
+final_n <- final %>%
+  select(name, maingroup, direction, story, hand) %>%
+  distinct() %>%
+  count(maingroup, direction, hand)
+
+final_summary <- final %>%
+  group_by(maingroup, direction, hand) %>%
+  summarise(radius_mean = mean(radius),
+            radius_sd = sd(radius)) %>%
+  ungroup() %>%
+  left_join(final_n, by = c("maingroup", "direction", "hand")) %>%
+  mutate(radius_se = radius_sd/sqrt(n))
+  
+final_summary %>%
+  filter(hand == "right") %>%
+  ggplot(aes(x = maingroup, y = radius_mean, color = direction, fill = direction)) +
+  geom_point(position = position_dodge(width = 0.25), size = 2) +
+  geom_errorbar(aes(ymin = radius_mean - radius_se, ymax = radius_mean + radius_se),
+                position = position_dodge(width = 0.25),
+                width = 0.2,
+                size = 1) +
+  scale_y_continuous(limits = c(20, 37)) +
+  labs(x = "",
+       y = "radius",
+       title = "Radius Values for 5.0% Recurrence") +
+  theme_light()
+
+# Fit model
+m1 <- lmer(data = final, radius ~ maingroup * direction + (1 + hand|name) + (1|story))
+tidy(m1, conf.int = TRUE) %>%
+  mutate_if(is.numeric, round, 2) %>%
+  filter(effect == 'fixed') %>%
+  select(-effect, -group)
+
+# Plot model coefficients
+# https://cran.r-project.org/web/packages/sjPlot/vignettes/plot_model_estimates.html
+plot_model(m1, 
+           show.values = TRUE, value.offset = .3, 
+           order.terms = c(4, 1:3, 5:7),
+           width = .2,
+           dot.size = 1,
+           title = "Model Predictors for Radius (95% CI)")
+```
 
