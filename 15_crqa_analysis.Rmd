@@ -1,0 +1,30 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+OK! After messy code in 12_, 13_, and 14_ (should clean it up, eek), we have CRQA results all over. Cool. Let's load 'em all. 
+
+```{r Load Files, message=FALSE, warning=FALSE}
+
+# Load libraries
+library(tidyverse)
+library(janitor)
+library(lme4)
+library(broom)
+library(broom.mixed)
+library(sjPlot)
+
+# This are the data frames (with lists, etc.) used for finding the optimal radius for each person's eye gaze, against both the right hand and the left hand. First, we took all data associated with each story x direction x hand, and found the optimal embeddim and delay parameters for each via the optimizeParam() function. Then we ran those optimal parameters in CRQAs with a radius range of 5-60 ("test radius") to get associated rr_values. The target rr_value was 5, and the test radius that produced the target rr_value was then used for the final CRQA. 
+crqa_inputdata_r <- readRDS("crqa_rhand.RDS") %>%
+  add_column(hand = "right") %>%
+  
+crqa_inputdata_l <- readRDS("crqa_lhand.RDS")
+
+# These are the CRQA results for each participant x story x direction x hand, using the test radius 
+crqa_results_r <- read_csv("crqa_results_rhand.csv")
+crqa_results_l <- read_csv("crqa_results_lhand.csv")
+```
+
+
+
