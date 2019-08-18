@@ -248,6 +248,8 @@ averaged_y <- data %>%
             y_count = n(),
             y_se = y_sd/sqrt(y_count))
 
+write_csv(averaged_y, "bears_time_series_group_averages.csv")
+
 library(hrbrthemes)
 averaged_y %>%
   ggplot() + 
