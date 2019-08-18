@@ -1,6 +1,14 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: "CRQA Final Results"
+author: "Adam Stone, PhD"
+date: '`r format(Sys.Date(), "%m-%d-%Y")`'
+output:
+  html_notebook:
+    code_folding: hide
+    highlight: tango
+    theme: yeti
+    toc: yes
+    toc_depth: 2
 ---
 
 ```{r Load Libraries, message=FALSE, warning=FALSE}
@@ -13,6 +21,7 @@ library(broom.mixed)
 library(sjPlot)
 library(assertr)
 library(skimr)
+library(hrbrthemes)
 ```
 
 
@@ -108,6 +117,8 @@ Let's model that!
 * Grouping variables (random intercepts): name & story
 * Random slopes: hand (for name...so for each participant we allow the slope to vary for right vs. left)
 
+It's actually a good thing we have CRQA results for both left and right hands. We know there is not a world of a difference between them, so we can "double" the dataset by adding "hand" as a random effects variable! 
+
 ```{r message=FALSE, warning=FALSE}
 
 # Plot means
@@ -135,7 +146,7 @@ final_summary %>%
   scale_y_continuous(limits = c(20, 37)) +
   labs(x = "",
        y = "radius",
-       title = "Radius Values for 5.0% Recurrence") +
+       title = "Radius Values for 5.0% Recurrence With Right Hand Position") +
   theme_light()
 
 # Fit model
@@ -153,5 +164,56 @@ plot_model(m1,
            width = .2,
            dot.size = 1,
            title = "Model Predictors for Radius (95% CI)")
+```
+
+The interpretation is :  
+
+1. We have a main effect of direction. RV results in smaller radius values, which means *more tightly coupled* viewing. Reversing video makes people pay more attention to the hands. 
+1. There is no main effect of MainGroup...although Hearing Novice gets close. 
+1. We have an interaction of Maingroup & Direction, where Hearing Noivce, when confronted w reverse video, become *less coupled* to hand position. It's possible they dis-engage and engage in poorer viewing behavior in general!
+
+
+# Time-Series Plot
+
+We need a plot like this for the poster, to give people an idea of what we are talking about. This was submitted with the abstract as figure 2. Re-creating it here. 
+
+```{r}
+
+averaged_y <- read_csv("bears_time_series_group_averages.csv")
+
+averaged_y %>%
+  ggplot() + 
+  geom_line(aes(x = gaze_point_index, y = y_mean, color = maingroup), size = 0.8) +
+  geom_ribbon(aes(x = gaze_point_index, 
+                  ymin = y_mean-y_se, 
+                  ymax = y_mean+y_se,
+                  fill = maingroup), alpha = 0.5) +
+  scale_y_reverse(limits = c(1200,0)) +
+  facet_wrap("maingroup") +
+  labs(x = "time (ms)", y = "pixels", title = "Figure 1. Vertical Eye Gaze Position Across One ASL Narrative") +
+  guides(color = F, fill = F) +
+  theme_ipsum_rc()
+
+averaged_y %>%
+  ggplot() + 
+  geom_line(aes(x = gaze_point_index, y = y_mean, color = maingroup)) +
+  geom_ribbon(aes(x = gaze_point_index, 
+                  ymin = y_mean-y_se, 
+                  ymax = y_mean+y_se,
+                  fill = maingroup), alpha = 0.5) +
+  scale_y_reverse(limits = c(1200,0)) +
+  theme_bw()
+
+averaged_y %>%
+  filter(maingroup == "DeafEarly" | maingroup == "HearingNovice") %>%
+  ggplot() + 
+  geom_line(aes(x = gaze_point_index, y = y_mean, color = maingroup), size = 0.8) +
+  geom_ribbon(aes(x = gaze_point_index, 
+                  ymin = y_mean-y_se, 
+                  ymax = y_mean+y_se,
+                  fill = maingroup), alpha = 0.1) +
+  scale_y_reverse(limits = c(700,300)) +
+  labs(x = "time (ms)", y = "pixels", title = "Figure 2. Deaf Early Signers vs. Hearing Novice Signers", color = "", fill = "") +
+  theme_ipsum_rc()
 ```
 
