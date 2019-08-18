@@ -155,6 +155,7 @@ data_ma <- data %>%
   
 
 # Get Right Hand Data -----------------------------------------------------
+# At around line 600 we combine this with LEFT HAND DATA 
 max_per_story <- data_ma %>% 
   group_by(story, name) %>%
   summarise(max_rows = n()) %>%
@@ -353,8 +354,9 @@ end_time <- Sys.time()
 end_time - start_time
 # Time difference of 2.501935 hours
 
-saveRDS(optimizing_radius, "crqa.RDS")
+saveRDS(optimizing_radius, "crqa_rhand.RDS")
 
+# optimizing_radius <- readRDS("crqa_rhand.RDS")
 target_radius <- optimizing_radius %>%
   select(name, story, direction, test_radius, rr_values) %>%
   mutate(diff = abs(5 - rr_values)) %>%
@@ -363,8 +365,9 @@ target_radius <- optimizing_radius %>%
   ungroup() %>%
   select(name, story, direction, test_radius)
 
-
-
+# checking normality 
+target_radius %>% ggplot(aes(x = test_radius)) + geom_density()
+car::qqPlot(target_radius$test_radius)
 
 # CRQA on All Stories All Directions --------------------------------------
 
@@ -595,3 +598,255 @@ crqa_results_per_video %>%
 
 m2 <- lmer(data = crqa_results_per_video, rhand_det ~ maingroup * direction + (1|story) + (1|name))
 summary(m2)
+
+
+
+# NEW STUFF AS OF 17 August
+# Get Right Hand & Left Hand Data -----------------------------------------------------
+max_per_story <- data_ma %>% 
+  group_by(story, name) %>%
+  summarise(max_rows = n()) %>%
+  group_by(story) %>%
+  summarise(max = max(max_rows)) %>%
+  spread(story, max)
+
+rhand_files <- list.files("aoi_position",
+                          pattern = "right",
+                          full.names = T) %>%
+  set_names(.)
+
+rhand <- rhand_files %>%
+  map_dfr(read_csv, .id = "source", 
+          col_types = cols(sec = col_double(),
+                           x = col_double(),
+                           y = col_double()
+          )) %>%
+  mutate(story = str_remove(source, "aoi_position/aoi_"),
+         story = str_remove(story, "_right.csv")) %>%
+  select(-source) %>%
+  mutate(sec = floor(sec*120)) %>%
+  mutate(sec = sec + 1) %>%
+  add_row(story = "bears", sec = max_per_story$bears) %>%
+  add_row(story = "redridinghood", sec = max_per_story$redridinghood) %>%
+  add_row(story = "midas", sec = max_per_story$midas) %>%
+  add_row(story = "cinderella", sec = max_per_story$cinderella) %>%
+  arrange(story, sec) %>%
+  group_by(story) %>%
+  fill(x, y) %>%
+  # Fix duplicate gaze_point_index 
+  group_by(story, sec) %>%
+  slice(1)
+
+bears_rhand <- seq(1, max_per_story$bears) %>%
+  enframe(name = NULL, value = 'sec') %>%
+  left_join(filter(rhand, story == "bears"), by = "sec") %>%
+  fill(story, x, y)
+
+cinderella_rhand <- seq(1, max_per_story$cinderella) %>%
+  enframe(name = NULL, value = 'sec') %>%
+  left_join(filter(rhand, story == "cinderella"), by = "sec") %>%
+  fill(story, x, y)
+
+midas_rhand <- seq(1, max_per_story$midas) %>%
+  enframe(name = NULL, value = 'sec') %>%
+  left_join(filter(rhand, story == "midas"), by = "sec") %>%
+  fill(story, x, y) 
+
+redridinghood_rhand <- seq(1, max_per_story$redridinghood) %>%
+  enframe(name = NULL, value = 'sec') %>%
+  left_join(filter(rhand, story == "redridinghood"), by = "sec") %>%
+  fill(story, x, y)
+
+rhand_all <- bind_rows(bears_rhand,
+                       cinderella_rhand,
+                       midas_rhand,
+                       redridinghood_rhand) %>%
+  group_by(story) %>%
+  summarise(rhand_y = list(y)) %>%
+  mutate(rhand_len = lengths(rhand_y))
+
+
+
+# Combine Both Datasets ---------------------------------------------------
+
+# Combine our eye tracking data and right hand data
+# We can check lengths to make sure both vectors match for each participant & story
+
+data_lists <- data_ma %>%
+  group_by(name, maingroup, story, direction) %>%
+  summarise(eye_y = list(y_ma5)) %>%
+  mutate(eye_len = lengths(eye_y)) %>%
+  left_join(rhand_all, by = "story") %>%
+  ungroup()
+
+data_lists %>%
+  mutate(samesame = rhand_len == eye_len) %>%
+  filter(!samesame)
+
+# Now get left hand data
+
+max_per_story <- data_ma %>% 
+  group_by(story, name) %>%
+  summarise(max_rows = n()) %>%
+  group_by(story) %>%
+  summarise(max = max(max_rows)) %>%
+  spread(story, max)
+
+lhand_files <- list.files("aoi_position",
+                          pattern = "left",
+                          full.names = T) %>%
+  set_names(.)
+
+lhand <- lhand_files %>%
+  map_dfr(read_csv, .id = "source", 
+          col_types = cols(sec = col_double(),
+                           x = col_double(),
+                           y = col_double()
+          )) %>%
+  mutate(story = str_remove(source, "aoi_position/aoi_"),
+         story = str_remove(story, "_left.csv")) %>%
+  select(-source) %>%
+  mutate(sec = floor(sec*120)) %>%
+  mutate(sec = sec + 1) %>%
+  add_row(story = "bears", sec = max_per_story$bears) %>%
+  add_row(story = "redridinghood", sec = max_per_story$redridinghood) %>%
+  add_row(story = "midas", sec = max_per_story$midas) %>%
+  add_row(story = "cinderella", sec = max_per_story$cinderella) %>%
+  arrange(story, sec) %>%
+  group_by(story) %>%
+  fill(x, y) %>%
+  # Fix duplicate gaze_point_index 
+  group_by(story, sec) %>%
+  slice(1)
+
+bears_lhand <- seq(1, max_per_story$bears) %>%
+  enframe(name = NULL, value = 'sec') %>%
+  left_join(filter(lhand, story == "bears"), by = "sec") %>%
+  fill(story, x, y)
+
+cinderella_lhand <- seq(1, max_per_story$cinderella) %>%
+  enframe(name = NULL, value = 'sec') %>%
+  left_join(filter(lhand, story == "cinderella"), by = "sec") %>%
+  fill(story, x, y)
+
+midas_lhand <- seq(1, max_per_story$midas) %>%
+  enframe(name = NULL, value = 'sec') %>%
+  left_join(filter(lhand, story == "midas"), by = "sec") %>%
+  fill(story, x, y) 
+
+redridinghood_lhand <- seq(1, max_per_story$redridinghood) %>%
+  enframe(name = NULL, value = 'sec') %>%
+  left_join(filter(lhand, story == "redridinghood"), by = "sec") %>%
+  fill(story, x, y)
+
+lhand_all <- bind_rows(bears_lhand,
+                       cinderella_lhand,
+                       midas_lhand,
+                       redridinghood_lhand) %>%
+  group_by(story) %>%
+  summarise(lhand_y = list(y)) %>%
+  mutate(lhand_len = lengths(lhand_y))
+
+
+
+# Combine Both Datasets ---------------------------------------------------
+
+# Add left hand data to data_lists
+data_lists <- data_lists %>%
+  left_join(lhand_all, by = "story")
+
+data_lists %>%
+  mutate(samesame = lhand_len == eye_len) %>%
+  filter(!samesame)
+
+# Run CRQA 
+# First, get story_parameters from above 
+# And get target_radius from above too
+
+# So really, we're using the same target radius found via rhand for lhand too 
+data_lists_optimized <- data_lists %>%
+  left_join(story_parameters, by = c("story", "direction")) %>%
+  select(-r) %>%
+  left_join(target_radius, by = c("name", "story", "direction")) %>%
+  rename(optimized_r = test_radius)
+
+run_crqa <- function(a, b, c, d, e){
+  crqa(a, 
+       b, 
+       radius = c, 
+       embed = d, 
+       delay = e, 
+       rescale = 2, 
+       normalize = 2, 
+       mindiagline = 2, 
+       minvertline = 2, 
+       tw = 0, 
+       whiteline = FALSE, 
+       recpt = FALSE, 
+       side = 'both')
+}
+
+plan(multiprocess)
+crqa_data <- data_lists_optimized %>%
+  mutate(rhand = future_pmap(list(eye_y, rhand_y, optimized_r, embeddim, delay),
+                             run_crqa)) %>%
+  mutate(lhand = future_pmap(list(eye_y, lhand_y, optimized_r, embeddim, delay),
+                             run_crqa))
+
+
+crqa_results <- crqa_data %>%
+  mutate(rhand_rr = map_dbl(rhand, pluck, "RR"),
+         rhand_det = map_dbl(rhand, pluck, "DET"),
+         rhand_nrline = map_dbl(rhand, pluck, "NRLINE"),
+         rhand_maxl = map_dbl(rhand, pluck, "maxL"),
+         rhand_l = map_dbl(rhand, pluck, "L"),
+         rhand_entr = map_dbl(rhand, pluck, "ENTR"),
+         rhand_r_ENTR = map_dbl(rhand, pluck, "rENTR"),
+         rhand_lam = map_dbl(rhand, pluck, "LAM"),
+         rhand_tt = map_dbl(rhand, pluck, "TT")) %>%
+  mutate(lhand_rr = map_dbl(lhand, pluck, "RR"),
+         lhand_det = map_dbl(lhand, pluck, "DET"),
+         lhand_nrline = map_dbl(lhand, pluck, "NRLINE"),
+         lhand_maxl = map_dbl(lhand, pluck, "maxL"),
+         lhand_l = map_dbl(lhand, pluck, "L"),
+         lhand_entr = map_dbl(lhand, pluck, "ENTR"),
+         lhand_r_ENTR = map_dbl(lhand, pluck, "rENTR"),
+         lhand_lam = map_dbl(lhand, pluck, "LAM"),
+         lhand_tt = map_dbl(lhand, pluck, "TT")) %>%
+  select(name, maingroup, story, direction, embeddim, delay, optimized_r, rhand_rr:lhand_tt)
+
+# Making sure we got the same results again for rhand
+# old_results <- read_csv("crqa_results.csv")
+# head(old_results$rhand_rr)
+# head(crqa_results$rhand_rr)
+
+#write_csv(crqa_results, "crqa_results_both_hands.csv")
+
+
+library(lmerTest)
+m1 <- lmer(data = crqa_results, optimized_r ~ maingroup * direction + (1|story) + (1|name))
+summary(m1)
+
+crqa_results %>%
+  ggbetweenstats(x = maingroup, 
+                 y = optimized_r,
+                 pairwise.comparisons = TRUE,
+                 pairwise.annotation = "p.value",
+                 p.adjust.method = "holm")
+
+crqa_results %>%
+  grouped_ggbetweenstats(x = maingroup, 
+                         y = optimized_r,
+                         grouping.var = direction,
+                         pairwise.comparisons = TRUE,
+                         pairwise.annotation = "p.value",
+                         p.adjust.method = "holm")
+
+gathered <- crqa_results %>%
+  select(name, maingroup, story, direction, rhand_det, lhand_det) %>%
+  rename(rhand = rhand_det,
+         lhand = lhand_det) %>%
+  gather(hand, det, rhand:lhand)
+
+m1 <- lmer(data = gathered, det ~ maingroup * direction * hand + (1|story) + (1|name))
+summary(m1)

@@ -160,7 +160,6 @@ data_ma <- data %>%
 
 
 # Get Left Hand Data -----------------------------------------------------
-# At around line 600 we combine this with LEFT HAND DATA 
 max_per_story <- data_ma %>% 
   group_by(story, name) %>%
   summarise(max_rows = n()) %>%
@@ -360,11 +359,11 @@ optimizing_radius <- data_lists %>%
                                           test_radius), run_crqa_return_rr))
 end_time <- Sys.time()
 end_time - start_time
-# Time difference of ___ hours
+# Time difference of 2.18 hours
 
 saveRDS(optimizing_radius, "crqa_lhand.RDS")
 
-# optimizing_radius <- readRDS("crqa_lhand.RDS")
+optimizing_radius <- readRDS("crqa_lhand.RDS")
 target_radius <- optimizing_radius %>%
   select(name, story, direction, test_radius, rr_values) %>%
   mutate(diff = abs(5 - rr_values)) %>%
@@ -376,3 +375,164 @@ target_radius <- optimizing_radius %>%
 # checking normality 
 target_radius %>% ggplot(aes(x = test_radius)) + geom_density()
 car::qqPlot(target_radius$test_radius)
+
+# Now do CRQAs with the target radius 
+
+data_lists_optimized <- data_lists %>%
+  left_join(story_parameters_with_lhand, by = c("story", "direction")) %>%
+  select(-r) %>%
+  left_join(target_radius, by = c("name", "story", "direction")) %>%
+  rename(optimized_r = test_radius)
+
+run_crqa <- function(a, b, c, d, e){
+  crqa(a, 
+       b, 
+       radius = c, 
+       embed = d, 
+       delay = e, 
+       rescale = 2, 
+       normalize = 2, 
+       mindiagline = 2, 
+       minvertline = 2, 
+       tw = 0, 
+       whiteline = FALSE, 
+       recpt = FALSE, 
+       side = 'both')
+}
+
+crqa_data <- data_lists_optimized %>%
+  mutate(lhand = future_pmap(list(eye_y, lhand_y, optimized_r, embeddim, delay),
+                             run_crqa))
+
+crqa_results <- crqa_data %>%
+  mutate(lhand_rr = map_dbl(lhand, pluck, "RR"),
+         lhand_det = map_dbl(lhand, pluck, "DET"),
+         lhand_nrline = map_dbl(lhand, pluck, "NRLINE"),
+         lhand_maxl = map_dbl(lhand, pluck, "maxL"),
+         lhand_l = map_dbl(lhand, pluck, "L"),
+         lhand_entr = map_dbl(lhand, pluck, "ENTR"),
+         lhand_r_ENTR = map_dbl(lhand, pluck, "rENTR"),
+         lhand_lam = map_dbl(lhand, pluck, "LAM"),
+         lhand_tt = map_dbl(lhand, pluck, "TT")) %>%
+  select(name, maingroup, story, direction, embeddim, delay, optimized_r, lhand_rr:lhand_tt)
+
+write_csv(crqa_results, "crqa_results_lhand.csv")
+rhand_results <- read_csv("crqa_results.csv")
+
+# Combine left and right hand CRQA results
+rhand_results <- read_csv("crqa_results_rhand.csv") %>%
+  add_column(hand = "right") %>%
+  rename_at(vars(rhand_rr:rhand_tt), ~ str_remove(.x, "rhand_"))
+lhand_results <- read_csv("crqa_results_lhand.csv") %>%
+  add_column(hand = "left") %>%
+  rename_at(vars(lhand_rr:lhand_tt), ~ str_remove(.x, "lhand_"))
+
+final <- bind_rows(rhand_results, lhand_results)
+
+final %>%
+  ggplot(aes(x = maingroup, y = optimized_r, fill = hand)) + geom_violin(position = position_dodge(width = 0.5)) + facet_wrap("direction")
+
+library(lmerTest)
+m1 <- lmer(data = filter(final, hand == 'right'), optimized_r ~ maingroup * direction + (1|story) + (1|name))
+summary(m1)
+m2 <- lmer(data = filter(final, hand == 'left'), optimized_r ~ maingroup * direction + (1|story) + (1|name))
+summary(m2)
+
+# 
+# final %>%
+#   filter(hand == 'right') %>%
+#   grouped_ggbetweenstats(x = maingroup, 
+#                  y = optimized_r,
+#                  grouping.var = direction)
+# 
+# final %>%
+#   filter(hand == 'left') %>%
+#   ggbetweenstats(x = maingroup, 
+#                  y = optimized_r,
+#                  pairwise.comparisons = TRUE,
+#                  pairwise.annotation = "p.value",
+#                  p.adjust.method = "holm")
+
+final_participants <- final %>%
+  select(name, maingroup, direction) %>%
+  distinct() %>%
+  count(maingroup, direction)
+
+final_summary <- final %>%
+  group_by(maingroup, direction, hand) %>%
+  summarise(radius_mean = mean(r_ENTR),
+            radius_sd = sd(r_ENTR)) %>%
+  ungroup() %>%
+  left_join(final_participants, by = c("maingroup", "direction")) %>%
+  mutate(radius_se = radius_sd/sqrt(n))
+  
+
+final_summary %>%
+  ggplot(aes(x = maingroup, y = radius_mean, color = direction, fill = direction)) +
+  geom_point(position = position_dodge(width = 0.9)) +
+  geom_errorbar(aes(ymin = radius_mean - radius_se, ymax = radius_mean + radius_se),
+                position = position_dodge(width = 0.9),
+                width = 0.5) +
+ # scale_y_continuous(limits = c(20, 37)) +
+  facet_wrap('hand')
+
+library(broom) 
+library(broom.mixed)
+library(sjPlot)
+model <- lmer(data = final, optimized_r ~ maingroup * direction + (1 + hand|name) + (1|story))
+summary(model)
+tidy(model)
+# augment(model)
+plot(model)
+# coef(model)
+plot_model(model, sort.est = TRUE, show.values = TRUE)
+plot_model(model, sort.est = TRUE, show.values = TRUE, type = "std")
+plot_model(model, type = "re") # Random effects
+plot_model(model, type = "pred") # Predicted values of main effects
+plot_model(model, type = "int") # Marginal effects of interaction terms in model.
+plot_model(model, type = "diag")
+
+# Plotting cross recurrence by optimized_r
+r_data_lists <- readRDS("crqa_rhand.RDS") %>% rename(optimized_r = test_radius)
+l_data_lists <- readRDS("crqa_lhand.RDS") %>% rename(optimized_r = test_radius)
+
+best <- final %>%  ## THIS CAME UP AS LEFT HAND 
+  arrange(desc(optimized_r)) %>% 
+  slice(2:2) %>%
+  select(-embeddim, -delay) %>%
+  left_join(l_data_lists, by = c("name", "maingroup", "story", "direction", "optimized_r"))
+best_crqa <- run_crqa(best$eye_y[[1]], best$lhand_y[[1]], best$optimized_r, best$embeddim, best$delay)
+image(best_crqa$RP)
+
+worst <- final %>% ## THIS CAME UP AS RIGHT HAND
+  arrange(optimized_r) %>% 
+  slice(1) %>%
+  select(-embeddim, -delay) %>%
+  left_join(r_data_lists, by = c("name", "maingroup", "story", "direction", "optimized_r"))
+worst_crqa <- run_crqa(worst$eye_y[[1]], worst$rhand_y[[1]], worst$optimized_r, worst$embeddim, worst$delay)
+image(worst_crqa$RP)
+
+
+# Plotting cross recurrence by r_ENTR
+best <- final %>%  ## THIS CAME UP AS RIGHT HAND 
+  arrange(desc(r_ENTR)) %>% 
+  slice(1) %>%
+  select(-embeddim, -delay) %>%
+  left_join(r_data_lists, by = c("name", "maingroup", "story", "direction", "optimized_r"))
+best_crqa <- run_crqa(best$eye_y[[1]], best$rhand_y[[1]], best$optimized_r, best$embeddim, best$delay)
+image(best_crqa$RP)
+
+worst <- final %>% ## THIS CAME UP AS LEFT HAND
+  arrange(r_ENTR) %>% 
+  slice(1) %>%
+  select(-embeddim, -delay) %>%
+  left_join(l_data_lists, by = c("name", "maingroup", "story", "direction", "optimized_r"))
+worst_crqa <- run_crqa(worst$eye_y[[1]], worst$lhand_y[[1]], worst$optimized_r, worst$embeddim, worst$delay)
+image(worst_crqa$RP)
+
+
+dcrp_results_worst <- drpdfromts(ts1 = worst$eye_y[[1]], ts2 = worst$lhand_y[[1]], ws = 100, datatype = "continuous", radius = 32) # run DCRP on the x and y dimension of the Lorenz system
+plot(-100:100,dcrp_results_worst$profile,type = "l")
+
+dcrp_results_best <- drpdfromts(ts1 = best$eye_y[[1]], ts2 = best$rhand_y[[1]], ws = 100, datatype = "continuous", radius = 29) # run DCRP on the x and y dimension of the Lorenz system
+plot(-100:100,dcrp_results_best$profile,type = "l")
