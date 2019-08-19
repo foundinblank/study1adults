@@ -119,7 +119,7 @@ Let's model that!
 
 It's actually a good thing we have CRQA results for both left and right hands. We know there is not a world of a difference between them, so we can "double" the dataset by adding "hand" as a random effects variable! 
 
-```{r message=FALSE, warning=FALSE}
+```{r Radius plots and models, message=FALSE, warning=FALSE}
 
 # Plot means
 final_n <- final %>%
@@ -173,47 +173,172 @@ The interpretation is :
 1. We have an interaction of Maingroup & Direction, where Hearing Noivce, when confronted w reverse video, become *less coupled* to hand position. It's possible they dis-engage and engage in poorer viewing behavior in general!
 
 
-# Time-Series Plot
+# Eye Gaze & Hand Position Time-Series Plot
 
 We need a plot like this for the poster, to give people an idea of what we are talking about. This was submitted with the abstract as figure 2. Re-creating it here. 
 
-```{r}
+NEED TO ADD HAND POSITION...
 
-averaged_y <- read_csv("bears_time_series_group_averages.csv")
+```{r Plot Hand and Eye Position, warning=FALSE, message=FALSE}
+# Averaged eye gaze position for Three Bears
+y_averaged <- read_csv("bears_time_series_group_averages.csv")
 
-averaged_y %>%
-  ggplot() + 
-  geom_line(aes(x = gaze_point_index, y = y_mean, color = maingroup), size = 0.8) +
-  geom_ribbon(aes(x = gaze_point_index, 
-                  ymin = y_mean-y_se, 
-                  ymax = y_mean+y_se,
-                  fill = maingroup), alpha = 0.5) +
-  scale_y_reverse(limits = c(1200,0)) +
-  facet_wrap("maingroup") +
-  labs(x = "time (ms)", y = "pixels", title = "Figure 1. Vertical Eye Gaze Position Across One ASL Narrative") +
-  guides(color = F, fill = F) +
-  theme_ipsum_rc()
+# Right hand position data 
+y_rhand <- final %>%
+  filter(story == "bears" & hand == "right") %>%
+  slice(1) %>%
+  pull(hand_y) %>%
+  unlist() %>%
+  as_tibble() %>%
+  add_rownames() %>%
+  rename(gaze_point_index = rowname,
+         y = value) %>%
+  mutate_at(vars(gaze_point_index), as.numeric)
 
-averaged_y %>%
-  ggplot() + 
-  geom_line(aes(x = gaze_point_index, y = y_mean, color = maingroup)) +
-  geom_ribbon(aes(x = gaze_point_index, 
-                  ymin = y_mean-y_se, 
-                  ymax = y_mean+y_se,
-                  fill = maingroup), alpha = 0.5) +
-  scale_y_reverse(limits = c(1200,0)) +
-  theme_bw()
+# Left hand position data
+y_lhand <- final %>%
+  filter(story == "bears" & hand == "left") %>%
+  slice(1) %>%
+  pull(hand_y) %>%
+  unlist() %>%
+  as_tibble() %>%
+  add_rownames() %>%
+  rename(gaze_point_index = rowname,
+         y = value) %>%
+  mutate_at(vars(gaze_point_index), as.numeric)
 
-averaged_y %>%
+
+# 4-panel plot of averaged y-position for each group
+# averaged_y %>%
+#   ggplot() +
+#   geom_line(aes(x = gaze_point_index, y = y_mean, color = maingroup), size = 0.8) +
+#   geom_ribbon(aes(x = gaze_point_index,
+#                   ymin = y_mean - y_se,
+#                   ymax = y_mean + y_se,
+#                   fill = maingroup), alpha = 0.5) +
+#   scale_y_reverse(limits = c(1200,0)) +
+#   facet_wrap("maingroup") +
+#   labs(x = "time (ms)", y = "pixels", title = "Figure 1. Vertical Eye Gaze Position Across One ASL Narrative") +
+#   guides(color = F, fill = F) +
+#   theme_ipsum_rc()
+
+# All 4 groups plotted on same plot
+# averaged_y %>%
+#   ggplot() +
+#   geom_line(aes(x = gaze_point_index, y = y_mean, color = maingroup)) +
+#   geom_ribbon(aes(x = gaze_point_index,
+#                   ymin = y_mean - y_se,
+#                   ymax = y_mean + y_se,
+#                   fill = maingroup), alpha = 0.5) +
+#   scale_y_reverse(limits = c(1200,0)) +
+#   theme_bw()
+
+
+# Just Deaf Early vs. Hearing Novice
+p1 <- y_averaged %>%
   filter(maingroup == "DeafEarly" | maingroup == "HearingNovice") %>%
   ggplot() + 
   geom_line(aes(x = gaze_point_index, y = y_mean, color = maingroup), size = 0.8) +
   geom_ribbon(aes(x = gaze_point_index, 
-                  ymin = y_mean-y_se, 
-                  ymax = y_mean+y_se,
+                  ymin = y_mean - y_se, 
+                  ymax = y_mean + y_se,
                   fill = maingroup), alpha = 0.1) +
-  scale_y_reverse(limits = c(700,300)) +
+  geom_step(data = y_rhand, aes(x = gaze_point_index, y = y)) +
+  scale_y_reverse(limits = c(900,300)) +
   labs(x = "time (ms)", y = "pixels", title = "Figure 2. Deaf Early Signers vs. Hearing Novice Signers", color = "", fill = "") +
   theme_ipsum_rc()
+
+
+  geom_step(data = lhand_expanded, aes(x = sec, y = y), color = "blue", linetype = "longdash", alpha = 0.5) +
+  annotate("text", label = "Left Hand", x = 3, y = 1000, color = "blue", alpha = 0.5) +
+  labs(title = "Monica's Eye Gaze vs. Signer's Left Hand") +
+  theme_bw() +
+  theme(panel.grid.minor.y = element_blank())
+
 ```
 
+HAND POSITION HERE
+
+
+```{r}
+# Get rhand, lhand, mouth data 
+rows_to_use <- data_ma %>% filter(name == "Monica") %>% nrow()
+
+rhand <- read_csv("aoi_position/aoi_bears_right.csv",
+                  col_types = cols(sec = col_double(),
+                                   x = col_double(),
+                                   y = col_double()
+                                   )) %>%
+  mutate(sec = floor(sec*120)) %>%
+  mutate(sec = sec + 1) %>%
+  add_row(sec = rows_to_use) %>%
+  fill(x, y)
+rhand_expanded <- seq(1, max(rhand$sec)) %>%
+  enframe(name = NULL, value = 'sec') %>%
+  left_join(rhand, by = 'sec') %>%
+  fill(x, y)
+
+lhand <- read_csv("aoi_position/aoi_bears_left.csv",
+                  col_types = cols(sec = col_double(),
+                                   x = col_double(),
+                                   y = col_double()
+                                   )) %>%
+  mutate(sec = floor(sec*120)) %>%
+  mutate(sec = sec + 1) %>%
+  add_row(sec = rows_to_use) %>%
+  fill(x, y)
+lhand_expanded <- seq(1, max(lhand$sec)) %>%
+  enframe(name = NULL, value = 'sec') %>%
+  left_join(lhand, by = 'sec') %>%
+  fill(x, y)
+
+mouth <- read_csv("aoi_position/aoi_bears_mouth.csv",
+                  col_types = cols(sec = col_double(),
+                                   x = col_double(),
+                                   y = col_double()
+                                   )) %>%
+  mutate(sec = floor(sec * 120)) %>%
+  mutate(sec = sec + 1) %>%
+  add_row(sec = rows_to_use) %>%
+  fill(x, y)
+mouth_expanded <- seq(1, max(mouth$sec)) %>%
+  enframe(name = NULL, value = "sec") %>%
+  left_join(mouth, by = "sec") %>%
+  fill(x, y)
+
+# Subset Monica's data and reset so gaze_point_index starts with 1
+monica <- data_ma %>%
+  filter(name == "Monica") %>%
+  mutate(gaze_point_index = gaze_point_index - 30)
+
+# Visualize
+monica %>%
+  ggplot(aes(x = gaze_point_index, y = y)) +
+  scale_y_reverse(limits = c(1200,0), expand = c(0,0)) +
+  geom_line(alpha = 1, color = "purple") +
+  geom_step(data = rhand_expanded, aes(x = sec, y = y), color = "red", linetype = "longdash", alpha = 0.5) +
+  annotate("text", label = "Right Hand", x = 3, y = 1000, color = "red", alpha = 0.5) +
+  labs(title = "Monica's Eye Gaze vs. Signer's Right Hand") +
+  theme_bw() +
+  theme(panel.grid.minor.y = element_blank())
+
+monica %>%
+  ggplot(aes(x = gaze_point_index, y = y)) +
+  scale_y_reverse(limits = c(1200,0), expand = c(0,0)) +
+  geom_line(alpha = 1, color = "purple") +
+  geom_step(data = lhand_expanded, aes(x = sec, y = y), color = "blue", linetype = "longdash", alpha = 0.5) +
+  annotate("text", label = "Left Hand", x = 3, y = 1000, color = "blue", alpha = 0.5) +
+  labs(title = "Monica's Eye Gaze vs. Signer's Left Hand") +
+  theme_bw() +
+  theme(panel.grid.minor.y = element_blank())
+
+monica %>%
+  ggplot(aes(x = gaze_point_index, y = y)) +
+  scale_y_reverse(limits = c(1200,0), expand = c(0,0)) +
+  geom_line(alpha = 1, color = "purple") +
+  geom_step(data = mouth_expanded, aes(x = sec, y = y), color = "black", linetype = "longdash", alpha = 0.5) +
+  annotate("text", label = "Mouth", x = 3, y = 300, color = "black", alpha = 0.5) +
+  labs(title = "Monica's Eye Gaze vs. Signer's Mouth") +
+  theme_bw() +
+  theme(panel.grid.minor.y = element_blank())
+```
