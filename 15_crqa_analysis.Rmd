@@ -388,23 +388,29 @@ run_crqa <- function(a, b, c, d, e){
 # Best CRQA (lowest entropy score)
 best <- final %>%
   filter(hand == 'right') %>%
+  filter(direction == 'fw') %>%
   arrange(r_ENTR) %>%
-  slice(2)
+  slice(1)
 
 # Worst CRQA (highest entropy score)
 worst <- final %>%
   filter(hand == 'right') %>%
+  filter(direction == 'rv') %>%
   arrange(desc(r_ENTR)) %>%
-  slice(1)
+  slice(2)
 
 
 # Get the recurrence plot by re-running optimizeParam & CRQA 
-best_param <- optimizeParam(best$eye_y[[1]], best$hand_y[[1]], mlpar)
-best_crqa <- run_crqa(best$eye_y[[1]], best$hand_y[[1]], best_param$radius, best_param$emddim, best_param$delay)
+# best_param <- optimizeParam(best$eye_y[[1]], best$hand_y[[1]], mlpar)
+# best_crqa <- run_crqa(best$eye_y[[1]], best$hand_y[[1]], best_param$radius, best_param$emddim, best_param$delay)
 
-worst_param <- optimizeParam(worst$eye_y[[1]], worst$hand_y[[1]], mlpar)
-worst_crqa <- run_crqa(worst$eye_y[[1]], worst$hand_y[[1]], worst_param$radius, worst_param$emddim, worst_param$delay)
+best_crqa <- run_crqa(best$eye_y[[1]], best$hand_y[[1]], best$radius, best$embeddim, best$delay)
 
+
+# worst_param <- optimizeParam(worst$eye_y[[1]], worst$hand_y[[1]], mlpar)
+# worst_crqa <- run_crqa(worst$eye_y[[1]], worst$hand_y[[1]], worst_param$radius, worst_param$emddim, worst_param$delay)
+
+worst_crqa <- run_crqa(worst$eye_y[[1]], worst$hand_y[[1]], worst$radius, worst$embeddim, worst$delay)
 
 # Plot
 # params = list(unit = 10, labelx = "Time", labely = "Time", cols = "blue", pcex = 0.25)
@@ -482,15 +488,15 @@ worst_rp <- summary(worst_crqa$RP) %>%
 # Make plots
 best_rp %>%
   ggsave(filename = 'tislr_figures/best_rp.png',
-         width = 12,
-         height = 12,
+         width = 9,
+         height = 9,
          units = 'in',
          device = 'png')
 
 worst_rp %>%
   ggsave(filename = 'tislr_figures/worst_rp.png',
-         width = 12,
-         height = 12,
+         width = 9,
+         height = 9,
          units = 'in',
          device = 'png')
 
