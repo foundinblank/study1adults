@@ -1065,6 +1065,10 @@ facechest_info <- fulldata %>%
     maingroup == "HearingNovice" ~ "Hearing Novice"
     ))
 
+# For making the babies/adults chart: 
+facechest_info %>%
+  write_csv("../Study2Children/fcr_chart_adults.csv")
+
 ggplot(facechest_info, aes(x = maingroup, y = mean, fill = direction, color = direction)) +
   geom_point(stat = "identity", position = position_dodge(0.5), size = 2) + 
   geom_errorbar(aes(ymin = mean-se, ymax = mean+se), position = position_dodge(0.5), width = 0.3, size = 1) +
