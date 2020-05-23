@@ -1065,7 +1065,20 @@ facechest_info <- fulldata %>%
     maingroup == "HearingNovice" ~ "Hearing Novice"
     ))
 
-# For making the babies/adults chart: 
+# For making the babies/adults charts:
+fulldata %>%
+  filter(eye_exclude == FALSE) %>%
+  group_by(maingroup, direction, participant, age) %>%
+  summarise(facechest = mean(facechest, na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(maingroup = case_when(
+    maingroup == "DeafEarly" ~ "Deaf Early",
+    maingroup == "DeafLate" ~ "Deaf Late",
+    maingroup == "HearingLate" ~ "Hearing Late",
+    maingroup == "HearingNovice" ~ "Hearing Novice"
+    )) %>%
+  write_csv("../Study2Children/fcr_individual_values_adults.csv")
+
 facechest_info %>%
   write_csv("../Study2Children/fcr_chart_adults.csv")
 
